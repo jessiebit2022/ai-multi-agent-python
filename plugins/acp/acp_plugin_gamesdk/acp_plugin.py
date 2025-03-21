@@ -17,6 +17,7 @@ from .interface import AcpJobPhasesDesc, IInventory
 class AdNetworkPluginOptions:
     api_key: str
     acp_token_client: AcpToken
+    cluster: Optional[str] = None
 
 class AcpPlugin:
     def __init__(self, options: AdNetworkPluginOptions):
@@ -39,7 +40,7 @@ class AcpPlugin:
 
         NOTE: This is NOT for finding clients - only for executing trades when there's a specific need to buy or sell something.
         """
-        
+        self.cluster = options.cluster
         self.produced_inventory: List[IInventory] = []
 
     def add_produce_item(self, item: IInventory) -> None:
@@ -105,11 +106,6 @@ class AcpPlugin:
                     "type": "string",
                     "description": "Explain why you need to find trading partners at this time",
                 },
-                {
-                    "name": "keyword",
-                    "type": "string",
-                    "description": "A one word description of the work to be DONE",
-                },
             ],
             executable=self._search_agents_executable
         )
@@ -122,13 +118,7 @@ class AcpPlugin:
             )
 
         try:
-            if not args.get("keyword"):
-                return FunctionResult(
-                    FunctionResultStatus.FAILED,
-                    "Keyword is required to search"
-                )
-
-            available_agents = await self.acp_client.browse_agents(args["keyword"])
+            available_agents = await self.acp_client.browse_agents(self.cluster)
 
             if not available_agents:
                 return FunctionResult(

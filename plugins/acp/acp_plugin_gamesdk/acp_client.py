@@ -27,16 +27,29 @@ class AcpClient:
         )
         return response.json()
 
-    async def browse_agents(self, query: str) -> List[AcpAgent]:
-        response =  requests.get(
-            f"https://acpx.virtuals.gg/wp-json/wp/v2/agents",
-            params={"search": query}
-        )
+    async def browse_agents(self, cluster: Optional[str] = None) -> List[AcpAgent]:
+        url = "https://acpx.virtuals.gg/api/agents"
         
-        if (response.status_code != 200):
-            raise Exception(f"Failed to browse agents: {response.json()}")
+        params = {}
+        if cluster:
+            params["filters[cluster]"] = cluster
+        
+        response = requests.get(url, params=params)
+        
+        if response.status_code != 200:
+            raise Exception(f"Failed to browse agents: {response.text}")
 
-        return response.json()
+        response_json = response.json()
+        
+        return [
+            {
+                "id": agent["id"],
+                "name": agent["name"],
+                "description": agent["description"],
+                "walletAddress": agent["walletAddress"]
+            }
+            for agent in response_json.get("data", [])
+        ]
 
     async def create_job(self, provider_address: str, price: float, job_description: str) -> int:
         expired_at = datetime.now() + timedelta(days=1)
