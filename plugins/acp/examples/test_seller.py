@@ -1,68 +1,65 @@
-from typing import Dict, Any, List
+from typing import List, Dict, Any, Optional,Tuple
 
 from web3 import Web3
-from ..acp_plugin_gamesdk.acp_plugin import AcpPlugin
-from ..acp_plugin_gamesdk.acp_token import AcpToken
-from game_sdk.game.worker import Worker
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
+from plugins.acp.acp_plugin_gamesdk import acp_plugin
+from plugins.acp.acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
+from plugins.acp.acp_plugin_gamesdk.acp_token import AcpToken
 from game_sdk.game.custom_types import Function, FunctionResult, FunctionResultStatus
-from game_sdk.game.agent import Agent
-from game_sdk.game.worker import ExecutableGameFunctionResponse, ExecutableGameFunctionStatus
+from game_sdk.game.agent import Agent, WorkerConfig
 
 def ask_question(query: str) -> str:
     return input(query)
 
-async def generate_meme(args: Dict[str, Any], logger, acp_plugin) -> ExecutableGameFunctionResponse:
-    logger("Generating meme...")
-
-    if not args["jobId"]:
-        return ExecutableGameFunctionResponse(
-            ExecutableGameFunctionStatus.Failed,
-            f"Job {args['jobId']} is invalid. Should only respond to active as a seller job."
-        )
-
-    state = await acp_plugin.get_acp_state()
-
-    job = next(
-        (j for j in state.jobs.active.as_a_seller if j.job_id == int(args["jobId"])),
-        None
-    )
-
-    if not job:
-        return ExecutableGameFunctionResponse(
-            ExecutableGameFunctionStatus.Failed,
-            f"Job {args['jobId']} is invalid. Should only respond to active as a seller job."
-        )
-
-    url = "http://example.com/meme"
-
-    acp_plugin.add_produce_item({
-        "jobId": int(args["jobId"]),
-        "type": "url",
-        "value": url
-    })
-
-    return ExecutableGameFunctionResponse(
-        ExecutableGameFunctionStatus.Done,
-        f"Meme generated with the URL: {url}"
-    )
 
 async def test():
     acp_plugin = AcpPlugin(
-        api_key="xxx",
-        acp_token_client=AcpToken(
-            "xxx",
-            "base_sepolia"
+        options=AdNetworkPluginOptions(
+            api_key="apt-2e7f33d88ef994b056f2a247a5ed6168",
+            acp_token_client=AcpToken(
+                "0x8d2bc0d18b87b12aa435b66b2e13001ef5c395de063cdad15805c1d147fde68e",
+                "base_sepolia"  # Assuming this is the chain identifier
+            )
         )
     )
+    
+    def get_agent_state(_: Any, _e: Any) -> dict:
+        state = acp_plugin.get_acp_state()
+        return state
+    
+    def generate_meme(description: str, jobId: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
+        if not jobId or jobId == 'None':
+            return FunctionResultStatus.FAILED, f"JobId is invalid. Should only respond to active as a seller job.", {}
 
-    core_worker = Worker(
+        state = acp_plugin.get_acp_state()
+
+        job = next(
+            (j for j in state.jobs.active.as_a_seller if j.job_id == int(jobId)),
+            None
+        )
+
+        if not job:
+            return FunctionResultStatus.FAILED, f"Job {jobId} is invalid. Should only respond to active as a seller job.", {}
+
+        url = "http://example.com/meme"
+
+        acp_plugin.add_produce_item({
+            "jobId": int(jobId),
+            "type": "url",
+            "value": url
+        })
+
+        return FunctionResultStatus.DONE, f"Meme generated with the URL: {url}", {}
+
+    core_worker = WorkerConfig(
         id="core-worker",
-        name="Core Worker",
-        description="This worker to provide meme generation as a service where you are selling",
-        functions=[
+        worker_description="This worker to provide meme generation as a service where you are selling",
+        action_space=[
             Function(
-                name="generate_meme",
-                description="A function to generate meme",
+                fn_name="generate_meme",
+                fn_description="A function to generate meme",
                 args=[
                     {
                         "name": "description",
@@ -80,27 +77,27 @@ async def test():
                         "description": "The reasoning of the tweet"
                     }
                 ],
-                executable=lambda args, logger: generate_meme(args, logger, acp_plugin)
+                executable=generate_meme
             )
         ],
-        get_environment=acp_plugin.get_acp_state
+        get_state_fn=get_agent_state
     )
-
+    
+    acp_worker =  acp_plugin.get_worker()
     agent = Agent(
-        "xxx",
-        {
-            "name": "Memx",
-            "goal": "To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller.",
-            "description": f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
+            api_key="apt-98f312ab3078757c3682a7703455ab73",
+            name="Memx",
+            agent_goal="To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller.",
+            agent_description=f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
 
             {acp_plugin.agent_description}
             """,
-            "workers": [core_worker, acp_plugin.get_worker()],
-            "getAgentState": lambda: acp_plugin.get_acp_state()
-        }
+            workers=[core_worker, acp_worker],
+            get_agent_state_fn=get_agent_state
     )
 
-    await agent.init()
+    agent.compile()
+    agent.run()
 
     while True:
         await agent.step(verbose=True)

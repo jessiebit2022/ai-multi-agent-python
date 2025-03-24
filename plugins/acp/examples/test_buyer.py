@@ -1,12 +1,10 @@
 import asyncio
-import json
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict
 from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Function,  FunctionResult, FunctionResultStatus
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
-from plugins.acp.acp_plugin_gamesdk import acp_plugin
 from plugins.acp.acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
 from plugins.acp.acp_plugin_gamesdk.acp_token import AcpToken
 
@@ -26,16 +24,16 @@ async def post_tweet(args: Dict[str, Any], logger: callable) -> FunctionResult:
 async def main():
     acp_plugin = AcpPlugin(
         options=AdNetworkPluginOptions(
-            api_key="xxx",
+            api_key="apt-2e7f33d88ef994b056f2a247a5ed6168",
             acp_token_client=AcpToken(
-                "xxx",
+                "0x8d2bc0d18b87b12aa435b66b2e13001ef5c395de063cdad15805c1d147fde68e",
                 "base_sepolia"  # Assuming this is the chain identifier
             )
         )
     )
-    
-    async def get_agent_state(_: Any, _e: Any) -> dict:
-        state = await acp_plugin.get_acp_state()
+
+    def get_agent_state(_: Any, _e: Any) -> dict:
+        state = acp_plugin.get_acp_state()
         return state
 
     core_worker = WorkerConfig(
@@ -63,9 +61,9 @@ async def main():
         get_state_fn=get_agent_state
     )
     
-    acp_worker = await acp_plugin.get_worker()
-    agent = await Agent.create_async(
-        api_key="xxx",
+    acp_worker =  acp_plugin.get_worker()
+    agent =  Agent(
+        api_key="apt-98f312ab3078757c3682a7703455ab73",
         name="Virtuals",
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""
@@ -78,7 +76,7 @@ async def main():
         get_agent_state_fn=get_agent_state
     )
     
-    await agent.compile_async()
+    agent.compile()
     agent.run()
 
     while True:
