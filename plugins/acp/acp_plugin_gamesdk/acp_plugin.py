@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Optional,Tuple
+import json
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -61,7 +62,7 @@ class AcpPlugin:
             self.pay_job,
             self.deliver_job,
         ]
-
+        
         def get_environment(_e, __) -> Dict[str, Any]:
             environment = data.get_environment() if hasattr(data, "get_environment") else {}
             return {
@@ -108,12 +109,12 @@ class AcpPlugin:
             print("No agents found")
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
             
-        return FunctionResultStatus.DONE, f"Successfully found {len(agents)} trading agents", {
+        return FunctionResultStatus.DONE, json.dumps({
             "availableAgents": agents,
             "totalAgentsFound": len(agents),
             "timestamp": datetime.now().timestamp(),
-            "note": "Use the walletAddress when initiating a job with your chosen trading partner.",
-        }
+            "note": "Use the walletAddress when initiating a job with your chosen trading partner."
+        }), {}
 
     @property
     def search_agents_functions(self) -> Function:
@@ -160,12 +161,12 @@ class AcpPlugin:
             executable=self._initiate_job_executable
         )
 
-    async def _initiate_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
+    def _initiate_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
         if not args.get("price"):
             return FunctionResultStatus.FAILED, "Missing price - specify how much you're offering per unit", {}
 
         try:
-            state = await self.get_acp_state()
+            state = self.get_acp_state()
 
             if state["jobs"]["active"]["asABuyer"]:
                 return FunctionResultStatus.FAILED, "You already have an active job as a buyer", {}
@@ -173,19 +174,19 @@ class AcpPlugin:
 
             # ... Rest of validation logic ...
 
-            job_id = await self.acp_client.create_job(
+            job_id = self.acp_client.create_job(
                 args["sellerWalletAddress"],
                 float(args["price"]),
                 args["serviceRequirements"]
             )
 
-            return FunctionResultStatus.DONE, f"Successfully initiated job with ID {job_id}", {
-                    "jobId": job_id,
-                    "sellerWalletAddress": args["sellerWalletAddress"],
-                    "price": float(args["price"]),
-                    "serviceRequirements": args["serviceRequirements"],
+            return FunctionResultStatus.DONE, json.dumps({
+                "jobId": job_id,
+                "sellerWalletAddress": args["sellerWalletAddress"],
+                "price": float(args["price"]),
+                "serviceRequirements": args["serviceRequirements"],
                 "timestamp": datetime.now().timestamp(),
-            }
+            }), {}
         except Exception as e:
             return FunctionResultStatus.FAILED, f"System error while initiating job - try again after a short delay. {str(e)}", {}
 
@@ -214,7 +215,7 @@ class AcpPlugin:
             executable=self._respond_job_executable
         )
 
-    async def _respond_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
+    def _respond_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
         if not args.get("jobId"):
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're responding to", {}
         
@@ -225,7 +226,7 @@ class AcpPlugin:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you made this decision", {}
 
         try:
-            state = await self.get_acp_state()
+            state = self.get_acp_state()
             
             job = next(
                 (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == int(args["jobId"])),
@@ -238,18 +239,18 @@ class AcpPlugin:
             if job["phase"] != AcpJobPhasesDesc.REQUEST:
                 return FunctionResultStatus.FAILED, f"Cannot respond - job is in '{job['phase']}' phase, must be in 'request' phase", {}
 
-            await self.acp_client.response_job(
+            self.acp_client.response_job(
                 int(args["jobId"]),
                 args["decision"] == "ACCEPT",
                 job["memo"][0]["id"],
                 args["reasoning"]
             )
 
-            return FunctionResultStatus.DONE, f"Successfully responded to job with ID {args['jobId']}", {
-                    "jobId": args["jobId"],
-                    "decision": args["decision"],
-                    "timestamp": datetime.now().timestamp()
-                }
+            return FunctionResultStatus.DONE, json.dumps({
+                "jobId": args["jobId"],
+                "decision": args["decision"],
+                "timestamp": datetime.now().timestamp()
+            }), {}
         except Exception as e:
             return FunctionResultStatus.FAILED, f"System error while responding to job - try again after a short delay. {str(e)}", {}
 
@@ -278,7 +279,7 @@ class AcpPlugin:
             executable=self._pay_job_executable
         )
 
-    async def _pay_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
+    def _pay_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
         if not args.get("jobId"):
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're paying for", {}
 
@@ -289,7 +290,7 @@ class AcpPlugin:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you're making this payment", {}
 
         try:
-            state = await self.get_acp_state()
+            state = self.get_acp_state()
             
             job = next(
                 (c for c in state["jobs"]["active"]["asABuyer"] if c["jobId"] == int(args["jobId"])),
@@ -303,18 +304,18 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, f"Cannot pay - job is in '{job['phase']}' phase, must be in 'negotiation' phase", {}
 
 
-            await self.acp_client.make_payment(
+            self.acp_client.make_payment(
                 int(args["jobId"]),
                 float(args["amount"]),
                 job["memo"][0]["id"],
                 args["reasoning"]
             )
 
-            return FunctionResultStatus.DONE, f"Successfully paid {args['amount']} for job with ID {args['jobId']}", {
-                    "jobId": args["jobId"],
-                    "amountPaid": args["amount"],
-                    "timestamp": datetime.now().timestamp()
-                }
+            return FunctionResultStatus.DONE, json.dumps({
+                "jobId": args["jobId"],
+                "amountPaid": args["amount"],
+                "timestamp": datetime.now().timestamp()
+            }), {}
         except Exception as e:
             return FunctionResultStatus.FAILED, f"System error while processing payment - try again after a short delay. {str(e)}", {}
 
@@ -348,7 +349,7 @@ class AcpPlugin:
             executable=self._deliver_job_executable
         )
 
-    async def _deliver_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
+    def _deliver_job_executable(self, args: Dict, _: Any) -> Tuple[FunctionResultStatus, str, dict]:
         if not args.get("jobId"):
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're delivering for", {}
             
@@ -359,7 +360,7 @@ class AcpPlugin:
             return FunctionResultStatus.FAILED, "Missing deliverable - specify what you're delivering", {}
 
         try:
-            state = await self.get_acp_state()
+            state = self.get_acp_state()
             
             job = next(
                 (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == int(args["jobId"])),
@@ -385,18 +386,18 @@ class AcpPlugin:
                 "value": args["deliverable"]
             }
 
-            await self.acp_client.deliver_job(
+            self.acp_client.deliver_job(
                 int(args["jobId"]),
                 deliverable,
                 job["memo"][0]["id"],
                 args["reasoning"]
             )
 
-            return FunctionResultStatus.DONE, f"Successfully delivered {args['deliverable']} to the buyer", {
-                    "status": "success",
-                    "jobId": args["jobId"],
-                    "deliverable": args["deliverable"],
-                    "timestamp": datetime.now().timestamp()
-                }
+            return FunctionResultStatus.DONE, json.dumps({
+                "status": "success",
+                "jobId": args["jobId"],
+                "deliverable": args["deliverable"],
+                "timestamp": datetime.now().timestamp()
+            }), {}
         except Exception as e:
             return FunctionResultStatus.FAILED, f"System error while delivering items - try again after a short delay. {str(e)}", {}

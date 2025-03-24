@@ -14,12 +14,12 @@ def ask_question(query: str) -> str:
     return input(query)
 
 
-async def test():
+def test():
     acp_plugin = AcpPlugin(
         options=AdNetworkPluginOptions(
-            api_key="apt-2e7f33d88ef994b056f2a247a5ed6168",
+            api_key="xxx",
             acp_token_client=AcpToken(
-                "0x8d2bc0d18b87b12aa435b66b2e13001ef5c395de063cdad15805c1d147fde68e",
+                "xxx",
                 "base_sepolia"  # Assuming this is the chain identifier
             )
         )
@@ -27,6 +27,7 @@ async def test():
     
     def get_agent_state(_: Any, _e: Any) -> dict:
         state = acp_plugin.get_acp_state()
+        print(f"State: {state}")
         return state
     
     def generate_meme(description: str, jobId: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
@@ -34,7 +35,7 @@ async def test():
             return FunctionResultStatus.FAILED, f"JobId is invalid. Should only respond to active as a seller job.", {}
 
         state = acp_plugin.get_acp_state()
-
+        
         job = next(
             (j for j in state.jobs.active.as_a_seller if j.job_id == int(jobId)),
             None
@@ -85,7 +86,7 @@ async def test():
     
     acp_worker =  acp_plugin.get_worker()
     agent = Agent(
-            api_key="apt-98f312ab3078757c3682a7703455ab73",
+            api_key="xxx",
             name="Memx",
             agent_goal="To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller.",
             agent_description=f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
@@ -97,12 +98,10 @@ async def test():
     )
 
     agent.compile()
-    agent.run()
 
     while True:
-        await agent.step(verbose=True)
-        await ask_question("\nPress any key to continue...\n")
+        agent.step()
+        ask_question("\nPress any key to continue...\n")
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(test())
+    test()

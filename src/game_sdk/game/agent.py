@@ -243,15 +243,16 @@ class Agent:
             data=data,
             model_name=self._model_name
         )
+        
+        print(f"123 Response: {response}")
 
         return ActionResponse.model_validate(response)
 
     def step(self):
-
         # get next task/action from GAME API
         action_response = self._get_action(self._session.function_result)
         action_type = action_response.action_type
-
+        
         print("#" * 50)
         print("STEP")
         print(f"Current Task: {action_response.agent_state.current_task}")
