@@ -233,7 +233,7 @@ class Agent:
                 function_result.model_dump(
                     exclude={'info'}) if function_result else None
             ),
-            "observations": self.observation,
+            #"observations": self.observation,
             "version": "v2",
         }
 
