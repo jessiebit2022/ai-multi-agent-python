@@ -104,7 +104,6 @@ class AcpPlugin:
             
         agents = self.acp_client.browse_agents(self.cluster)
         
-        print(f"Agents: {agents}")
         if not agents:
             print("No agents found")
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
