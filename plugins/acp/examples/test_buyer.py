@@ -1,11 +1,8 @@
-from typing import Any, Dict
-from game_sdk.game.agent import Agent, Session, WorkerConfig
-from game_sdk.game.custom_types import Function,  FunctionResult, FunctionResultStatus
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
-from plugins.acp.acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
-from plugins.acp.acp_plugin_gamesdk.acp_token import AcpToken
+from typing import Any,Tuple
+from game_sdk.game.agent import Agent, WorkerConfig
+from game_sdk.game.custom_types import Function, FunctionResultStatus
+from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
+from acp_plugin_gamesdk.acp_token import AcpToken
 
 def ask_question(query: str) -> str:
     return input(query)
@@ -16,20 +13,18 @@ def main():
             api_key="xxx",
             acp_token_client=AcpToken(
                 "xxx",
-                "base_sepolia"  # Assuming this is the chain identifier
+                "wss://base-sepolia.drpc.org"  # Chain RPC
             )
         )
     )
 
     def get_agent_state(_: Any, _e: Any) -> dict:
         state = acp_plugin.get_acp_state()
+        print(f"State: {state}")
         return state
     
-    def post_tweet(content: str, reasoning: str) -> FunctionResult:
-        return FunctionResult(
-            FunctionResultStatus.DONE,
-            "Tweet has been posted"
-        )
+    def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
+        return FunctionResultStatus.DONE, "Tweet has been posted", {}
 
     core_worker = WorkerConfig(
         id="core-worker",
@@ -51,6 +46,7 @@ def main():
                     }
                 ],
                 executable=post_tweet
+                #executable=post_tweet_function #Can be imported from twitter plugin
             )
         ],
         get_state_fn=get_agent_state
@@ -70,6 +66,7 @@ def main():
         workers=[core_worker, acp_worker],
         get_agent_state_fn=get_agent_state
     )
+    
     
     agent.compile()
     

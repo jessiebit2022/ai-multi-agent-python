@@ -1,5 +1,6 @@
 import asyncio
 from enum import IntEnum
+from time import time
 from typing import Optional, Tuple, TypedDict, List
 from datetime import datetime
 from web3 import Web3
@@ -62,7 +63,7 @@ class AcpToken:
     def get_wallet_address(self) -> str:
         return self.account.address
 
-    async def create_job(
+    def create_job(
         self,
         provider_address: str,
         expire_at: datetime
@@ -83,7 +84,8 @@ class AcpToken:
                 transaction, 
                 self.account.key
             )
-            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            
+            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
             
             # Get job ID from event logs
@@ -98,7 +100,7 @@ class AcpToken:
             print(f"Error creating job: {error}")
             raise Exception("Failed to create job")
 
-    async def approve_allowance(self, price_in_wei: int) -> str:
+    def approve_allowance(self, price_in_wei: int) -> str:
         try:
             erc20_contract = self.web3.eth.contract(
                 address=self.virtuals_token_address,
@@ -126,7 +128,7 @@ class AcpToken:
                 transaction,
                 self.account.key
             )
-            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             self.web3.eth.wait_for_transaction_receipt(tx_hash)
             
             return tx_hash.hex()
@@ -134,7 +136,7 @@ class AcpToken:
             print(f"Error approving allowance: {error}")
             raise Exception("Failed to approve allowance")
 
-    async def create_memo(
+    def create_memo(
         self,
         job_id: int,
         content: str,
@@ -146,11 +148,11 @@ class AcpToken:
         while retries > 0:
             try:
                 transaction = self.contract.functions.createMemo(
-                    job_id,
-                    content,
-                    memo_type,
-                    is_secured,
-                    next_phase
+                    jobId = job_id,
+                    content = content,
+                    memoType = memo_type,
+                    isSecured = is_secured,
+                    nextPhase = next_phase
                 ).build_transaction({
                     'from': self.account.address,
                     'nonce': self.web3.eth.get_transaction_count(self.account.address),
@@ -160,7 +162,7 @@ class AcpToken:
                     transaction,
                     self.account.key
                 )
-                tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+                tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
                 receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
                 
                 # Get memo ID from event logs
@@ -174,11 +176,11 @@ class AcpToken:
             except Exception as error:
                 print(f"Error creating memo: {error}")
                 retries -= 1
-                await asyncio.sleep(2 * (3 - retries))
+                asyncio.sleep(2 * (3 - retries))
                 
         raise Exception("Failed to create memo")
 
-    async def sign_memo(
+    def sign_memo(
         self,
         memo_id: int,
         is_approved: bool,
@@ -200,18 +202,19 @@ class AcpToken:
                     transaction,
                     self.account.key
                 )
-                tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+                
+                tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
                 self.web3.eth.wait_for_transaction_receipt(tx_hash)
                 
                 return tx_hash.hex()
             except Exception as error:
                 print(f"Error signing memo: {error}")
                 retries -= 1
-                await asyncio.sleep(2 * (3 - retries))
+                asyncio.sleep(2 * (3 - retries))
                 
         raise Exception("Failed to sign memo")
 
-    async def set_budget(self, job_id: int, budget: int) -> str:
+    def set_budget(self, job_id: int, budget: int) -> str:
         try:
             transaction = self.contract.functions.setBudget(
                 job_id,
@@ -225,7 +228,7 @@ class AcpToken:
                 transaction,
                 self.account.key
             )
-            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             self.web3.eth.wait_for_transaction_receipt(tx_hash)
             
             return tx_hash.hex()
@@ -233,7 +236,7 @@ class AcpToken:
             print(f"Error setting budget: {error}")
             raise Exception("Failed to set budget")
 
-    async def get_job(self, job_id: int) -> Optional[IJob]:
+    def get_job(self, job_id: int) -> Optional[IJob]:
         try:
             job_data = self.contract.functions.jobs(job_id).call()
             
@@ -255,7 +258,7 @@ class AcpToken:
             print(f"Error getting job: {error}")
             raise Exception("Failed to get job")
 
-    async def get_memo_by_job(
+    def get_memo_by_job(
         self,
         job_id: int,
         memo_type: Optional[MemoType] = None
@@ -272,7 +275,7 @@ class AcpToken:
             print(f"Error getting memo: {error}")
             raise Exception("Failed to get memo")
 
-    async def get_memos_for_phase(
+    def get_memos_for_phase(
         self,
         job_id: int,
         phase: int,

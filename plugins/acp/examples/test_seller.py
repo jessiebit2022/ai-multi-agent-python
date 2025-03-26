@@ -1,26 +1,19 @@
-from typing import List, Dict, Any, Optional,Tuple
-
-from web3 import Web3
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
-from plugins.acp.acp_plugin_gamesdk import acp_plugin
-from plugins.acp.acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
-from plugins.acp.acp_plugin_gamesdk.acp_token import AcpToken
-from game_sdk.game.custom_types import Function, FunctionResult, FunctionResultStatus
+from typing import Any, Tuple
+from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
+from acp_plugin_gamesdk.acp_token import AcpToken
+from game_sdk.game.custom_types import Function, FunctionResultStatus
 from game_sdk.game.agent import Agent, WorkerConfig
 
 def ask_question(query: str) -> str:
     return input(query)
 
-
-def test():
+def main():
     acp_plugin = AcpPlugin(
         options=AdNetworkPluginOptions(
             api_key="xxx",
             acp_token_client=AcpToken(
                 "xxx",
-                "base_sepolia"  # Assuming this is the chain identifier
+                "wss://base-sepolia.drpc.org"  # Chain RPC
             )
         )
     )
@@ -37,10 +30,10 @@ def test():
         state = acp_plugin.get_acp_state()
         
         job = next(
-            (j for j in state.jobs.active.as_a_seller if j.job_id == int(jobId)),
+            (j for j in state.get('jobs').get('active').get('asASeller') if j.get('jobId') == int(jobId)),
             None
         )
-
+        
         if not job:
             return FunctionResultStatus.FAILED, f"Job {jobId} is invalid. Should only respond to active as a seller job.", {}
 
@@ -104,4 +97,4 @@ def test():
         ask_question("\nPress any key to continue...\n")
 
 if __name__ == "__main__":
-    test()
+    main()

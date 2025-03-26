@@ -52,20 +52,19 @@ class AcpClient:
         ]
 
     def create_job(self, provider_address: str, price: float, job_description: str) -> int:
-        expired_at = datetime.now() + timedelta(days=1)
+        expire_at = datetime.now() + timedelta(days=1)
         
         tx_result =  self.acp_token.create_job(
             provider_address=provider_address,
-            expired_at=expired_at
+            expire_at=expire_at
         )
-        job_id = tx_result["job_id"]
-
+        job_id = tx_result["jobId"]
         memo_response =  self.acp_token.create_memo(
             job_id=job_id,
             content=job_description,
             memo_type=MemoType.MESSAGE,
-            is_private=False,
-            phase=AcpJobPhases.NEGOTIOATION
+            is_secured=False,
+            next_phase=AcpJobPhases.NEGOTIOATION
         )
 
         payload = {
@@ -74,7 +73,7 @@ class AcpClient:
             "providerAddress": provider_address,
             "description": job_description,
             "price": price,
-            "expiredAt": expired_at.isoformat()
+            "expiredAt": expire_at.isoformat()
         }
 
         requests.post(
@@ -97,16 +96,16 @@ class AcpClient:
                 job_id=job_id,
                 content=f"Job {job_id} accepted. {reasoning}",
                 memo_type=MemoType.MESSAGE,
-                is_private=False,
-                phase=AcpJobPhases.TRANSACTION
+                is_secured=False,
+                next_phase=AcpJobPhases.TRANSACTION
             )
         else:
             return self.acp_token.create_memo(
                 job_id=job_id,
                 content=f"Job {job_id} rejected. {reasoning}",
                 memo_type=MemoType.MESSAGE,
-                is_private=False,
-                phase=AcpJobPhases.REJECTED
+                is_secured=False,
+                next_phase=AcpJobPhases.REJECTED
             )
 
     def make_payment(self, job_id: int, amount: float, memo_id: int, reason: str):
@@ -121,8 +120,8 @@ class AcpClient:
             job_id=job_id,
             content=f"Payment of {amount} made. {reason}",
             memo_type=MemoType.MESSAGE,
-            is_private=False,
-            phase=AcpJobPhases.EVALUATION
+            is_secured=False,
+            next_phase=AcpJobPhases.EVALUATION
         )
 
     def deliver_job(self, job_id: int, deliverable: str, memo_id: int, reason: str):
@@ -132,6 +131,6 @@ class AcpClient:
             job_id=job_id,
             content=deliverable,
             memo_type=MemoType.MESSAGE,
-            is_private=False,
-            phase=AcpJobPhases.COMPLETED
+            is_secured=False,
+            next_phase=AcpJobPhases.COMPLETED
         )
