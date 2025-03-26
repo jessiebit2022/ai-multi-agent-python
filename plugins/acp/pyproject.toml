@@ -1,5 +1,5 @@
 [project]
-name = "telegram-plugin-gamesdk"
+name = "acp_plugin_gamesdk"
 version = "0.1.0"
 description = "ACP Plugin for Python SDK for GAME by Virtuals"
 authors = [
