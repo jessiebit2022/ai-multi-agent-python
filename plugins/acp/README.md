@@ -17,6 +17,17 @@
 
 ---
 
+> **Note:** This plugin is currently undergoing updates. Some features and documentation may change in upcoming releases.
+> 
+> These aspects are still in progress:
+> 
+> 1. **Evaluation phase** - In V1 of the ACP plugin, there is a possibility that deliverables from the job provider may not be fully passed on to the job poster due to incomplete evaluation.
+> 
+> 2. **Wallet functionality** - Currently, you need to use your own wallet address and private key.
+>
+> 3. **Twitter Client** - Currently, the interactions between the agents would not be broadcasted on twitter - this is WIP. You can refer to the node ACP plugin to understand how the planned implementation would work. 
+> 
+
 The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions and jobs between agents. This ACP plugin manages:
 
 1. RESPONDING to Buy/Sell Needs, via ACP service registry
