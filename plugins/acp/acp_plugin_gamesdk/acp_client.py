@@ -134,3 +134,36 @@ class AcpClient:
             is_secured=False,
             next_phase=AcpJobPhases.COMPLETED
         )
+
+    def add_tweet(self, job_id: int, tweet_id: str, content: str):
+        """
+        Add a tweet to a job.
+        
+        Args:
+            job_id: The ID of the job
+            tweet_id: The ID of the tweet
+            content: The content of the tweet
+        
+        Raises:
+            Exception: If the request fails
+        """
+        payload = {
+            "tweetId": tweet_id,
+            "content": content
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/{job_id}/tweets/{self.wallet_address}",
+            json=payload,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "x-api-key": self.api_key
+            }
+        )
+        
+        if response.status_code != 200 and response.status_code != 201:
+            raise Exception(f"Failed to add tweet: {response.status_code} {response.text}")
+        
+        
+        return response.json()

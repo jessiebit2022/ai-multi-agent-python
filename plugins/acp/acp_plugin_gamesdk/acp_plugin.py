@@ -4,12 +4,14 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from game_sdk.game.agent import WorkerConfig
-from game_sdk.game.custom_types import Function,  FunctionResult, FunctionResultStatus
+from game_sdk.game.custom_types import Function, FunctionResultStatus
+from plugins.twitter.twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 import sys
 import os
-
 from plugins.acp.acp_plugin_gamesdk import acp_client
+from plugins.twitter.twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+from plugins.twitter.twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 from .acp_client import AcpClient
 from .acp_token import AcpToken
@@ -19,6 +21,7 @@ from .interface import AcpJobPhasesDesc, IInventory
 class AdNetworkPluginOptions:
     api_key: str
     acp_token_client: AcpToken
+    twitter_plugin: TwitterPlugin | GameTwitterPlugin = None
     cluster: Optional[str] = None
 
 class AcpPlugin:
@@ -44,6 +47,7 @@ class AcpPlugin:
         NOTE: This is NOT for finding clients - only for executing trades when there's a specific need to buy or sell something.
         """
         self.cluster = options.cluster
+        self.twitter_plugin = options.twitter_plugin
         self.produced_inventory: List[IInventory] = []
 
     def add_produce_item(self, item: IInventory) -> None:
@@ -154,11 +158,16 @@ class AcpPlugin:
                     "type": "string",
                     "description": "Detailed specifications for service-based items",
                 },
+                {
+                    "name": "tweetContent",
+                    "type": "string",
+                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+                },
             ],
             executable=self._initiate_job_executable
         )
 
-    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, tweetContent : str) -> Tuple[FunctionResultStatus, str, dict]:
         if not price:
             return FunctionResultStatus.FAILED, "Missing price - specify how much you're offering per unit", {}
 
@@ -175,6 +184,13 @@ class AcpPlugin:
                 float(price),
                 serviceRequirements
             )
+            
+            if (self.twitter_plugin is not None and tweetContent is not None):
+                post_tweet_fn = self.twitter_plugin.get_function('post_tweet')
+                tweet_id = post_tweet_fn(tweetContent, None).get('data', {}).get('id')
+                if (tweet_id is not None):
+                    self.acp_client.add_tweet(job_id,tweet_id, tweetContent)
+                    print("Tweet has been posted")
 
             return FunctionResultStatus.DONE, json.dumps({
                 "jobId": job_id,
@@ -207,11 +223,16 @@ class AcpPlugin:
                     "type": "string",
                     "description": "Why you made this decision",
                 },
+                {
+                    "name": "tweetContent",
+                    "type": "string",
+                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+                },
             ],
             executable=self._respond_job_executable
         )
 
-    def _respond_job_executable(self, jobId: str, decision: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _respond_job_executable(self, jobId: str, decision: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're responding to", {}
         
@@ -241,6 +262,16 @@ class AcpPlugin:
                 job["memo"][0]["id"],
                 reasoning
             )
+            
+            if (self.twitter_plugin is not None):
+                tweet_history = job.get("tweetHistory", [])
+                tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
+                if (tweet_id is not None):
+                    post_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
+                    tweet_id = post_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    if (tweet_id is not None):
+                        self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
+                        print("Tweet has been posted")
 
             return FunctionResultStatus.DONE, json.dumps({
                 "jobId": jobId,
@@ -271,11 +302,16 @@ class AcpPlugin:
                     "type": "string",
                     "description": "Why you are making this payment",
                 },
+                {
+                    "name": "tweetContent",
+                    "type": "string",
+                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+                },
             ],
             executable=self._pay_job_executable
         )
 
-    def _pay_job_executable(self, jobId: str, amount: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _pay_job_executable(self, jobId: str, amount: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're paying for", {}
 
@@ -306,6 +342,16 @@ class AcpPlugin:
                 job["memo"][0]["id"],
                 reasoning
             )
+            
+            if (self.twitter_plugin is not None):
+                tweet_history = job.get("tweetHistory", [])
+                tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
+                if (tweet_id is not None):
+                    post_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
+                    tweet_id = post_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    if (tweet_id is not None):
+                        self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
+                        print("Tweet has been posted")
 
             return FunctionResultStatus.DONE, json.dumps({
                 "jobId": jobId,
@@ -341,11 +387,16 @@ class AcpPlugin:
                     "type": "string",
                     "description": "Why you are making this delivery",
                 },
+                {
+                    "name": "tweetContent",
+                    "type": "string",
+                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+                },
             ],
             executable=self._deliver_job_executable
         )
 
-    def _deliver_job_executable(self, jobId: str, deliverableType: str, deliverable: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _deliver_job_executable(self, jobId: str, deliverableType: str, deliverable: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're delivering for", {}
             
@@ -388,6 +439,16 @@ class AcpPlugin:
                 job["memo"][0]["id"],
                 reasoning
             )
+            
+            if (self.twitter_plugin is not None):
+                tweet_history = job.get("tweetHistory", [])
+                tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
+                if (tweet_id is not None):
+                    post_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
+                    tweet_id = post_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    if (tweet_id is not None):
+                        self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
+                        print("Tweet has been posted")
 
             return FunctionResultStatus.DONE, json.dumps({
                 "status": "success",
