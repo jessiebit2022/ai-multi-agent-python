@@ -11,7 +11,7 @@ class AcpAgent:
 
 class AcpJobPhases(IntEnum):
     REQUEST = 0
-    NEGOTIOATION = 1
+    NEGOTIATION = 1
     TRANSACTION = 2
     EVALUATION = 3
     COMPLETED = 4
@@ -19,7 +19,7 @@ class AcpJobPhases(IntEnum):
 
 class AcpJobPhasesDesc(str, Enum):
     REQUEST = "request"
-    NEGOTIOATION = "pending_payment"
+    NEGOTIATION = "pending_payment"
     TRANSACTION = "in_progress"
     EVALUATION = "evaluation"
     COMPLETED = "completed"

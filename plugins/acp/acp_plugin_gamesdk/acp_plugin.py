@@ -267,8 +267,8 @@ class AcpPlugin:
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
-                    post_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
-                    tweet_id = post_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    reply_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
+                    tweet_id = reply_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
                     if (tweet_id is not None):
                         self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
                         print("Tweet has been posted")
@@ -332,7 +332,7 @@ class AcpPlugin:
             if not job:
                 return FunctionResultStatus.FAILED, "Job not found in your buyer jobs - check the ID and verify you're the buyer", {}
 
-            if job["phase"] != AcpJobPhasesDesc.NEGOTIOATION:
+            if job["phase"] != AcpJobPhasesDesc.NEGOTIATION:
                 return FunctionResultStatus.FAILED, f"Cannot pay - job is in '{job['phase']}' phase, must be in 'negotiation' phase", {}
 
 
@@ -347,8 +347,8 @@ class AcpPlugin:
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
-                    post_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
-                    tweet_id = post_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    reply_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
+                    tweet_id = reply_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
                     if (tweet_id is not None):
                         self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
                         print("Tweet has been posted")
@@ -444,8 +444,8 @@ class AcpPlugin:
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
-                    post_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
-                    tweet_id = post_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    reply_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
+                    tweet_id = reply_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
                     if (tweet_id is not None):
                         self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
                         print("Tweet has been posted")

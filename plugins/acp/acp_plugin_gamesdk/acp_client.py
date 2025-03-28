@@ -64,7 +64,7 @@ class AcpClient:
             content=job_description,
             memo_type=MemoType.MESSAGE,
             is_secured=False,
-            next_phase=AcpJobPhases.NEGOTIOATION
+            next_phase=AcpJobPhases.NEGOTIATION
         )
 
         payload = {
