@@ -71,7 +71,9 @@ acp_plugin = AcpPlugin(
     )
 )
 ```
-
+> Note: 
+> - Your ACP token for your buyer and seller should be different.
+> - Speak to a DevRel (Celeste/John) to get a GAME Dev API key
 
 1. Integrate the ACP plugin worker into your agent by running:
 
