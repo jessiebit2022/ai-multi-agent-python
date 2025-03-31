@@ -7,12 +7,8 @@ from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Function, FunctionResultStatus
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
-import sys
-import os
-from acp_plugin_gamesdk import acp_client
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 from .acp_client import AcpClient
 from .acp_token import AcpToken
 from .interface import AcpJobPhasesDesc, IInventory
@@ -55,8 +51,6 @@ class AcpPlugin:
 
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
-        print("Server state:")
-        print(server_state)
         server_state["inventory"]["produced"] = self.produced_inventory
         return server_state
 
