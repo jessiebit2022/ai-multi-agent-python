@@ -6,6 +6,7 @@ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from game_sdk.game.custom_types import Function, FunctionResult, FunctionResultStatus
 from game_sdk.game.agent import Agent, WorkerConfig
+from pprint import pprint
 
 def ask_question(query: str) -> str:
     return input(query)
@@ -40,7 +41,7 @@ def test():
         options=AdNetworkPluginOptions(
             api_key=os.environ.get("GAME_DEV_API_KEY"),
             acp_token_client=AcpToken(
-                os.environ.get("ACP_TOKEN"),
+                os.environ.get("ACP_TOKEN_SELLER"),
                 "https://base-sepolia-rpc.publicnode.com/"  # Assuming this is the chain identifier
             ),
             twitter_plugin=GameTwitterPlugin(options)
@@ -60,7 +61,8 @@ def test():
     
     def get_agent_state(_: Any, _e: Any) -> dict:
         state = acp_plugin.get_acp_state()
-        print(f"State: {state}")
+        print(f"State:")
+        pprint(state)
         return state
     
     def generate_meme(description: str, jobId: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
