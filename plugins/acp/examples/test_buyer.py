@@ -37,7 +37,7 @@ options = {
 def main():
     acp_plugin = AcpPlugin(
         options=AdNetworkPluginOptions(
-            api_key=os.environ.get("GAME_API_KEY"),
+            api_key=os.environ.get("ACP_API_KEY"),
             acp_token_client=AcpToken(
                 os.environ.get("ACP_TOKEN"),
                 "https://base-sepolia-rpc.publicnode.com/"  # RPC
@@ -97,7 +97,7 @@ def main():
     
     acp_worker = acp_plugin.get_worker()
     agent = Agent(
-        api_key=os.environ.get("AGENT_API_KEY"),
+        api_key=os.environ.get("GAME_API_KEY"),
         name="Virtuals",
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""

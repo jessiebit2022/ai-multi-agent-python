@@ -38,7 +38,7 @@ options = {
 def test():
     acp_plugin = AcpPlugin(
         options=AdNetworkPluginOptions(
-            api_key=os.environ.get("GAME_API_KEY"),
+            api_key=os.environ.get("ACP_API_KEY"),
             acp_token_client=AcpToken(
                 os.environ.get("ACP_TOKEN"),
                 "https://base-sepolia-rpc.publicnode.com/"  # Assuming this is the chain identifier
@@ -119,15 +119,15 @@ def test():
     
     acp_worker =  acp_plugin.get_worker()
     agent = Agent(
-            api_key=os.environ.get("AGENT_API_KEY"),
-            name="Memx",
-            agent_goal="To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller.",
-            agent_description=f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
+        api_key=os.environ.get("GAME_API_KEY"),
+        name="Memx",
+        agent_goal="To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller.",
+        agent_description=f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
 
-            {acp_plugin.agent_description}
-            """,
-            workers=[core_worker, acp_worker],
-            get_agent_state_fn=get_agent_state
+        {acp_plugin.agent_description}
+        """,
+        workers=[core_worker, acp_worker],
+        get_agent_state_fn=get_agent_state
     )
 
     agent.compile()
