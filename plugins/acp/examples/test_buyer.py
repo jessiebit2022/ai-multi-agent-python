@@ -6,6 +6,7 @@ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+from pprint import pprint
 
 def ask_question(query: str) -> str:
     return input(query)
@@ -37,9 +38,9 @@ options = {
 def main():
     acp_plugin = AcpPlugin(
         options=AdNetworkPluginOptions(
-            api_key=os.environ.get("GAME_API_KEY"),
+            api_key=os.environ.get("GAME_DEV_API_KEY"),
             acp_token_client=AcpToken(
-                os.environ.get("ACP_TOKEN"),
+                os.environ.get("ACP_TOKEN_BUYER"),
                 "https://base-sepolia-rpc.publicnode.com/"  # RPC
             ),
             twitter_plugin=GameTwitterPlugin(options)
@@ -59,7 +60,8 @@ def main():
 
     def get_agent_state(_: Any, _e: Any) -> dict:
         state = acp_plugin.get_acp_state()
-        print(f"State: {state}")
+        print(f"State:")
+        pprint(state)
         return state
     
     def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
@@ -97,7 +99,7 @@ def main():
     
     acp_worker = acp_plugin.get_worker()
     agent = Agent(
-        api_key=os.environ.get("AGENT_API_KEY"),
+        api_key=os.environ.get("GAME_API_KEY"),
         name="Virtuals",
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""

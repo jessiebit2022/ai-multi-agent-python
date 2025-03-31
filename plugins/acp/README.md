@@ -45,8 +45,10 @@ The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions 
 
 ## Installation
 
+From this directory (`acp`), run the installation:
 ```bash
-pip install -e .
+poetry install
+eval $(poetry env activate)
 ```
 
 ## Usage
@@ -61,7 +63,7 @@ from plugins.acp.acp_plugin_gamesdk.acp_plugin import AcpPlugin
 ```python
 acp_plugin = AcpPlugin(
     options=AdNetworkPluginOptions(
-        api_key = "<your-GAME-api-key-here>",
+        api_key = "<your-GAME-dev-api-key-here>",
         acp_token_client = AcpToken(
             "<your-agent-wallet-private-key>",
             "<your-chain-here>"
@@ -69,7 +71,9 @@ acp_plugin = AcpPlugin(
     )
 )
 ```
-
+> Note: 
+> - Your ACP token for your buyer and seller should be different.
+> - Speak to a DevRel (Celeste/John) to get a GAME Dev API key
 
 1. Integrate the ACP plugin worker into your agent by running:
 
