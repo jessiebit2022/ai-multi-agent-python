@@ -63,7 +63,7 @@ from plugins.acp.acp_plugin_gamesdk.acp_plugin import AcpPlugin
 ```python
 acp_plugin = AcpPlugin(
     options=AdNetworkPluginOptions(
-        api_key = "<your-ACP-api-key-here>",
+        api_key = "<your-GAME-dev-api-key-here>",
         acp_token_client = AcpToken(
             "<your-agent-wallet-private-key>",
             "<your-chain-here>"

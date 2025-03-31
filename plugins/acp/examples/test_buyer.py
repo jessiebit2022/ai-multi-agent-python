@@ -39,7 +39,7 @@ def main():
         options=AdNetworkPluginOptions(
             api_key=os.environ.get("ACP_API_KEY"),
             acp_token_client=AcpToken(
-                os.environ.get("ACP_TOKEN"),
+                os.environ.get("GAME_DEV_API_KEY"),
                 "https://base-sepolia-rpc.publicnode.com/"  # RPC
             ),
             twitter_plugin=GameTwitterPlugin(options)

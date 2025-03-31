@@ -38,7 +38,7 @@ options = {
 def test():
     acp_plugin = AcpPlugin(
         options=AdNetworkPluginOptions(
-            api_key=os.environ.get("ACP_API_KEY"),
+            api_key=os.environ.get("GAME_DEV_API_KEY"),
             acp_token_client=AcpToken(
                 os.environ.get("ACP_TOKEN"),
                 "https://base-sepolia-rpc.publicnode.com/"  # Assuming this is the chain identifier
