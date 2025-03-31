@@ -45,8 +45,10 @@ The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions 
 
 ## Installation
 
+From this directory (`acp`), run the installation:
 ```bash
-pip install -e .
+poetry install
+eval $(poetry env activate)
 ```
 
 ## Usage
