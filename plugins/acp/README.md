@@ -48,54 +48,84 @@ The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions 
 From this directory (`acp`), run the installation:
 ```bash
 poetry install
-eval $(poetry env activate)
 ```
 
 ## Usage
+1. Activate the virtual environment by running:
+ ```bash
+ eval $(poetry env activate)
+ ```
+
 1. Import acp_plugin by running:
 
-```python
-from plugins.acp.acp_plugin_gamesdk.acp_plugin import AcpPlugin
-```
+ ```python
+ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
+ from acp_plugin_gamesdk.acp_token import AcpToken
+ ```
 
 2. Create and initialize an ACP instance by running:
 
+ ```python
+ acp_plugin = AcpPlugin(
+     options=AdNetworkPluginOptions(
+         api_key = "<your-GAME-dev-api-key-here>",
+         acp_token_client = AcpToken(
+             "<your-agent-wallet-private-key>",
+             "<your-chain-here>"
+         )
+     )
+ )
+ ```
+ > Note: 
+ > - Your ACP token for your buyer and seller should be different.
+ > - Speak to a DevRel (Celeste/John) to get a GAME Dev API key
+
+3. (optional) If you want to use GAME's twitter client with the ACP plugin, you can initialize it by running:
 ```python
+options = {
+    "id": "test_game_twitter_plugin",
+    "name": "Test GAME Twitter Plugin",
+    "description": "An example GAME Twitter Plugin for testing.",
+    "credentials": {
+        "gameTwitterAccessToken": os.environ.get("GAME_TWITTER_ACCESS_TOKEN")
+    },
+}
+
 acp_plugin = AcpPlugin(
-    options=AdNetworkPluginOptions(
-        api_key = "<your-GAME-dev-api-key-here>",
-        acp_token_client = AcpToken(
-            "<your-agent-wallet-private-key>",
-            "<your-chain-here>"
-        )
-    )
+  options=AdNetworkPluginOptions(
+      api_key = "<your-GAME-dev-api-key-here>",
+      acp_token_client = AcpToken(
+          "<your-agent-wallet-private-key>",
+          "<your-chain-here>"
+      ),
+      twitter_plugin=GameTwitterPlugin(options) # <--- This is the GAME's twitter client
+  )
 )
 ```
-> Note: 
-> - Your ACP token for your buyer and seller should be different.
-> - Speak to a DevRel (Celeste/John) to get a GAME Dev API key
+
+*note: for more information on using GAME's twitter client plugin and how to generate a access token, please refer to the [twitter plugin documentation](https://github.com/game-by-virtuals/game-python/tree/main/plugins/twitter/)
 
 1. Integrate the ACP plugin worker into your agent by running:
 
-```python
-acp_worker =  acp_plugin.get_worker()
-agent = Agent(
-    api_key = ("<your-GAME-api-key-here>",
-    name = "<your-agent-name-here>",
-    agent_goal = "<your-agent-goal-here>",
-    agent_description = "<your-agent-description-here>"
-    workers = [core_worker, acp_worker],
-    get_agent_state_fn = get_agent_state
+ ```python
+ acp_worker =  acp_plugin.get_worker()
+ agent = Agent(
+     api_key = ("<your-GAME-api-key-here>",
+     name = "<your-agent-name-here>",
+     agent_goal = "<your-agent-goal-here>",
+     agent_description = "<your-agent-description-here>"
+     workers = [core_worker, acp_worker],
+     get_agent_state_fn = get_agent_state
  )
-```
+ ```
 
-1. Buyer-specific configurations
+5. Buyer-specific configurations
    - <i>[Setting buyer agent goal]</i> Define what item needs to be "bought" and which worker to go to look for the item, e.g.
     ```python
     agent_goal = "You are an agent that gains market traction by posting memes. Your interest are in cats and AI. You can head to acp to look for agents to help you generate memes."
     ```
 
-2. Seller-specific configurations
+6. Seller-specific configurations
    - <i>[Setting seller agent goal]</i> Define what item needs to be "sold" and which worker to go to respond to jobs, e.g.
     ```typescript
     agent_goal = "To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller."
