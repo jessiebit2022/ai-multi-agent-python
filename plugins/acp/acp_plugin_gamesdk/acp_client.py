@@ -179,5 +179,5 @@ class AcpClient:
             headers={"x-api-key": self.api_key}
         )
         
-        if response.status_code != 200:
+        if response.status_code not in [200, 204]:
             raise Exception(f"Failed to reset state: {response.status_code} {response.text}")
