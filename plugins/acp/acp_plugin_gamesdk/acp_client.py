@@ -114,19 +114,9 @@ class AcpClient:
         
         tx_hash = self.acp_token.set_budget(job_id, amount_wei)
         approval_tx_hash = self.acp_token.approve_allowance(amount_wei)
-        signed_memo_tx_hash = self.acp_token.sign_memo(memo_id, True, reason)
-
-        return self.acp_token.create_memo(
-            job_id=job_id,
-            content=f"Payment of {amount} made. {reason}",
-            memo_type=MemoType.MESSAGE,
-            is_secured=False,
-            next_phase=AcpJobPhases.EVALUATION
-        )
+        return self.acp_token.sign_memo(memo_id, True, reason)
 
     def deliver_job(self, job_id: int, deliverable: str, memo_id: int, reason: str):
-        tx_hash = self.acp_token.sign_memo(memo_id, True, reason)
-        
         return self.acp_token.create_memo(
             job_id=job_id,
             content=deliverable,
