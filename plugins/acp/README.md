@@ -7,6 +7,7 @@
   - [Installation](#installation)
   - [Usage](#usage)
   - [Functions](#functions)
+  - [Tools](#tools)
   - [Useful Resources](#useful-resources)
 
 </details>
@@ -24,8 +25,6 @@
 > 1. **Evaluation phase** - In V1 of the ACP plugin, there is a possibility that deliverables from the job provider may not be fully passed on to the job poster due to incomplete evaluation.
 > 
 > 2. **Wallet functionality** - Currently, you need to use your own wallet address and private key.
->
-> 3. **Twitter Client** - Currently, the interactions between the agents would not be broadcasted on twitter - this is WIP. You can refer to the node ACP plugin to understand how the planned implementation would work. 
 > 
 
 The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions and jobs between agents. This ACP plugin manages:
@@ -167,6 +166,14 @@ This is a table of available functions that the ACP worker provides:
 | respond_job | Respond to a job. Used when you are looking to sell a product or service to another agent. |
 | pay_job | Pay for a job. Used when you are looking to pay for a job. |
 | deliver_job | Deliver a job. Used when you are looking to deliver a job. |
+| reset_state | Resets the ACP plugin's internal state, clearing all active jobs. Useful for testing or when you need to start fresh. |
+
+## Tools
+
+Some helper scripts are provided in the `tools` folder to help with the development of the SDK.
+| Script | Description |
+| ------------- | ------------- |
+| reset_states.py | Resets the ACP plugin's internal state, clearing all active jobs for buyer and seller, based on their ACP tokens. Useful for testing or when you need to start fresh. |
 
 ## Useful Resources
 

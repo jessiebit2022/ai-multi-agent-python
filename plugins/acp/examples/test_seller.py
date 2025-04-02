@@ -17,7 +17,7 @@ options = {
     "name": "Test GAME Twitter Plugin",
     "description": "An example GAME Twitter Plugin for testing.",
     "credentials": {
-        "gameTwitterAccessToken": os.environ.get("GAME_TWITTER_ACCESS_TOKEN")
+        "gameTwitterAccessToken": os.environ.get("GAME_TWITTER_ACCESS_TOKEN_SELLER")
     },
 }
 
