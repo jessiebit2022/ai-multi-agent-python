@@ -48,7 +48,10 @@ class AcpPlugin:
 
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
-
+        
+    def reset_state(self) -> None:
+        self.acp_client.reset_state()
+        
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
         server_state["inventory"]["produced"] = self.produced_inventory

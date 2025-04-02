@@ -167,3 +167,17 @@ class AcpClient:
         
         
         return response.json()
+    
+    def reset_state(self, wallet_address: str ) -> None:
+        if not wallet_address:
+            raise Exception("Wallet address is required")
+        
+        address = wallet_address
+        
+        response = requests.delete(
+            f"{self.base_url}/states/{address}",
+            headers={"x-api-key": self.api_key}
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"Failed to reset state: {response.status_code} {response.text}")
