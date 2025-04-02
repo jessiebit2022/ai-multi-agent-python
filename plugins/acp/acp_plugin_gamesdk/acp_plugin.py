@@ -50,7 +50,7 @@ class AcpPlugin:
         self.produced_inventory.append(item)
         
     def reset_state(self) -> None:
-        self.acp_client.reset_state()
+        self.acp_client.reset_state(self.acp_client.wallet_address)
         
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
