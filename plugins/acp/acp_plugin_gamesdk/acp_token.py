@@ -45,7 +45,7 @@ class AcpToken:
         self,
         wallet_private_key: str,
         network_url: str,
-        contract_address: str = "0xd7beE7E06f0335721C919A3e5F35dDB4dD736127",
+        contract_address: str = "0x5e4ee2620482f7c4fee12bf27b095e48d441f5cf",
         virtuals_token_address: str = "0xbfAB80ccc15DF6fb7185f9498d6039317331846a"
     ):
         self.web3 = Web3(Web3.HTTPProvider(network_url))
