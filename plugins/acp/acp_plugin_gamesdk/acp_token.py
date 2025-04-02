@@ -1,6 +1,6 @@
 import asyncio
 from enum import IntEnum
-from time import time
+import time
 from typing import Optional, Tuple, TypedDict, List
 from datetime import datetime
 from web3 import Web3
@@ -176,7 +176,7 @@ class AcpToken:
             except Exception as error:
                 print(f"Error creating memo: {error}")
                 retries -= 1
-                asyncio.sleep(2 * (3 - retries))
+                time.sleep(2 * (3 - retries))
                 
         raise Exception("Failed to create memo")
 
@@ -210,7 +210,7 @@ class AcpToken:
             except Exception as error:
                 print(f"Error signing memo: {error}")
                 retries -= 1
-                asyncio.sleep(2 * (3 - retries))
+                time.sleep(2 * (3 - retries))
                 
         raise Exception("Failed to sign memo")
 

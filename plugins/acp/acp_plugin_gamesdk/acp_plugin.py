@@ -5,14 +5,10 @@ from datetime import datetime
 
 from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Function, FunctionResultStatus
-from plugins.twitter.twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
-import sys
-import os
-from plugins.acp.acp_plugin_gamesdk import acp_client
-from plugins.twitter.twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
-from plugins.twitter.twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from .acp_client import AcpClient
 from .acp_token import AcpToken
 from .interface import AcpJobPhasesDesc, IInventory
