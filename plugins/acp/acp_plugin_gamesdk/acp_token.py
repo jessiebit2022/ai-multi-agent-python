@@ -1,7 +1,6 @@
-import asyncio
 from enum import IntEnum
 import time
-from typing import Optional, Tuple, TypedDict, List
+from typing import Optional, Tuple, TypedDict
 from datetime import datetime
 from web3 import Web3
 from eth_account import Account
@@ -9,6 +8,9 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 from .acp_token_abi import ACP_TOKEN_ABI
+import requests
+from eth_keys import keys
+from eth_utils import keccak
 
 class MemoType(IntEnum):
     MESSAGE = 0
@@ -189,24 +191,24 @@ class AcpToken:
         retries = 3
         while retries > 0:
             try:
-                transaction = self.contract.functions.signMemo(
-                    memo_id,
-                    is_approved,
-                    reason or ""
-                ).build_transaction({
-                    'from': self.account.address,
-                    'nonce': self.web3.eth.get_transaction_count(self.account.address),
-                })
-                
-                signed_txn = self.web3.eth.account.sign_transaction(
-                    transaction,
-                    self.account.key
-                )
-                
-                tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
-                self.web3.eth.wait_for_transaction_receipt(tx_hash)
-                
-                return tx_hash.hex()
+                encoded_data = self.contract.encode_abi("signMemo", args=[memo_id, is_approved, reason])
+                private_key = keys.PrivateKey(bytes.fromhex(private_key[2:]))
+                message_hash = keccak(b"Ethereum Transaction")
+                signature = private_key.sign_msg(message_hash)
+                payload = {
+                    "agentWallet": "0x895dab20e8C52cEa7D03F3cEef38536f8edB8e74",
+                    "trxData": {
+                        "target": self.get_contract_address(),
+                        "value": 0,
+                        "data": encoded_data
+                    },
+                    "signature": signature.to_hex()
+                }
+                # Submit to custom API
+                api_url = "https://acpx.virtuals.gg/api/acp-agent-wallets/transactions"
+                response = requests.post(api_url, json=payload)
+                print("Status:", response.status_code)
+                print("Response:", response.json())
             except Exception as error:
                 print(f"Error signing memo: {error}")
                 retries -= 1
