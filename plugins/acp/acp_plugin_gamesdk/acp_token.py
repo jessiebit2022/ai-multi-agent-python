@@ -46,18 +46,23 @@ class AcpToken:
     def __init__(
         self,
         wallet_private_key: str,
+        agent_wallet_address: str,
         network_url: str,
         contract_address: str = "0x5e4ee2620482f7c4fee12bf27b095e48d441f5cf",
         virtuals_token_address: str = "0xbfAB80ccc15DF6fb7185f9498d6039317331846a"
     ):
         self.web3 = Web3(Web3.HTTPProvider(network_url))
         self.account = Account.from_key(wallet_private_key)
+        self.agent_wallet_address = agent_wallet_address
         self.contract_address = Web3.to_checksum_address(contract_address)
         self.virtuals_token_address = Web3.to_checksum_address(virtuals_token_address)
         self.contract = self.web3.eth.contract(
             address=self.contract_address,
             abi=ACP_TOKEN_ABI
         )
+
+    def get_agent_wallet_address(self) -> str:
+        return self.agent_wallet_address
         
     def get_contract_address(self) -> str:
         return self.contract_address
@@ -188,8 +193,6 @@ class AcpToken:
         is_approved: bool,
         reason: Optional[str] = ""
     ) -> str:
-        # TODO: replace hardcoded agent wallet with a proper configured value
-        AGENT_WALLET = "0x895dab20e8C52cEa7D03F3cEef38536f8edB8e74"
         retries = 3
         while retries > 0:
             try:
@@ -209,7 +212,7 @@ class AcpToken:
                 message = encode_defunct(message_bytes)
                 signature = account.sign_message(message).signature.hex()
                 payload = {
-                    "agentWallet": AGENT_WALLET,
+                    "agentWallet": self.get_agent_wallet_address(),
                     "trxData": trx_data,
                     "signature": signature
                 }
