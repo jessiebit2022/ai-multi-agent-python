@@ -3,37 +3,40 @@ from acp_plugin_gamesdk.acp_plugin import AcpToken
 import requests
 from eth_keys import keys
 from eth_utils import keccak
+from eth_account import Account
+from eth_account.messages import encode_defunct
 import json
 
+AGENT_WALLET = "0x895dab20e8C52cEa7D03F3cEef38536f8edB8e74"
 token = os.environ.get("ACP_TOKEN_BUYER")
+private_key_hex = token[2:]
 acp_token_client = AcpToken(
     token,
     "https://base-sepolia-rpc.publicnode.com/"
 )
 web3 = acp_token_client.web3
-
-# Sender private key
 account = web3.eth.account.from_key(token)
 sender = account.address
 
 # Construct unsigned transaction
 encoded_data = acp_token_client.contract.encode_abi("memoCounter", args=[])
-
 trx_data = {
     "target": acp_token_client.get_contract_address(),
-    "value": 0,
+    "value": "0",
     "data": encoded_data
 }
-message_hash = keccak(json.dumps(trx_data, sort_keys=False).encode())
+message_json = json.dumps(trx_data, separators=(".", ":"), sort_keys=False)
+print(f"JSON string: {message_json}")
+message_bytes = message_json.encode()
+account = Account.from_key(private_key_hex)
 
 # Sign the transaction
-print("private_key:", token)
-private_key = keys.PrivateKey(bytes.fromhex(token[2:]))
-signature = private_key.sign_msg_hash(message_hash)
+message = encode_defunct(message_bytes)
+signature = account.sign_message(message).signature.hex()
 payload = {
-    "agentWallet": "0x895dab20e8C52cEa7D03F3cEef38536f8edB8e74",
+    "agentWallet": AGENT_WALLET,
     "trxData": trx_data,
-    "signature": signature.to_hex()
+    "signature": signature
 }
 
 # Submit to custom API

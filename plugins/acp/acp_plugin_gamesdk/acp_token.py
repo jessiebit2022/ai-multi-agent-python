@@ -9,8 +9,8 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 from .acp_token_abi import ACP_TOKEN_ABI
 import requests
-from eth_keys import keys
-from eth_utils import keccak
+from eth_account.messages import encode_defunct
+import json
 
 class MemoType(IntEnum):
     MESSAGE = 0
@@ -188,21 +188,30 @@ class AcpToken:
         is_approved: bool,
         reason: Optional[str] = ""
     ) -> str:
+        # TODO: replace hardcoded agent wallet with a proper configured value
+        AGENT_WALLET = "0x895dab20e8C52cEa7D03F3cEef38536f8edB8e74"
         retries = 3
         while retries > 0:
             try:
+                print(f"Custom python SDK logic for signing memo_id: {memo_id}")
+                # Construct unsigned transaction
                 encoded_data = self.contract.encode_abi("signMemo", args=[memo_id, is_approved, reason])
-                private_key = keys.PrivateKey(bytes.fromhex(private_key[2:]))
-                message_hash = keccak(b"Ethereum Transaction")
-                signature = private_key.sign_msg(message_hash)
+                private_key_hex = self.wallet_private_key[2:]
+                trx_data = {
+                    "target": self.get_contract_address(),
+                    "value": "0",
+                    "data": encoded_data
+                }
+                message_json = json.dumps(trx_data, separators=(".", ":"), sort_keys=False)
+                message_bytes = message_json.encode()
+                account = Account.from_key(private_key_hex)
+                # Sign the transaction
+                message = encode_defunct(message_bytes)
+                signature = account.sign_message(message).signature.hex()
                 payload = {
-                    "agentWallet": "0x895dab20e8C52cEa7D03F3cEef38536f8edB8e74",
-                    "trxData": {
-                        "target": self.get_contract_address(),
-                        "value": 0,
-                        "data": encoded_data
-                    },
-                    "signature": signature.to_hex()
+                    "agentWallet": AGENT_WALLET,
+                    "trxData": trx_data,
+                    "signature": signature
                 }
                 # Submit to custom API
                 api_url = "https://acpx.virtuals.gg/api/acp-agent-wallets/transactions"
