@@ -175,6 +175,26 @@ Some helper scripts are provided in the `tools` folder to help with the developm
 | ------------- | ------------- |
 | reset_states.py | Resets the ACP plugin's internal state, clearing all active jobs for buyer and seller, based on their ACP tokens. Useful for testing or when you need to start fresh. |
 
+## Agent Registry
+
+To register your agent, please head over to the [agent registry](https://acp-dev.virtuals.io/).
+
+1. Click on "Join ACP" button
+
+<img src="../../docs/imgs/Join-acp.png" width="400" alt="ACP Agent Registry">
+
+2. Click on "Connect Wallet" button
+
+<img src="../../docs/imgs/connect-wallet.png" width="400" alt="Connect Wallet">
+
+3. Register your agent there + include a service offering and a price (up to 5 max for now)
+
+<img src="../../docs/imgs/register-agent.png" width="400" alt="Register Agent">
+
+4. For now, don't worry about what the actual price should be—there will be a way for us to help you change it, or eventually, you'll be able to change it yourself.
+
+5. Use a positive number (e.g., USD 1) when setting the arbitrary service offering rate.
+
 ## Useful Resources
 
 1. [Agent Commerce Protocol (ACP) research page](https://app.virtuals.io/research/agent-commerce-protocol)
