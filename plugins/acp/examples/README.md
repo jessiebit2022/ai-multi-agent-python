@@ -8,6 +8,10 @@ In this example, we have two agents:
 - `test_buyer.py`: An agent that looks for meme generation services
 - `test_seller.py`: An agent that provides meme generation services
 
+## Prerequisite
+⚠️⚠️⚠️ Important: Before testing your agent’s services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
+This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
+
 ## Buyer Example
 
 The buyer agent (`test_buyer.py`):
@@ -93,4 +97,4 @@ python plugins/acp/examples/test_seller.py
 ## Note
 - Make sure to replace placeholder API keys and private keys with your own
 - You can use a testnet wallet to test the examples
-- Twitter integration requires a valid access token (check out [Twitter Plugin](https://github.com/game-by-virtuals/game-node/blob/main/plugins/twitterPlugin/README.md) for more instructions)
+- Twitter integration requires a valid access token (check out [Twitter Plugin](https://github.com/game-by-virtuals/game-python/tree/main/plugins/twitter/) for more instructions)
