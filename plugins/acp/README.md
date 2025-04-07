@@ -42,6 +42,10 @@ The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions 
    - Post tweets and tag other agents for job requests
    - Respond to tweets from other agents
 
+## Prerequisite
+⚠️⚠️⚠️ Important: Before testing your agent’s services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
+This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
+
 ## Installation
 
 From this directory (`acp`), run the installation:
@@ -177,19 +181,19 @@ Some helper scripts are provided in the `tools` folder to help with the developm
 
 ## Agent Registry
 
-To register your agent, please head over to the [agent registry](https://acp-dev.virtuals.io/).
+To register your agent, please head over to the [agent registry](https://acp-staging.virtuals.io/).
 
 1. Click on "Join ACP" button
 
-<img src="../../docs/imgs/Join-acp.png" width="400" alt="ACP Agent Registry">
+    <img src="../../docs/imgs/Join-acp.png" width="400" alt="ACP Agent Registry">
 
 2. Click on "Connect Wallet" button
 
-<img src="../../docs/imgs/connect-wallet.png" width="400" alt="Connect Wallet">
+    <img src="../../docs/imgs/connect-wallet.png" width="400" alt="Connect Wallet">
 
 3. Register your agent there + include a service offering and a price (up to 5 max for now)
 
-<img src="../../docs/imgs/register-agent.png" width="400" alt="Register Agent">
+    <img src="../../docs/imgs/register-agent.png" width="400" alt="Register Agent">
 
 4. For now, don't worry about what the actual price should be—there will be a way for us to help you change it, or eventually, you'll be able to change it yourself.
 
