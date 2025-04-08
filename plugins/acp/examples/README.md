@@ -9,7 +9,7 @@ In this example, we have two agents:
 - `test_seller.py`: An agent that provides meme generation services
 
 ## Prerequisite
-⚠️⚠️⚠️ Important: Before testing your agent’s services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
+⚠️ Important: Before testing your agent’s services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
 This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
 
 ## Buyer Example
@@ -21,17 +21,17 @@ The buyer agent (`test_buyer.py`):
 
 ### Configuration
 
- ```python
- acp_plugin = AcpPlugin(
-     options=AdNetworkPluginOptions(
-         api_key = "<your-GAME-dev-api-key-here>",
-         acp_token_client = AcpToken(
-             "<your-agent-wallet-private-key>",
-             "<your-chain-here>"
-         )
-     )
- )
- ```
+```python
+acp_plugin = AcpPlugin(
+    options = AdNetworkPluginOptions(
+        api_key = "<your-GAME-dev-api-key-here>",
+        acp_token_client = AcpToken(
+            "<your-agent-wallet-private-key>",
+            "<your-chain-here>"
+        )
+    )
+)
+```
 
 
 ## Seller Example
@@ -44,17 +44,17 @@ The seller agent (`test_seller.py`):
 ### Configuration
 
 
- ```python
- acp_plugin = AcpPlugin(
-     options=AdNetworkPluginOptions(
-         api_key = "<your-GAME-dev-api-key-here>",
-         acp_token_client = AcpToken(
-             "<your-agent-wallet-private-key>",
-             "<your-chain-here>"
-         )
-     )
- )
- ```
+```python
+acp_plugin = AcpPlugin(
+    options = AdNetworkPluginOptions(
+        api_key = "<your-GAME-dev-api-key-here>",
+        acp_token_client = AcpToken(
+            "<your-agent-wallet-private-key>",
+            "<your-chain-here>"
+        )
+    )
+)
+```
 
 ## Getting Started
 
@@ -70,21 +70,38 @@ poetry install
  eval $(poetry env activate)
  ```
 
-3. Import acp_plugin by running:
+3. Store the key in a safe location, like a .bashrc or a .zshrc file.
+```python
+# ACP Wallet Private Key
+ACP_TOKEN_SELLER="your_wallet_one_private_key"
+ACP_TOKEN_BUYER="your_wallet_two_private_key"
+
+# GAME API Key
+GAME_DEV_API_KEY="your_dev_api_key" #get from virtuals devrel team
+GAME_API_KEY_SELLER="your_api_key_for_seller" #get from https://console-dev.game.virtuals.io/
+GAME_API_KEY_BUYER="your_api_key_for_buyer" #get from https://console-dev.game.virtuals.io/
+
+# Twitter 
+#X Auth Tutorial: https://github.com/game-by-virtuals/game-python/tree/main/plugins/twitter
+GAME_TWITTER_ACCESS_TOKEN_SELLER="your_x_token_for_seller" 
+GAME_TWITTER_ACCESS_TOKEN_BUYER="your_x_token_for_buyer"
+```
+
+4. Import acp_plugin by running:
 
  ```python
  from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
  from acp_plugin_gamesdk.acp_token import AcpToken
  ```
 
-4. Configure your environment:
+5. Configure your environment:
    - Set up your API keys
-    -  GAME API key (get from https://console.game.virtuals.io/projects)
+    -  GAME API key (get from https://console.game.virtuals.io/)
     -  ACP API key (please contact us to get one)
    - Configure your wallet private key
    - Set up Twitter access token
 
-5. Run the examples:
+6. Run the examples:
 Run buyer
 ```python
 python plugins/acp/examples/test_buyer.py
