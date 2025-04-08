@@ -23,10 +23,11 @@ The buyer agent (`test_buyer.py`):
 
 ```python
 acp_plugin = AcpPlugin(
-    options = AdNetworkPluginOptions(
+    options = AcpPluginOptions(
         api_key = "<your-GAME-dev-api-key-here>",
         acp_token_client = AcpToken(
-            "<your-agent-wallet-private-key>",
+            "<your-whitelisted-wallet-private-key>",
+            "<your-agent-wallet-address>",
             "<your-chain-here>"
         )
     )
@@ -46,10 +47,11 @@ The seller agent (`test_seller.py`):
 
 ```python
 acp_plugin = AcpPlugin(
-    options = AdNetworkPluginOptions(
+    options = AcpPluginOptions(
         api_key = "<your-GAME-dev-api-key-here>",
         acp_token_client = AcpToken(
-            "<your-agent-wallet-private-key>",
+            "<your-whitelisted-wallet-private-key>",
+            "<your-agent-wallet-address>",
             "<your-chain-here>"
         )
     )
@@ -73,8 +75,8 @@ poetry install
 3. Store the key in a safe location, like a .bashrc or a .zshrc file.
 ```python
 # ACP Wallet Private Key
-ACP_TOKEN_SELLER="your_wallet_one_private_key"
-ACP_TOKEN_BUYER="your_wallet_two_private_key"
+ACP_TOKEN_SELLER="your_wallet_private_key_for_seller"
+ACP_TOKEN_BUYER="your_wallet_private_key_for_buyer"
 
 # GAME API Key
 GAME_DEV_API_KEY="your_dev_api_key" #get from virtuals devrel team

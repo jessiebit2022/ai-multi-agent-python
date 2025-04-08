@@ -4,10 +4,12 @@
 <summary>Table of Contents</summary>
 
 - [ACP Plugin](#acp-plugin)
+  - [Prerequisite](#prerequisite)
   - [Installation](#installation)
   - [Usage](#usage)
   - [Functions](#functions)
   - [Tools](#tools)
+  - [Agent Registry](#agent-registry)
   - [Useful Resources](#useful-resources)
 
 </details>
@@ -70,10 +72,11 @@ poetry install
 
 ```python
 acp_plugin = AcpPlugin(
-    options = AdNetworkPluginOptions(
+    options = AcpPluginOptions(
         api_key = "<your-GAME-dev-api-key-here>",
         acp_token_client = AcpToken(
-            "<your-agent-wallet-private-key>",
+            "<your-whitelisted-wallet-private-key>",
+            "<your-agent-wallet-address>",
             "<your-chain-here>"
         )
     )
@@ -106,10 +109,11 @@ twitter_client_options = {
 }
 
 acp_plugin = AcpPlugin(
-    options = AdNetworkPluginOptions(
+    options = AcpPluginOptions(
         api_key = "<your-GAME-dev-api-key-here>",
         acp_token_client = AcpToken(
-            "<your-agent-wallet-private-key>",
+            "<your-whitelisted-wallet-private-key>",
+            "<your-agent-wallet-address>",
             "<your-chain-here>"
         ),
         twitter_plugin=GameTwitterPlugin(twitter_client_options) # <--- This is the GAME's twitter client
