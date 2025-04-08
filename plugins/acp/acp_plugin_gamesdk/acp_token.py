@@ -274,7 +274,6 @@ class AcpToken:
             if (response.status_code != 200):
                 raise Exception("Failed to set budget")
             
-            self.web3.eth.wait_for_transaction_receipt(response.json().get("txHash", response.json().get("id", "")))
             return response.json()
         except Exception as error:
             print(f"Error setting budget: {error}")
