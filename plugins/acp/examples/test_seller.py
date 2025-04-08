@@ -2,11 +2,10 @@ from typing import Any,Tuple
 import os
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
-from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
+from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from game_sdk.game.custom_types import Function, FunctionResult, FunctionResultStatus
 from game_sdk.game.agent import Agent, WorkerConfig
-from pprint import pprint
 
 def ask_question(query: str) -> str:
     return input(query)
@@ -35,13 +34,14 @@ options = {
 #     },
 # }
 
-
+#Seller
 def test():
     acp_plugin = AcpPlugin(
-        options=AdNetworkPluginOptions(
+        options=AcpPluginOptions(
             api_key=os.environ.get("GAME_DEV_API_KEY"),
             acp_token_client=AcpToken(
                 os.environ.get("ACP_TOKEN_SELLER"),
+                os.environ.get("ACP_AGENT_WALLET_ADDRESS_SELLER"),
                 "https://base-sepolia-rpc.publicnode.com/"  # Assuming this is the chain identifier
             ),
             twitter_plugin=GameTwitterPlugin(options)
@@ -53,6 +53,7 @@ def test():
     #         api_key="xxx",
     #         acp_token_client=AcpToken(
     #             "xxx",
+    #             os.environ.get("ACP_AGENT_WALLET_ADDRESS_SELLER"),
     #             "https://base-sepolia-rpc.publicnode.com/"  # Assuming this is the chain identifier
     #         ),
     #         twitter_plugin=TwitterPlugin(options)
@@ -62,7 +63,7 @@ def test():
     def get_agent_state(_: Any, _e: Any) -> dict:
         state = acp_plugin.get_acp_state()
         print(f"State:")
-        pprint(state)
+        print(state)
         return state
     
     def generate_meme(description: str, jobId: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:

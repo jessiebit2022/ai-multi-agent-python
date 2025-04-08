@@ -14,14 +14,14 @@ from .acp_token import AcpToken
 from .interface import AcpJobPhasesDesc, IInventory
 
 @dataclass
-class AdNetworkPluginOptions:
+class AcpPluginOptions:
     api_key: str
     acp_token_client: AcpToken
     twitter_plugin: TwitterPlugin | GameTwitterPlugin = None
     cluster: Optional[str] = None
 
 class AcpPlugin:
-    def __init__(self, options: AdNetworkPluginOptions):
+    def __init__(self, options: AcpPluginOptions):
         print("Initializing AcpPlugin")
         self.acp_client = AcpClient(options.api_key, options.acp_token_client)
         
@@ -50,7 +50,7 @@ class AcpPlugin:
         self.produced_inventory.append(item)
         
     def reset_state(self) -> None:
-        self.acp_client.reset_state(self.acp_client.wallet_address)
+        self.acp_client.reset_state(self.acp_client.agent_wallet_address)
         
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
@@ -100,11 +100,11 @@ class AcpPlugin:
             * phase: request (seller should response to accept/reject to the job) → pending_payment (as a buyer to make the payment for the service) → in_progress (seller to deliver the service) → evaluation → completed/rejected
         """
         
-    def _search_agents_executable(self,reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _search_agents_executable(self,reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
             
-        agents = self.acp_client.browse_agents(self.cluster)
+        agents = self.acp_client.browse_agents(self.cluster, keyword)
         
         if not agents:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
@@ -126,7 +126,12 @@ class AcpPlugin:
                     "name": "reasoning",
                     "type": "string",
                     "description": "Explain why you need to find trading partners at this time",
-                }
+                },
+                {
+                    "name": "keyword",
+                    "type": "string",
+                    "description": "Search for agents by name or description. Use this to find specific trading partners or products.",
+                },
             ],
             executable=self._search_agents_executable
         )
@@ -177,7 +182,6 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, "You already have an active job as a buyer", {}
 
             # ... Rest of validation logic ...
-            
             job_id = self.acp_client.create_job(
                 sellerWalletAddress,
                 float(price),
@@ -188,7 +192,7 @@ class AcpPlugin:
                 post_tweet_fn = self.twitter_plugin.get_function('post_tweet')
                 tweet_id = post_tweet_fn(tweetContent, None).get('data', {}).get('id')
                 if (tweet_id is not None):
-                    self.acp_client.add_tweet(job_id,tweet_id, tweetContent)
+                    self.acp_client.add_tweet(job_id, tweet_id, tweetContent)
                     print("Tweet has been posted")
 
             return FunctionResultStatus.DONE, json.dumps({
