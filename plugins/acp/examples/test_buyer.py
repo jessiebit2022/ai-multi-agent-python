@@ -41,6 +41,7 @@ def main():
             api_key=os.environ.get("GAME_DEV_API_KEY"),
             acp_token_client=AcpToken(
                 os.environ.get("ACP_TOKEN_BUYER"),
+                os.environ.get("ACP_AGENT_WALLET_ADDRESS_BUYER"),
                 "https://base-sepolia-rpc.publicnode.com/"  # RPC
             ),
             twitter_plugin=GameTwitterPlugin(options)
