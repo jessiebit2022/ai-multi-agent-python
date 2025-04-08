@@ -1,5 +1,5 @@
 import os
-from acp_plugin_gamesdk.acp_plugin import AcpToken, AcpPlugin, AdNetworkPluginOptions
+from acp_plugin_gamesdk.acp_plugin import AcpToken, AcpPlugin, AcpPluginOptions
 
 
 def reset_acp_states() -> None:
@@ -12,7 +12,7 @@ def reset_acp_states() -> None:
     for token in acp_tokens:
         try:
             acp_plugin = AcpPlugin(
-                options=AdNetworkPluginOptions(
+                options=AcpPluginOptions(
                     api_key=os.environ.get("GAME_DEV_API_KEY"),
                     acp_token_client=AcpToken(
                         token,

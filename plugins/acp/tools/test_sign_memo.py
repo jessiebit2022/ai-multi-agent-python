@@ -24,7 +24,7 @@ trx_data = {
     "value": "0",
     "data": encoded_data
 }
-message_json = json.dumps(trx_data, separators=(".", ":"), sort_keys=False)
+message_json = json.dumps(trx_data, separators=(",", ":"), sort_keys=False)
 print(f"JSON string: {message_json}")
 message_bytes = message_json.encode()
 account = Account.from_key(private_key_hex)
@@ -35,7 +35,7 @@ signature = account.sign_message(message).signature.hex()
 payload = {
     "agentWallet": acp_token_client.get_agent_wallet_address(),
     "trxData": trx_data,
-    "signature": signature
+    "signature": "0x" + signature
 }
 
 # Submit to custom API

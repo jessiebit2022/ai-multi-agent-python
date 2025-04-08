@@ -49,7 +49,8 @@ class AcpToken:
         agent_wallet_address: str,
         network_url: str,
         contract_address: str = "0x2422c1c43451Eb69Ff49dfD39c4Dc8C5230fA1e6",
-        virtuals_token_address: str = "0xbfAB80ccc15DF6fb7185f9498d6039317331846a"
+        virtuals_token_address: str = "0xbfAB80ccc15DF6fb7185f9498d6039317331846a",
+        base_url: str = "https://acpx.virtuals.gg/api"
     ):
         self.web3 = Web3(Web3.HTTPProvider(network_url))
         self.account = Account.from_key(wallet_private_key)
@@ -60,6 +61,34 @@ class AcpToken:
             address=self.contract_address,
             abi=ACP_TOKEN_ABI
         )
+        self.virtuals_token_contract = self.web3.eth.contract(
+            address=self.virtuals_token_address,
+            abi=[{
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "spender",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "amount", 
+                        "type": "uint256"
+                    }
+                ],
+                "name": "approve",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }]
+        )
+        self.base_url = base_url
 
     def get_agent_wallet_address(self) -> str:
         return self.agent_wallet_address
@@ -67,78 +96,69 @@ class AcpToken:
     def get_contract_address(self) -> str:
         return self.contract_address
 
-    def get_wallet_address(self) -> str:
-        return self.account.address
+    def await_transaction(self, hash_value: str) -> object:
+        try:
+            response = requests.post(f"{self.base_url}/acp-agent-wallets/trx-result", json={"userOpHash": hash_value})
+            return response.json()
+        except Exception as error:
+            print(f"Error getting job_id: {error}")
+            raise Exception("Failed to get job_id")
 
     def create_job(
         self,
         provider_address: str,
+        evaluator_address: str,
         expire_at: datetime
     ) -> dict:
         try:
             provider_address = Web3.to_checksum_address(provider_address)
             expire_timestamp = int(expire_at.timestamp())
-            
-            transaction = self.contract.functions.createJob(
-                provider_address,
-                expire_timestamp
-            ).build_transaction({
-                'from': self.account.address,
-                'nonce': self.web3.eth.get_transaction_count(self.account.address),
-            })
-            
-            signed_txn = self.web3.eth.account.sign_transaction(
-                transaction, 
-                self.account.key
+        
+            # Sign the transaction
+            trx_data, signature = self._sign_transaction(
+                "createJob", 
+                [provider_address, evaluator_address, expire_timestamp]
             )
-            
-            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
-            receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
-            
-            # Get job ID from event logs
-            job_created_event = self.contract.events.JobCreated().process_receipt(receipt)
-            job_id = job_created_event[0]['args']['jobId']
-            
-            return {
-                'txHash': tx_hash.hex(),
-                'jobId': job_id
+                
+            # Prepare payload
+            payload = {
+                "agentWallet": self.get_agent_wallet_address(),
+                "trxData": trx_data,
+                "signature": signature
             }
+            
+            # Submit to custom API
+            api_url = f"{self.base_url}/acp-agent-wallets/transactions"
+            response = requests.post(api_url, json=payload)
+                
+            # Return transaction hash or response ID
+            return { "txHash": response.json().get("data", {}).get("userOpHash", "")}
+        
         except Exception as error:
             print(f"Error creating job: {error}")
             raise Exception("Failed to create job")
 
     def approve_allowance(self, price_in_wei: int) -> str:
         try:
-            erc20_contract = self.web3.eth.contract(
-                address=self.virtuals_token_address,
-                abi=[{
-                    "inputs": [
-                        {"name": "spender", "type": "address"},
-                        {"name": "amount", "type": "uint256"}
-                    ],
-                    "name": "approve",
-                    "outputs": [{"name": "", "type": "bool"}],
-                    "stateMutability": "nonpayable",
-                    "type": "function"
-                }]
+            trx_data, signature = self._sign_transaction(
+                "approve", 
+                [self.contract_address, price_in_wei],
+                self.virtuals_token_address
             )
             
-            transaction = erc20_contract.functions.approve(
-                self.contract_address,
-                price_in_wei
-            ).build_transaction({
-                'from': self.account.address,
-                'nonce': self.web3.eth.get_transaction_count(self.account.address),
-            })
+            payload = {
+                "agentWallet": self.get_agent_wallet_address(),
+                "trxData": trx_data,
+                "signature": signature
+            }
             
-            signed_txn = self.web3.eth.account.sign_transaction(
-                transaction,
-                self.account.key
-            )
-            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
-            self.web3.eth.wait_for_transaction_receipt(tx_hash)
+            api_url = f"{self.base_url}/acp-agent-wallets/transactions"
+            response = requests.post(api_url, json=payload)
             
-            return tx_hash.hex()
+            if (response.status_code != 200):
+                raise Exception("Failed to approve allowance")
+            
+            return response.json()
         except Exception as error:
             print(f"Error approving allowance: {error}")
             raise Exception("Failed to approve allowance")
@@ -154,38 +174,51 @@ class AcpToken:
         retries = 3
         while retries > 0:
             try:
-                transaction = self.contract.functions.createMemo(
-                    jobId = job_id,
-                    content = content,
-                    memoType = memo_type,
-                    isSecured = is_secured,
-                    nextPhase = next_phase
-                ).build_transaction({
-                    'from': self.account.address,
-                    'nonce': self.web3.eth.get_transaction_count(self.account.address),
-                })
-                
-                signed_txn = self.web3.eth.account.sign_transaction(
-                    transaction,
-                    self.account.key
+                trx_data, signature = self._sign_transaction(
+                    "createMemo", 
+                    [job_id, content, memo_type, is_secured, next_phase]
                 )
-                tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
-                receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
                 
-                # Get memo ID from event logs
-                new_memo_event = self.contract.events.NewMemo().process_receipt(receipt)
-                memo_id = new_memo_event[0]['args']['memoId']
-                
-                return {
-                    'txHash': tx_hash.hex(),
-                    'memoId': memo_id
+                payload = {
+                    "agentWallet": self.get_agent_wallet_address(),
+                    "trxData": trx_data,
+                    "signature": signature
                 }
+
+                api_url = f"{self.base_url}/acp-agent-wallets/transactions"
+                response = requests.post(api_url, json=payload)
+                
+                if (response.status_code != 200):
+                    raise Exception("Failed to create memo")
+                
+                return { "txHash": response.json().get("txHash", response.json().get("id", "")), "memoId": response.json().get("memoId", "")}
             except Exception as error:
                 print(f"Error creating memo: {error}")
                 retries -= 1
                 time.sleep(2 * (3 - retries))
                 
         raise Exception("Failed to create memo")
+
+    def _sign_transaction(self, method_name: str, args: list, contract_address: Optional[str] = None) -> Tuple[dict, str]:
+        if contract_address:
+            encoded_data = self.virtuals_token_contract.encode_abi(method_name, args=args)
+        else:
+            encoded_data = self.contract.encode_abi(method_name, args=args)
+        
+        trx_data = {
+            "target": contract_address if contract_address else self.get_contract_address(),
+            "value": "0",
+            "data": encoded_data
+        }
+        
+        message_json = json.dumps(trx_data, separators=(",", ":"), sort_keys=False)
+        message_bytes = message_json.encode()
+        
+        # Sign the transaction
+        message = encode_defunct(message_bytes)
+        signature = "0x" + self.account.sign_message(message).signature.hex()
+        
+        return trx_data, signature
 
     def sign_memo(
         self,
@@ -196,31 +229,25 @@ class AcpToken:
         retries = 3
         while retries > 0:
             try:
-                print(f"Custom python SDK logic for signing memo_id: {memo_id}")
-                # Construct unsigned transaction
-                encoded_data = self.contract.encode_abi("signMemo", args=[memo_id, is_approved, reason])
-                private_key_hex = self.wallet_private_key[2:]
-                trx_data = {
-                    "target": self.get_contract_address(),
-                    "value": "0",
-                    "data": encoded_data
-                }
-                message_json = json.dumps(trx_data, separators=(".", ":"), sort_keys=False)
-                message_bytes = message_json.encode()
-                account = Account.from_key(private_key_hex)
-                # Sign the transaction
-                message = encode_defunct(message_bytes)
-                signature = account.sign_message(message).signature.hex()
+                trx_data, signature = self._sign_transaction(
+                    "signMemo", 
+                    [memo_id, is_approved, reason]
+                )
+                
                 payload = {
                     "agentWallet": self.get_agent_wallet_address(),
                     "trxData": trx_data,
                     "signature": signature
                 }
-                # Submit to custom API
-                api_url = "https://acpx.virtuals.gg/api/acp-agent-wallets/transactions"
+                
+                api_url = f"{self.base_url}/acp-agent-wallets/transactions"
                 response = requests.post(api_url, json=payload)
-                print("Status:", response.status_code)
-                print("Response:", response.json())
+                
+                if (response.status_code != 200):
+                    raise Exception("Failed to sign memo")
+                
+                return response.json().get("txHash", response.json().get("id", ""))
+                
             except Exception as error:
                 print(f"Error signing memo: {error}")
                 retries -= 1
@@ -230,22 +257,25 @@ class AcpToken:
 
     def set_budget(self, job_id: int, budget: int) -> str:
         try:
-            transaction = self.contract.functions.setBudget(
-                job_id,
-                budget
-            ).build_transaction({
-                'from': self.account.address,
-                'nonce': self.web3.eth.get_transaction_count(self.account.address),
-            })
-            
-            signed_txn = self.web3.eth.account.sign_transaction(
-                transaction,
-                self.account.key
+            trx_data, signature = self._sign_transaction(
+                "setBudget", 
+                [job_id, budget]
             )
-            tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
-            self.web3.eth.wait_for_transaction_receipt(tx_hash)
             
-            return tx_hash.hex()
+            payload = {
+                "agentWallet": self.get_agent_wallet_address(),
+                "trxData": trx_data,
+                "signature": signature
+            }
+            
+            api_url = f"{self.base_url}/acp-agent-wallets/transactions"
+            response = requests.post(api_url, json=payload)
+            
+            if (response.status_code != 200):
+                raise Exception("Failed to set budget")
+            
+            self.web3.eth.wait_for_transaction_receipt(response.json().get("txHash", response.json().get("id", "")))
+            return response.json()
         except Exception as error:
             print(f"Error setting budget: {error}")
             raise Exception("Failed to set budget")
