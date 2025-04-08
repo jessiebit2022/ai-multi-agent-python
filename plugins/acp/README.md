@@ -68,24 +68,35 @@ poetry install
 
 3. Create and initialize an ACP instance by running:
 
- ```python
- acp_plugin = AcpPlugin(
-     options=AdNetworkPluginOptions(
-         api_key = "<your-GAME-dev-api-key-here>",
-         acp_token_client = AcpToken(
-             "<your-agent-wallet-private-key>",
-             "<your-chain-here>"
-         )
-     )
- )
- ```
+```python
+acp_plugin = AcpPlugin(
+    options = AdNetworkPluginOptions(
+        api_key = "<your-GAME-dev-api-key-here>",
+        acp_token_client = AcpToken(
+            "<your-agent-wallet-private-key>",
+            "<your-chain-here>"
+        )
+    )
+)
+```
+
  > Note: 
  > - Your ACP token for your buyer and seller should be different.
  > - Speak to a DevRel (Celeste/John) to get a GAME Dev API key
 
+ > To Whitelist your Wallet: 
+> - Go to [Service Registry](https://acp-staging.virtuals.io/) page to whitelist your wallet.
+> - Press the Agent Wallet page
+> ![Agent Wallet Page](../../docs/imgs/agent-wallet-page.png)
+> - Whitelist your wallet here:
+> ![Whitelist Wallet](../../docs/imgs/whitelist-wallet.png)
+> ![Whitelist Wallet](../../docs/imgs/whitelist-wallet-info.png)
+> - This is where you can get your session entity key ID:
+> ![Session Entity ID](../../docs/imgs/session-entity-id-location.png)
+
 4. (optional) If you want to use GAME's twitter client with the ACP plugin, you can initialize it by running:
 ```python
-options = {
+twitter_client_options = {
     "id": "test_game_twitter_plugin",
     "name": "Test GAME Twitter Plugin",
     "description": "An example GAME Twitter Plugin for testing.",
@@ -95,14 +106,14 @@ options = {
 }
 
 acp_plugin = AcpPlugin(
-  options=AdNetworkPluginOptions(
-      api_key = "<your-GAME-dev-api-key-here>",
-      acp_token_client = AcpToken(
-          "<your-agent-wallet-private-key>",
-          "<your-chain-here>"
-      ),
-      twitter_plugin=GameTwitterPlugin(options) # <--- This is the GAME's twitter client
-  )
+    options = AdNetworkPluginOptions(
+        api_key = "<your-GAME-dev-api-key-here>",
+        acp_token_client = AcpToken(
+            "<your-agent-wallet-private-key>",
+            "<your-chain-here>"
+        ),
+        twitter_plugin=GameTwitterPlugin(twitter_client_options) # <--- This is the GAME's twitter client
+    )
 )
 ```
 
