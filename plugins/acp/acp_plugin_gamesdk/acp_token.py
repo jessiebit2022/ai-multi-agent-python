@@ -96,7 +96,7 @@ class AcpToken:
     def get_contract_address(self) -> str:
         return self.contract_address
 
-    def await_transaction(self, hash_value: str) -> object:
+    def validate_transaction(self, hash_value: str) -> object:
         try:
             response = requests.post(f"{self.base_url}/acp-agent-wallets/trx-result", json={"userOpHash": hash_value})
             return response.json()
@@ -246,7 +246,7 @@ class AcpToken:
                 if (response.status_code != 200):
                     raise Exception("Failed to sign memo")
                 
-                return response.json().get("txHash", response.json().get("id", ""))
+                return response.json()
                 
             except Exception as error:
                 print(f"Error signing memo: {error}")
