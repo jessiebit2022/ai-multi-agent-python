@@ -4,10 +4,7 @@ from typing import Optional, Tuple, TypedDict
 from datetime import datetime
 from web3 import Web3
 from eth_account import Account
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
-from .acp_token_abi import ACP_TOKEN_ABI
+from acp_plugin_gamesdk.acp_token_abi import ACP_TOKEN_ABI
 import requests
 from eth_account.messages import encode_defunct
 import json

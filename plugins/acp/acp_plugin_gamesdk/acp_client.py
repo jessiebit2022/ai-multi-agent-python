@@ -2,11 +2,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from web3 import Web3
 import requests
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
-from .interface import AcpAgent, AcpJobPhases, AcpState
-from .acp_token import AcpToken, MemoType
+from acp_plugin_gamesdk.interface import AcpAgent, AcpJobPhases, AcpState
+from acp_plugin_gamesdk.acp_token import AcpToken, MemoType
 import time
 
 
