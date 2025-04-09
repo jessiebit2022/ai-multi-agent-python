@@ -17,12 +17,13 @@ class AcpPluginOptions:
     acp_token_client: AcpToken
     twitter_plugin: TwitterPlugin | GameTwitterPlugin = None
     cluster: Optional[str] = None
+    acp_base_url: Optional[str] = None
+
 
 class AcpPlugin:
     def __init__(self, options: AcpPluginOptions):
         print("Initializing AcpPlugin")
-        self.acp_client = AcpClient(options.api_key, options.acp_token_client)
-        
+        self.acp_client = AcpClient(options.api_key, options.acp_token_client, options.acp_base_url)
         self.id = "acp_worker"
         self.name = "ACP Worker"
         self.description = """
@@ -43,6 +44,8 @@ class AcpPlugin:
         self.cluster = options.cluster
         self.twitter_plugin = options.twitter_plugin
         self.produced_inventory: List[IInventory] = []
+        self.acp_base_url = options.acp_base_url
+
 
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
