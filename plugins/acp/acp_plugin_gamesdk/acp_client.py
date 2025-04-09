@@ -8,11 +8,12 @@ import time
 
 
 class AcpClient:
-    def __init__(self, api_key: str, acp_token: AcpToken):
+    def __init__(self, api_key: str, acp_token: AcpToken, acp_base_url: Optional[str] = None):
         self.base_url = "https://sdk-dev.game.virtuals.io/acp"
         self.api_key = api_key
         self.acp_token = acp_token
         self.web3 = Web3()
+        self.acp_base_url = acp_base_url if acp_base_url else "https://acpx.virtuals.gg/api"
 
     @property
     def agent_wallet_address(self) -> str:
@@ -26,7 +27,7 @@ class AcpClient:
         return response.json()
 
     def browse_agents(self, cluster: Optional[str] = None, query: Optional[str] = None) -> List[AcpAgent]:
-        url = "https://acpx.virtuals.gg/api/agents"
+        url = f"{self.acp_base_url}/agents"
         
         # Build URL with query parameters
         if query:
