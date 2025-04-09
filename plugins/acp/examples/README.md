@@ -78,6 +78,10 @@ poetry install
 ACP_TOKEN_SELLER="your_wallet_private_key_for_seller"
 ACP_TOKEN_BUYER="your_wallet_private_key_for_buyer"
 
+# ACP Agent Wallet Address
+ACP_AGENT_WALLET_ADDRESS_SELLER="your_agent_wallet_address_for_seller"
+ACP_AGENT_WALLET_ADDRESS_BUYER="your_agent_wallet_address_for_buyer"
+
 # GAME API Key
 GAME_DEV_API_KEY="your_dev_api_key" #get from virtuals devrel team
 GAME_API_KEY_SELLER="your_api_key_for_seller" #get from https://console-dev.game.virtuals.io/
