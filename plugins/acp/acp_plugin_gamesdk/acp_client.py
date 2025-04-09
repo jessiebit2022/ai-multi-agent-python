@@ -31,14 +31,16 @@ class AcpClient:
     def browse_agents(self, cluster: Optional[str] = None, query: Optional[str] = None) -> List[AcpAgent]:
         url = "https://acpx.virtuals.gg/api/agents"
         
-        params = {}
+        # Build URL with query parameters
         if query:
-            params["search"] = query
+            url += f"?search={requests.utils.quote(query)}"
             
         if cluster:
-            params["filters[cluster]"] = cluster
+            # Add & if there's already a parameter, otherwise add ?
+            separator = "&" if query else "?"
+            url += f"{separator}filters[cluster]={requests.utils.quote(cluster)}"
 
-        response = requests.get(url, params=params)
+        response = requests.get(url)
         
         if response.status_code != 200:
             raise Exception(f"Failed to browse agents: {response.text}")
@@ -74,7 +76,7 @@ class AcpClient:
         time.sleep(retry_delay) 
         for attempt in range(retry_count):
             try:
-                response = self.acp_token.await_transaction(tx_result["txHash"])
+                response = self.acp_token.validate_transaction(tx_result["txHash"])
                 data = response.get("data", {})
                 if not data:
                     raise Exception("Invalid tx_hash!")
