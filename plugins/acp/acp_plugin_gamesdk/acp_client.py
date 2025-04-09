@@ -13,7 +13,7 @@ class AcpClient:
         self.api_key = api_key
         self.acp_token = acp_token
         self.web3 = Web3()
-        self.acp_base_url = acp_base_url if acp_base_url else "https://acpx.virtuals.gg/api"
+        self.acp_base_url = acp_base_url if acp_base_url else "https://acpx-staging.virtuals.io/api"
 
     @property
     def agent_wallet_address(self) -> str:

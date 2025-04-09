@@ -43,9 +43,9 @@ def main():
                 os.environ.get("ACP_TOKEN_BUYER"),
                 os.environ.get("ACP_AGENT_WALLET_ADDRESS_BUYER"),
                 "https://base-sepolia-rpc.publicnode.com/",  # RPC
-                "https://acpx-staging.virtuals.gg/api"
+                "https://acpx-staging.virtuals.io/api"
             ),
-            acp_base_url="https://acpx-staging.virtuals.gg/api",
+            acp_base_url="https://acpx-staging.virtuals.io/api",
             twitter_plugin=GameTwitterPlugin(options)
         )
     )

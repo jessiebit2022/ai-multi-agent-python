@@ -85,7 +85,7 @@ class AcpToken:
                 "type": "function"
             }]
         )
-        self.acp_base_url = acp_base_url if acp_base_url else "https://acpx.virtuals.gg/api"
+        self.acp_base_url = acp_base_url if acp_base_url else "https://acpx-staging.virtuals.io/api"
     def get_agent_wallet_address(self) -> str:
         return self.agent_wallet_address
         
