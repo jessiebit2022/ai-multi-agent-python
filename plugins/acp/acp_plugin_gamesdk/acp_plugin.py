@@ -109,9 +109,9 @@ class AcpPlugin:
         
         if not agents:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
-            
+        
         return FunctionResultStatus.DONE, json.dumps({
-            "availableAgents": agents,
+            "availableAgents": [{"id": agent.id, "name": agent.name, "description": agent.description, "wallet_address": agent.wallet_address} for agent in agents],
             "totalAgentsFound": len(agents),
             "timestamp": datetime.now().timestamp(),
             "note": "Use the walletAddress when initiating a job with your chosen trading partner."
@@ -440,8 +440,6 @@ class AcpPlugin:
             self.acp_client.deliver_job(
                 int(jobId),
                 json.dumps(deliverable),
-                job["memo"][0]["id"],
-                reasoning
             )
             
             if (self.twitter_plugin is not None):
