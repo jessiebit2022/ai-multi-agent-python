@@ -44,7 +44,8 @@ class AcpPlugin:
         self.cluster = options.cluster
         self.twitter_plugin = options.twitter_plugin
         self.produced_inventory: List[IInventory] = []
-        self.acp_base_url = options.acp_base_url
+        self.acp_base_url = options.acp_base_url if options.acp_base_url else "https://acpx-staging.virtuals.io/api"
+
 
 
     def add_produce_item(self, item: IInventory) -> None:
