@@ -74,10 +74,8 @@ class AcpClient:
         time.sleep(retry_delay) 
         for attempt in range(retry_count):
             try:
-                print(f"tx_result: {tx_result}")
                 response = self.acp_token.validate_transaction(tx_result["txHash"])
                 data = response.get("data", {})
-                print(f"data: {data}")
                 if not data:
                     raise Exception("Invalid tx_hash!")
                 
