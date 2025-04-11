@@ -47,13 +47,18 @@ class AcpClient:
         result = []
         
         for agent in response_json.get("data", []):
+            if agent["offerings"]:
+                offerings = [AcpOffering(name=offering["name"], price=offering["price"]) for offering in agent["offerings"]]
+            else:
+                offerings = None
+
             result.append(
                 AcpAgent(
                     id=agent["id"],
                     name=agent["name"],
                     description=agent["description"],
                     wallet_address=agent["walletAddress"],
-                    offerings=[AcpOffering(name=offering["name"], price=offering["price"]) for offering in agent["offerings"]]
+                    offerings=offerings
                 )
             )
             
@@ -115,7 +120,8 @@ class AcpClient:
             "providerAddress": provider_address,
             "description": job_description,
             "price": price,
-            "expiredAt": expire_at.isoformat()
+            "expiredAt": expire_at.isoformat(),
+            "evaluatorAddress": self.agent_wallet_address
         }
 
         requests.post(
@@ -192,14 +198,9 @@ class AcpClient:
         
         return response.json()
     
-    def reset_state(self, wallet_address: str ) -> None:
-        if not wallet_address:
-            raise Exception("Wallet address is required")
-        
-        address = wallet_address
-        
+    def reset_state(self) -> None:
         response = requests.delete(
-            f"{self.base_url}/states/{address}",
+            f"{self.base_url}/states/{self.agent_wallet_address}",
             headers={"x-api-key": self.api_key}
         )
         
