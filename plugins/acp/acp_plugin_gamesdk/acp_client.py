@@ -47,13 +47,18 @@ class AcpClient:
         result = []
         
         for agent in response_json.get("data", []):
+            if agent["offerings"]:
+                offerings = [AcpOffering(name=offering["name"], price=offering["price"]) for offering in agent["offerings"]]
+            else:
+                offerings = None
+                
             result.append(
                 AcpAgent(
                     id=agent["id"],
                     name=agent["name"],
                     description=agent["description"],
                     wallet_address=agent["walletAddress"],
-                    offerings=[AcpOffering(name=offering["name"], price=offering["price"]) for offering in agent["offerings"]]
+                    offerings=offerings
                 )
             )
             
@@ -63,7 +68,7 @@ class AcpClient:
         expire_at = datetime.now() + timedelta(days=1)
         tx_result =  self.acp_token.create_job(
             provider_address=provider_address,
-            evaluator_address=provider_address,
+            evaluator_address=self.agent_wallet_address,
             expire_at=expire_at
         )
         
@@ -113,6 +118,7 @@ class AcpClient:
             "jobId": int(job_id),
             "clientAddress": self.agent_wallet_address,
             "providerAddress": provider_address,
+            "evaluatorAddress": self.agent_wallet_address,
             "description": job_description,
             "price": price,
             "expiredAt": expire_at.isoformat()

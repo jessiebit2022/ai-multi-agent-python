@@ -1,7 +1,14 @@
+from collections.abc import Callable
+import signal
+import sys
+from time import time
 from typing import List, Dict, Any, Optional,Tuple
 import json
 from dataclasses import dataclass
 from datetime import datetime
+
+import socketio
+import socketio.client
 
 from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Function, FunctionResultStatus
@@ -9,7 +16,7 @@ from plugins.twitter.twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from plugins.twitter.twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from acp_plugin_gamesdk.acp_client import AcpClient
 from acp_plugin_gamesdk.acp_token import AcpToken
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IInventory
+from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IDeliverable, IInventory
 
 @dataclass
 class AcpPluginOptions:
@@ -17,13 +24,20 @@ class AcpPluginOptions:
     acp_token_client: AcpToken
     twitter_plugin: TwitterPlugin | GameTwitterPlugin = None
     cluster: Optional[str] = None
-    acp_base_url: Optional[str] = None
+    on_evaluate: Optional[Callable[[IDeliverable], Tuple[bool, str]]] = None
 
+SocketEvents = {
+    "JOIN_EVALUATOR_ROOM": "joinEvaluatorRoom",
+    "LEAVE_EVALUATOR_ROOM": "leaveEvaluatorRoom", 
+    "ON_EVALUATE": "onEvaluate",
+    "ROOM_JOINED" : "roomJoined"
+}
 
 class AcpPlugin:
     def __init__(self, options: AcpPluginOptions):
         print("Initializing AcpPlugin")
-        self.acp_client = AcpClient(options.api_key, options.acp_token_client, options.acp_base_url)
+        self.acp_token_client = options.acp_token_client
+        self.acp_client = AcpClient(options.api_key, options.acp_token_client, options.acp_token_client.acp_base_url)
         self.id = "acp_worker"
         self.name = "ACP Worker"
         self.description = """
@@ -44,9 +58,70 @@ class AcpPlugin:
         self.cluster = options.cluster
         self.twitter_plugin = options.twitter_plugin
         self.produced_inventory: List[IInventory] = []
-        self.acp_base_url = options.acp_base_url if options.acp_base_url else "https://acpx-staging.virtuals.io/api"
-
-
+        self.acp_base_url = self.acp_token_client.acp_base_url if self.acp_token_client.acp_base_url is None else "https://acpx-staging.virtuals.io/api"
+        if (options.on_evaluate is not None):
+            print("Initializing socket")
+            self.on_evaluate = options.on_evaluate
+            self.socket = None
+            self.initializeSocket()
+        
+    def initializeSocket(self) -> Tuple[bool, str]:
+        """
+        Initialize socket connection for real-time communication.
+        Returns a tuple of (success, message).
+        """
+        try:
+            print("Initializing socket after")
+            self.socket = socketio.Client()
+                
+            # Set up authentication before connecting
+            self.socket.auth = {
+                "evaluatorAddress": self.acp_token_client.agent_wallet_address
+            }
+            
+            # Connect socket to GAME SDK dev server
+            self.socket.connect("https://sdk-dev.game.virtuals.io", auth=self.socket.auth)
+            
+            if (self.socket.connected):
+                print("Connecting socket")
+                self.socket.emit(SocketEvents["JOIN_EVALUATOR_ROOM"], self.acp_token_client.agent_wallet_address)
+                print(f"Joined evaluator room with address: {self.acp_token_client.agent_wallet_address}")
+        
+            
+            # Set up event handler for evaluation requests
+            @self.socket.on(SocketEvents["ON_EVALUATE"])
+            def on_evaluate(data):
+                if self.on_evaluate:
+                    deliverable = data.get("deliverable")
+                    memo_id = data.get("memoId")
+                    
+                    is_approved, reasoning = self.on_evaluate(deliverable)
+                    
+                    self.acp_token_client.sign_memo(memo_id, is_approved, reasoning)
+            
+            # Set up cleanup function for graceful shutdown
+            def cleanup():
+                if self.socket:
+                    print("Disconnecting socket")
+                    self.socket.emit("leaveEvaluatorRoom", self.acp_token_client.agent_wallet_address, callback=lambda: print("Successfully left evaluator room"))
+                    
+                    import time
+                    time.sleep(1)
+                    self.socket.disconnect()
+            
+            def signal_handler(sig, frame):
+                cleanup()
+                sys.exit(0)
+                
+            signal.signal(signal.SIGINT, signal_handler)
+            signal.signal(signal.SIGTERM, signal_handler)
+            
+            return True, "Socket initialized successfully"
+            
+        except Exception as e:
+            return False, f"Failed to initialize socket: {str(e)}"
+    
+    
 
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
@@ -112,7 +187,7 @@ class AcpPlugin:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
         
         return FunctionResultStatus.DONE, json.dumps({
-            "availableAgents": [{"id": agent.id, "name": agent.name, "description": agent.description, "wallet_address": agent.wallet_address, "offerings": [{"name": offering.name, "price": offering.price} for offering in agent.offerings]} for agent in agents],
+            "availableAgents": [{"id": agent.id, "name": agent.name, "description": agent.description, "wallet_address": agent.wallet_address, "offerings": [{"name": offering.name, "price": offering.price} for offering in agent.offerings] if agent.offerings else []} for agent in agents],
             "totalAgentsFound": len(agents),
             "timestamp": datetime.now().timestamp(),
             "note": "Use the walletAddress when initiating a job with your chosen trading partner."

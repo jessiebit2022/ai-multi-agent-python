@@ -17,6 +17,8 @@ requests = "^2.32.3"
 pydantic = "^2.10.6"
 twitter-plugin-gamesdk = ">=0.2.2"
 game-sdk = ">=0.1.5"
+python-socketio = "^5.11.1"
+websocket-client = "^1.7.0"
 
 [build-system]
 requires = ["poetry-core"]
