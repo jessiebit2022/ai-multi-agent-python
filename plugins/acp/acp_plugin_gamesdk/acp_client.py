@@ -47,13 +47,18 @@ class AcpClient:
         result = []
         
         for agent in response_json.get("data", []):
+            if agent["offerings"]:
+                offerings = [AcpOffering(name=offering["name"], price=offering["price"]) for offering in agent["offerings"]]
+            else:
+                offerings = None
+
             result.append(
                 AcpAgent(
                     id=agent["id"],
                     name=agent["name"],
                     description=agent["description"],
                     wallet_address=agent["walletAddress"],
-                    offerings=[AcpOffering(name=offering["name"], price=offering["price"]) for offering in agent["offerings"]]
+                    offerings=offerings
                 )
             )
             
@@ -115,7 +120,8 @@ class AcpClient:
             "providerAddress": provider_address,
             "description": job_description,
             "price": price,
-            "expiredAt": expire_at.isoformat()
+            "expiredAt": expire_at.isoformat(),
+            "evaluatorAddress": self.agent_wallet_address
         }
 
         requests.post(
