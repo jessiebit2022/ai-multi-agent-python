@@ -239,20 +239,24 @@ class AcpPlugin:
             description="Detailed specifications for service-based items",
         )
 
-        tweet_content_arg = Argument(
-            name="tweetContent",
-            type="string",
-            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-        )
+        args = [seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg]
+        
+        if self.twitter_plugin is not None:
+            tweet_content_arg = Argument(
+                name="tweetContent",
+                type="string",
+                description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+            )
+            args.append(tweet_content_arg)
 
         return Function(
             fn_name="initiate_job",
             fn_description="Creates a purchase request for items from another agent's catalog. Only for use when YOU are the buyer. The seller must accept your request before you can proceed with payment.",
-            args=[seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg, tweet_content_arg],
+            args=args,
             executable=self._initiate_job_executable
         )
 
-    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, tweetContent : str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, tweetContent : Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not price:
             return FunctionResultStatus.FAILED, "Missing price - specify how much you're offering per unit", {}
 
@@ -305,21 +309,25 @@ class AcpPlugin:
             type="string",
             description="Why you made this decision",
         )
-
-        tweet_content_arg = Argument(
-            name="tweetContent",
-            type="string",
-            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-        )
+        
+        args = [job_id_arg, decision_arg, reasoning_arg]
+        
+        if self.twitter_plugin is not None:
+            tweet_content_arg = Argument(
+                name="tweetContent",
+                type="string",
+                description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+            )
+            args.append(tweet_content_arg)
 
         return Function(
             fn_name="respond_to_job",
             fn_description="Accepts or rejects an incoming 'request' job",
-            args=[job_id_arg, decision_arg, reasoning_arg, tweet_content_arg],
+            args=args,
             executable=self._respond_job_executable
         )
 
-    def _respond_job_executable(self, jobId: int, decision: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _respond_job_executable(self, jobId: int, decision: str, reasoning: str, tweetContent: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're responding to", {}
         
@@ -350,7 +358,7 @@ class AcpPlugin:
                 reasoning
             )
             
-            if (self.twitter_plugin is not None):
+            if (self.twitter_plugin is not None and tweetContent is not None):
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
@@ -388,20 +396,24 @@ class AcpPlugin:
             description="Why you are making this payment",
         )
 
-        tweet_content_arg = Argument(
-            name="tweetContent",
-            type="string",
-            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-        )
+        args = [job_id_arg, amount_arg, reasoning_arg]
+        
+        if self.twitter_plugin is not None:
+            tweet_content_arg = Argument(
+                name="tweetContent",
+                type="string",
+                description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+            )
+            args.append(tweet_content_arg)
 
         return Function(
             fn_name="pay_job",
             fn_description="Processes payment for an accepted purchase request",
-            args=[job_id_arg, amount_arg, reasoning_arg, tweet_content_arg],
+            args=args,
             executable=self._pay_job_executable
         )
 
-    def _pay_job_executable(self, jobId: int, amount: float, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _pay_job_executable(self, jobId: int, amount: float, reasoning: str, tweetContent: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're paying for", {}
 
@@ -433,7 +445,7 @@ class AcpPlugin:
                 reasoning
             )
             
-            if (self.twitter_plugin is not None):
+            if (self.twitter_plugin is not None and tweetContent is not None):
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
@@ -477,20 +489,24 @@ class AcpPlugin:
             description="Why you are making this delivery",
         )
 
-        tweet_content_arg = Argument(
-            name="tweetContent",
-            type="string",
-            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-        )
+        args = [job_id_arg, deliverable_type_arg, deliverable_arg, reasoning_arg]
+        
+        if self.twitter_plugin is not None:
+            tweet_content_arg = Argument(
+                name="tweetContent",
+                type="string",
+                description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+            )
+            args.append(tweet_content_arg)
 
         return Function(
             fn_name="deliver_job",
             fn_description="Completes a sale by delivering items to the buyer",
-            args=[job_id_arg, deliverable_type_arg, deliverable_arg, reasoning_arg, tweet_content_arg],
+            args=args,
             executable=self._deliver_job_executable
         )
 
-    def _deliver_job_executable(self, jobId: int, deliverableType: str, deliverable: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _deliver_job_executable(self, jobId: int, deliverableType: str, deliverable: str, reasoning: str, tweetContent: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're delivering for", {}
             
@@ -532,7 +548,7 @@ class AcpPlugin:
                 json.dumps(deliverable),
             )
             
-            if (self.twitter_plugin is not None):
+            if (self.twitter_plugin is not None and tweetContent is not None):
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
