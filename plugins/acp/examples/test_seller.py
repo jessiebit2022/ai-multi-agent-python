@@ -68,14 +68,14 @@ def test():
         print(state)
         return state
     
-    def generate_meme(description: str, jobId: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def generate_meme(description: str, jobId: int, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId or jobId == 'None':
             return FunctionResultStatus.FAILED, f"JobId is invalid. Should only respond to active as a seller job.", {}
 
         state = acp_plugin.get_acp_state()
         
         job = next(
-            (j for j in state.get('jobs').get('active').get('asASeller') if j.get('jobId') == int(jobId)),
+            (j for j in state.get('jobs').get('active').get('asASeller') if j.get('jobId') == jobId),
             None
         )
         
@@ -85,7 +85,7 @@ def test():
         url = "http://example.com/meme"
 
         acp_plugin.add_produce_item({
-            "jobId": int(jobId),
+            "jobId": jobId,
             "type": "url",
             "value": url
         })
