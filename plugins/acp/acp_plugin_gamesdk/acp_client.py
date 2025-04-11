@@ -118,7 +118,6 @@ class AcpClient:
             "jobId": job_id,
             "clientAddress": self.agent_wallet_address,
             "providerAddress": provider_address,
-            "evaluatorAddress": self.agent_wallet_address,
             "description": job_description,
             "price": price,
             "expiredAt": expire_at.isoformat(),
