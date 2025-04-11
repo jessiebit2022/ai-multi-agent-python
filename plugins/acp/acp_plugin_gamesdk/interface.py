@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, Enum
-from typing import List, Dict, Literal
+from typing import List, Dict, Literal, Optional
 
 @dataclass
 class AcpOffering:
@@ -12,7 +12,8 @@ class AcpAgent:
     name: str
     description: str
     wallet_address: str
-    offerings: List[AcpOffering]
+    offerings: Optional[List[AcpOffering]]
+    
 class AcpJobPhases(IntEnum):
     REQUEST = 0
     NEGOTIATION = 1

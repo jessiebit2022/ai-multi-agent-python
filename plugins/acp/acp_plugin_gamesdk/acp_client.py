@@ -91,7 +91,7 @@ class AcpClient:
                     break
                 
                 if (data.get("status") == "success"):
-                    job_id = data.get("result").get("jobId")
+                    job_id = int(data.get("result").get("jobId"))
                     
                 if (job_id is not None and job_id != ""):
                     break  
@@ -107,7 +107,7 @@ class AcpClient:
             raise Exception("Failed to create job")
         
         self.acp_token.create_memo(
-                    job_id=int(job_id),
+                    job_id=job_id,
                     content=job_description,
                     memo_type=MemoType.MESSAGE,
                     is_secured=False,
@@ -115,13 +115,14 @@ class AcpClient:
                 )
 
         payload = {
-            "jobId": int(job_id),
+            "jobId": job_id,
             "clientAddress": self.agent_wallet_address,
             "providerAddress": provider_address,
             "evaluatorAddress": self.agent_wallet_address,
             "description": job_description,
             "price": price,
-            "expiredAt": expire_at.isoformat()
+            "expiredAt": expire_at.isoformat(),
+            "evaluatorAddress": self.agent_wallet_address
         }
 
         requests.post(
@@ -142,7 +143,7 @@ class AcpClient:
             time.sleep(5)
             
             return self.acp_token.create_memo(
-                job_id=int(job_id),
+                job_id=job_id,
                 content=f"Job {job_id} accepted. {reasoning}",
                 memo_type=MemoType.MESSAGE,
                 is_secured=False,
@@ -150,7 +151,7 @@ class AcpClient:
             )
         else:
             return self.acp_token.create_memo(
-                job_id=int(job_id),
+                job_id=job_id,
                 content=f"Job {job_id} rejected. {reasoning}",
                 memo_type=MemoType.MESSAGE,
                 is_secured=False,
@@ -169,7 +170,7 @@ class AcpClient:
 
     def deliver_job(self, job_id: int, deliverable: str):
         return self.acp_token.create_memo(
-            job_id=int(job_id),
+            job_id=job_id,
             content=deliverable,
             memo_type=MemoType.MESSAGE,
             is_secured=False,
@@ -198,14 +199,9 @@ class AcpClient:
         
         return response.json()
     
-    def reset_state(self, wallet_address: str ) -> None:
-        if not wallet_address:
-            raise Exception("Wallet address is required")
-        
-        address = wallet_address
-        
+    def reset_state(self) -> None:
         response = requests.delete(
-            f"{self.base_url}/states/{address}",
+            f"{self.base_url}/states/{self.agent_wallet_address}",
             headers={"x-api-key": self.api_key}
         )
         

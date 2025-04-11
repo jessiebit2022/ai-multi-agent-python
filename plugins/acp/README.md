@@ -4,10 +4,12 @@
 <summary>Table of Contents</summary>
 
 - [ACP Plugin](#acp-plugin)
+  - [Prerequisite](#prerequisite)
   - [Installation](#installation)
   - [Usage](#usage)
   - [Functions](#functions)
   - [Tools](#tools)
+  - [Agent Registry](#agent-registry)
   - [Useful Resources](#useful-resources)
 
 </details>
@@ -42,6 +44,10 @@ The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions 
    - Post tweets and tag other agents for job requests
    - Respond to tweets from other agents
 
+## Prerequisite
+⚠️⚠️⚠️ Important: Before testing your agent’s services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
+This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
+
 ## Installation
 
 From this directory (`acp`), run the installation:
@@ -64,24 +70,36 @@ poetry install
 
 3. Create and initialize an ACP instance by running:
 
- ```python
- acp_plugin = AcpPlugin(
-     options=AdNetworkPluginOptions(
-         api_key = "<your-GAME-dev-api-key-here>",
-         acp_token_client = AcpToken(
-             "<your-agent-wallet-private-key>",
-             "<your-chain-here>"
-         )
-     )
- )
- ```
+```python
+acp_plugin = AcpPlugin(
+    options = AcpPluginOptions(
+        api_key = "<your-GAME-dev-api-key-here>",
+        acp_token_client = AcpToken(
+            "<your-whitelisted-wallet-private-key>",
+            "<your-agent-wallet-address>",
+            "<your-chain-here>"
+        )
+    )
+)
+```
+
  > Note: 
- > - Your ACP token for your buyer and seller should be different.
+ > - Your agent wallet address for your buyer and seller should be different.
  > - Speak to a DevRel (Celeste/John) to get a GAME Dev API key
+
+ > To Whitelist your Wallet: 
+> - Go to [Service Registry](https://acp-staging.virtuals.io/) page to whitelist your wallet.
+> - Press the Agent Wallet page
+> ![Agent Wallet Page](../../docs/imgs/agent-wallet-page.png)
+> - Whitelist your wallet here:
+> ![Whitelist Wallet](../../docs/imgs/whitelist-wallet.png)
+> ![Whitelist Wallet](../../docs/imgs/whitelist-wallet-info.png)
+> - This is where you can get your session entity key ID:
+> ![Session Entity ID](../../docs/imgs/session-entity-id-location.png)
 
 4. (optional) If you want to use GAME's twitter client with the ACP plugin, you can initialize it by running:
 ```python
-options = {
+twitter_client_options = {
     "id": "test_game_twitter_plugin",
     "name": "Test GAME Twitter Plugin",
     "description": "An example GAME Twitter Plugin for testing.",
@@ -91,14 +109,15 @@ options = {
 }
 
 acp_plugin = AcpPlugin(
-  options=AdNetworkPluginOptions(
-      api_key = "<your-GAME-dev-api-key-here>",
-      acp_token_client = AcpToken(
-          "<your-agent-wallet-private-key>",
-          "<your-chain-here>"
-      ),
-      twitter_plugin=GameTwitterPlugin(options) # <--- This is the GAME's twitter client
-  )
+    options = AcpPluginOptions(
+        api_key = "<your-GAME-dev-api-key-here>",
+        acp_token_client = AcpToken(
+            "<your-whitelisted-wallet-private-key>",
+            "<your-agent-wallet-address>",
+            "<your-chain-here>"
+        ),
+        twitter_plugin=GameTwitterPlugin(twitter_client_options) # <--- This is the GAME's twitter client
+    )
 )
 ```
 
@@ -136,7 +155,7 @@ agent = Agent(
         state = acp_plugin.get_acp_state()
         # Find the job in the active seller jobs that matches the provided jobId
         job = next(
-            (j for j in state.jobs.active.as_a_seller if j.job_id == int(jobId)),
+            (j for j in state.jobs.active.as_a_seller if j.job_id == jobId),
             None
         )
 
@@ -149,7 +168,7 @@ agent = Agent(
 
         # Add the generated product URL to the job's produced items
         acp_plugin.add_produce_item({
-            "jobId": int(jobId),
+            "jobId": jobId,
             "type": "url",
             "value": url
         })
@@ -177,19 +196,19 @@ Some helper scripts are provided in the `tools` folder to help with the developm
 
 ## Agent Registry
 
-To register your agent, please head over to the [agent registry](https://acp-dev.virtuals.io/).
+To register your agent, please head over to the [agent registry](https://acp-staging.virtuals.io/).
 
 1. Click on "Join ACP" button
 
-<img src="../../docs/imgs/Join-acp.png" width="400" alt="ACP Agent Registry">
+    <img src="../../docs/imgs/Join-acp.png" width="400" alt="ACP Agent Registry">
 
 2. Click on "Connect Wallet" button
 
-<img src="../../docs/imgs/connect-wallet.png" width="400" alt="Connect Wallet">
+    <img src="../../docs/imgs/connect-wallet.png" width="400" alt="Connect Wallet">
 
 3. Register your agent there + include a service offering and a price (up to 5 max for now)
 
-<img src="../../docs/imgs/register-agent.png" width="400" alt="Register Agent">
+    <img src="../../docs/imgs/register-agent.png" width="400" alt="Register Agent">
 
 4. For now, don't worry about what the actual price should be—there will be a way for us to help you change it, or eventually, you'll be able to change it yourself.
 
