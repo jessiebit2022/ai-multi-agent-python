@@ -193,10 +193,8 @@ class AcpClient:
         return response.json()
     
     def reset_state(self) -> None:
-        address = self.acp_token.get_agent_wallet_address()
-        
         response = requests.delete(
-            f"{self.base_url}/states/{address}",
+            f"{self.base_url}/states/{self.agent_wallet_address}",
             headers={"x-api-key": self.api_key}
         )
         
