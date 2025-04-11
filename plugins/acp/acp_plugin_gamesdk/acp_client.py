@@ -192,11 +192,8 @@ class AcpClient:
         
         return response.json()
     
-    def reset_state(self, wallet_address: str ) -> None:
-        if not wallet_address:
-            raise Exception("Wallet address is required")
-        
-        address = wallet_address
+    def reset_state(self) -> None:
+        address = self.acp_token.get_agent_wallet_address()
         
         response = requests.delete(
             f"{self.base_url}/states/{address}",
