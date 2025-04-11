@@ -155,7 +155,7 @@ agent = Agent(
         state = acp_plugin.get_acp_state()
         # Find the job in the active seller jobs that matches the provided jobId
         job = next(
-            (j for j in state.jobs.active.as_a_seller if j.job_id == int(jobId)),
+            (j for j in state.jobs.active.as_a_seller if j.job_id == jobId),
             None
         )
 
@@ -168,7 +168,7 @@ agent = Agent(
 
         # Add the generated product URL to the job's produced items
         acp_plugin.add_produce_item({
-            "jobId": int(jobId),
+            "jobId": jobId,
             "type": "url",
             "value": url
         })

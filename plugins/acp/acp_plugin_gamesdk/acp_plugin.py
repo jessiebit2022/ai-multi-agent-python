@@ -215,7 +215,7 @@ class AcpPlugin:
             args=[
                 {
                     "name": "jobId",
-                    "type": "string",
+                    "type": "integer",
                     "description": "The job ID you are responding to",
                 },
                 {
@@ -237,7 +237,7 @@ class AcpPlugin:
             executable=self._respond_job_executable
         )
 
-    def _respond_job_executable(self, jobId: str, decision: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _respond_job_executable(self, jobId: int, decision: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're responding to", {}
         
@@ -251,7 +251,7 @@ class AcpPlugin:
             state = self.get_acp_state()
             
             job = next(
-                (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == int(jobId)),
+                (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == jobId),
                 None
             )
 
@@ -262,7 +262,7 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, f"Cannot respond - job is in '{job['phase']}' phase, must be in 'request' phase", {}
 
             self.acp_client.response_job(
-                int(jobId),
+                jobId,
                 decision == "ACCEPT",
                 job["memo"][0]["id"],
                 reasoning
@@ -294,12 +294,12 @@ class AcpPlugin:
             args=[
                 {
                     "name": "jobId",
-                    "type": "number",
+                    "type": "integer",
                     "description": "The job ID you are paying for",
                 },
                 {
                     "name": "amount",
-                    "type": "number",
+                    "type": "float",
                     "description": "The total amount to pay",
                 },
                 {
@@ -316,7 +316,7 @@ class AcpPlugin:
             executable=self._pay_job_executable
         )
 
-    def _pay_job_executable(self, jobId: str, amount: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _pay_job_executable(self, jobId: int, amount: float, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're paying for", {}
 
@@ -330,7 +330,7 @@ class AcpPlugin:
             state = self.get_acp_state()
             
             job = next(
-                (c for c in state["jobs"]["active"]["asABuyer"] if c["jobId"] == int(jobId)),
+                (c for c in state["jobs"]["active"]["asABuyer"] if c["jobId"] == jobId),
                 None
             )
 
@@ -342,8 +342,8 @@ class AcpPlugin:
 
 
             self.acp_client.make_payment(
-                int(jobId),
-                float(amount),
+                jobId,
+                amount,
                 job["memo"][0]["id"],
                 reasoning
             )
@@ -374,7 +374,7 @@ class AcpPlugin:
             args=[
                 {
                     "name": "jobId",
-                    "type": "string",
+                    "type": "integer",
                     "description": "The job ID you are delivering for",
                 },
                 {
@@ -401,7 +401,7 @@ class AcpPlugin:
             executable=self._deliver_job_executable
         )
 
-    def _deliver_job_executable(self, jobId: str, deliverableType: str, deliverable: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _deliver_job_executable(self, jobId: int, deliverableType: str, deliverable: str, reasoning: str, tweetContent: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not jobId:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're delivering for", {}
             
@@ -415,7 +415,7 @@ class AcpPlugin:
             state = self.get_acp_state()
             
             job = next(
-                (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == int(jobId)),
+                (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == jobId),
                 None
             )
 
@@ -439,7 +439,7 @@ class AcpPlugin:
             }
 
             self.acp_client.deliver_job(
-                int(jobId),
+                jobId,
                 json.dumps(deliverable),
             )
             
