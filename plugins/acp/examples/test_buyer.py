@@ -6,9 +6,13 @@ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
-
+from acp_plugin_gamesdk.interface import IDeliverable
 def ask_question(query: str) -> str:
     return input(query)
+
+def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
+    print(f"Evaluating deliverable: {deliverable}")
+    return True, "Default evaluation"
 
 # GAME Twitter Plugin options
 options = {
@@ -46,7 +50,8 @@ def main():
                 "https://acpx-staging.virtuals.io/api"
             ),
             acp_base_url="https://acpx-staging.virtuals.io/api",
-            twitter_plugin=GameTwitterPlugin(options)
+            twitter_plugin=GameTwitterPlugin(options),
+            on_evaluate=on_evaluate # will initialize socket connection for real-time communication
         )
     )
     # Native Twitter Plugin

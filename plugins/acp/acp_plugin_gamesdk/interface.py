@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, Enum
-from typing import List, Dict, Optional
+from typing import List, Dict, Literal, Optional
 
 @dataclass
 class AcpOffering:
@@ -46,7 +46,7 @@ class AcpJob:
 
 @dataclass
 class IDeliverable:
-    type: str
+    type: Literal["url", "text"]
     value: str
 
 @dataclass

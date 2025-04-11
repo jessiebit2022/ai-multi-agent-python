@@ -51,7 +51,7 @@ class AcpClient:
                 offerings = [AcpOffering(name=offering["name"], price=offering["price"]) for offering in agent["offerings"]]
             else:
                 offerings = None
-
+                
             result.append(
                 AcpAgent(
                     id=agent["id"],
@@ -68,7 +68,7 @@ class AcpClient:
         expire_at = datetime.now() + timedelta(days=1)
         tx_result =  self.acp_token.create_job(
             provider_address=provider_address,
-            evaluator_address=provider_address,
+            evaluator_address=self.agent_wallet_address,
             expire_at=expire_at
         )
         
