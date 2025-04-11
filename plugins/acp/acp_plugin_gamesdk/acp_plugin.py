@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from game_sdk.game.agent import WorkerConfig
-from game_sdk.game.custom_types import Function, FunctionResultStatus
+from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from acp_plugin_gamesdk.acp_client import AcpClient
@@ -52,7 +52,7 @@ class AcpPlugin:
         self.produced_inventory.append(item)
         
     def reset_state(self) -> None:
-        self.acp_client.reset_state(self.acp_client.agent_wallet_address)
+        self.acp_client.reset_state()
         
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
@@ -75,7 +75,7 @@ class AcpPlugin:
                 **(self.get_acp_state()),
             }
 
-        data = WorkerConfig(
+        worker_config = WorkerConfig(
             id=self.id,
             worker_description=self.description,
             action_space=functions,
@@ -83,7 +83,7 @@ class AcpPlugin:
             instruction=data.get("instructions") if data else None
         )
         
-        return data
+        return worker_config
 
     @property
     def agent_description(self) -> str:
@@ -120,56 +120,61 @@ class AcpPlugin:
 
     @property
     def search_agents_functions(self) -> Function:
+        reasoning_arg = Argument(
+            name="reasoning",
+            type="string",
+            description="Explain why you need to find trading partners at this time",
+        )
+
+        keyword_arg = Argument(
+            name="keyword",
+            type="string",
+            description="Search for agents by name or description. Use this to find specific trading partners or products.",
+        )
+
         return Function(
             fn_name="search_agents",
             fn_description="Get a list of all available trading agents and what they're selling. Use this function before initiating a job to discover potential trading partners. Each agent's entry will show their ID, name, type, walletAddress, description and product catalog with prices.",
-            args=[
-                {
-                    "name": "reasoning",
-                    "type": "string",
-                    "description": "Explain why you need to find trading partners at this time",
-                },
-                {
-                    "name": "keyword",
-                    "type": "string",
-                    "description": "Search for agents by name or description. Use this to find specific trading partners or products.",
-                },
-            ],
+            args=[reasoning_arg, keyword_arg],
             executable=self._search_agents_executable
         )
 
     @property
     def initiate_job(self) -> Function:
+        seller_wallet_address_arg = Argument(
+            name="sellerWalletAddress",
+            type="string",
+            description="The seller's agent wallet address you want to buy from",
+        )
+
+        price_arg = Argument(
+            name="price",
+            type="string",
+            description="Offered price for service",
+        )
+
+        reasoning_arg = Argument(
+            name="reasoning",
+            type="string",
+            description="Why you are making this purchase request",
+        )
+
+        service_requirements_arg = Argument(
+            name="serviceRequirements",
+            type="string",
+            description="Detailed specifications for service-based items",
+        )
+
+        tweet_content_arg = Argument(
+            name="tweetContent",
+            type="string",
+            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+        )
+
         return Function(
             fn_name="initiate_job",
             fn_description="Creates a purchase request for items from another agent's catalog. Only for use when YOU are the buyer. The seller must accept your request before you can proceed with payment.",
-            args=[
-                {
-                    "name": "sellerWalletAddress",
-                    "type": "string",
-                    "description": "The seller's agent wallet address you want to buy from",
-                },
-                {
-                    "name": "price",
-                    "type": "string",
-                    "description": "Offered price for service",
-                },
-                {
-                    "name": "reasoning",
-                    "type": "string",
-                    "description": "Why you are making this purchase request",
-                },
-                {
-                    "name": "serviceRequirements",
-                    "type": "string",
-                    "description": "Detailed specifications for service-based items",
-                },
-                {
-                    "name": "tweetContent",
-                    "type": "string",
-                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-                },
-            ],
+            args=[seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg, tweet_content_arg],
             executable=self._initiate_job_executable
         )
 
@@ -209,31 +214,34 @@ class AcpPlugin:
 
     @property
     def respond_job(self) -> Function:
+        job_id_arg = Argument(
+            name="jobId",
+            type="integer",
+            description="The job ID you are responding to",
+        )
+
+        decision_arg = Argument(
+            name="decision",
+            type="string",
+            description="Your response: 'ACCEPT' or 'REJECT'",
+        )
+
+        reasoning_arg = Argument(
+            name="reasoning",
+            type="string",
+            description="Why you made this decision",
+        )
+
+        tweet_content_arg = Argument(
+            name="tweetContent",
+            type="string",
+            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+        )
+
         return Function(
             fn_name="respond_to_job",
             fn_description="Accepts or rejects an incoming 'request' job",
-            args=[
-                {
-                    "name": "jobId",
-                    "type": "integer",
-                    "description": "The job ID you are responding to",
-                },
-                {
-                    "name": "decision",
-                    "type": "string",
-                    "description": "Your response: 'ACCEPT' or 'REJECT'",
-                },
-                {
-                    "name": "reasoning",
-                    "type": "string",
-                    "description": "Why you made this decision",
-                },
-                {
-                    "name": "tweetContent",
-                    "type": "string",
-                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-                },
-            ],
+            args=[job_id_arg, decision_arg, reasoning_arg, tweet_content_arg],
             executable=self._respond_job_executable
         )
 
@@ -288,31 +296,34 @@ class AcpPlugin:
 
     @property
     def pay_job(self) -> Function:
+        job_id_arg = Argument(
+            name="jobId",
+            type="integer",
+            description="The job ID you are paying for",
+        )
+
+        amount_arg = Argument(
+            name="amount",
+            type="float",
+            description="The total amount to pay",  # in Ether
+        )
+
+        reasoning_arg = Argument(
+            name="reasoning",
+            type="string",
+            description="Why you are making this payment",
+        )
+
+        tweet_content_arg = Argument(
+            name="tweetContent",
+            type="string",
+            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+        )
+
         return Function(
             fn_name="pay_job",
             fn_description="Processes payment for an accepted purchase request",
-            args=[
-                {
-                    "name": "jobId",
-                    "type": "integer",
-                    "description": "The job ID you are paying for",
-                },
-                {
-                    "name": "amount",
-                    "type": "float",
-                    "description": "The total amount to pay",
-                },
-                {
-                    "name": "reasoning",
-                    "type": "string",
-                    "description": "Why you are making this payment",
-                },
-                {
-                    "name": "tweetContent",
-                    "type": "string",
-                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-                },
-            ],
+            args=[job_id_arg, amount_arg, reasoning_arg, tweet_content_arg],
             executable=self._pay_job_executable
         )
 
@@ -368,36 +379,40 @@ class AcpPlugin:
 
     @property
     def deliver_job(self) -> Function:
+        job_id_arg = Argument(
+            name="jobId",
+            type="integer",
+            description="The job ID you are delivering for",
+        )
+
+        deliverable_type_arg = Argument(
+            name="deliverableType",
+            type="string",
+            description="Type of the deliverable",
+        )
+
+        deliverable_arg = Argument(
+            name="deliverable",
+            type="string",
+            description="The deliverable item",
+        )
+
+        reasoning_arg = Argument(
+            name="reasoning",
+            type="string",
+            description="Why you are making this delivery",
+        )
+
+        tweet_content_arg = Argument(
+            name="tweetContent",
+            type="string",
+            description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
+        )
+
         return Function(
             fn_name="deliver_job",
             fn_description="Completes a sale by delivering items to the buyer",
-            args=[
-                {
-                    "name": "jobId",
-                    "type": "integer",
-                    "description": "The job ID you are delivering for",
-                },
-                {
-                    "name": "deliverableType",
-                    "type": "string",
-                    "description": "Type of the deliverable",
-                },
-                {
-                    "name": "deliverable",
-                    "type": "string",
-                    "description": "The deliverable item",
-                },
-                {
-                    "name": "reasoning",
-                    "type": "string",
-                    "description": "Why you are making this delivery",
-                },
-                {
-                    "name": "tweetContent",
-                    "type": "string",
-                    "description": "Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
-                },
-            ],
+            args=[job_id_arg, deliverable_type_arg, deliverable_arg, reasoning_arg, tweet_content_arg],
             executable=self._deliver_job_executable
         )
 
@@ -433,7 +448,7 @@ class AcpPlugin:
             if not produced:
                 return FunctionResultStatus.FAILED, "Cannot deliver - you should be producing the deliverable first before delivering it", {}
 
-            deliverable = {
+            deliverable: dict = {
                 "type": deliverableType,
                 "value": deliverable
             }
