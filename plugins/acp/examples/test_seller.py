@@ -45,7 +45,6 @@ def test():
                 "https://base-sepolia-rpc.publicnode.com/",  # Assuming this is the chain identifier
                 "https://acpx-staging.virtuals.io/api"
             ),
-            acp_base_url="https://acpx-staging.virtuals.io/api",
             twitter_plugin=GameTwitterPlugin(options)
         )
     )
