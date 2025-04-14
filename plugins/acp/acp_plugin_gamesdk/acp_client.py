@@ -64,11 +64,12 @@ class AcpClient:
             
         return result
 
-    def create_job(self, provider_address: str, price: float, job_description: str) -> int:
+    def create_job(self, provider_address: str, price: float, job_description: str, evaluator_address: str) -> int:
         expire_at = datetime.now() + timedelta(days=1)
+        
         tx_result =  self.acp_token.create_job(
             provider_address=provider_address,
-            evaluator_address=self.agent_wallet_address,
+            evaluator_address=evaluator_address,
             expire_at=expire_at
         )
         
@@ -121,7 +122,7 @@ class AcpClient:
             "description": job_description,
             "price": price,
             "expiredAt": expire_at.isoformat(),
-            "evaluatorAddress": self.agent_wallet_address
+            "evaluatorAddress": evaluator_address
         }
 
         requests.post(

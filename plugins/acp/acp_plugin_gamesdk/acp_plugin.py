@@ -23,6 +23,7 @@ class AcpPluginOptions:
     acp_token_client: AcpToken
     twitter_plugin: TwitterPlugin | GameTwitterPlugin = None
     cluster: Optional[str] = None
+    evaluator_cluster: Optional[str] = None
     on_evaluate: Optional[Callable[[IDeliverable], Tuple[bool, str]]] = None
 
 SocketEvents = {
@@ -55,6 +56,7 @@ class AcpPlugin:
         NOTE: This is NOT for finding clients - only for executing trades when there's a specific need to buy or sell something.
         """
         self.cluster = options.cluster
+        self.evaluator_cluster = options.evaluator_cluster
         self.twitter_plugin = options.twitter_plugin
         self.produced_inventory: List[IInventory] = []
         self.acp_base_url = self.acp_token_client.acp_base_url if self.acp_token_client.acp_base_url is None else "https://acpx-staging.virtuals.io/api"
@@ -82,9 +84,7 @@ class AcpPlugin:
             self.socket.connect("https://sdk-dev.game.virtuals.io", auth=self.socket.auth)
             
             if (self.socket.connected):
-                print("Connecting socket")
                 self.socket.emit(SocketEvents["JOIN_EVALUATOR_ROOM"], self.acp_token_client.agent_wallet_address)
-                print(f"Joined evaluator room with address: {self.acp_token_client.agent_wallet_address}")
         
             
             # Set up event handler for evaluation requests
@@ -102,7 +102,6 @@ class AcpPlugin:
             def cleanup():
                 if self.socket:
                     print("Disconnecting socket")
-                    self.socket.emit("leaveEvaluatorRoom", self.acp_token_client.agent_wallet_address, callback=lambda: print("Successfully left evaluator room"))
                     
                     import time
                     time.sleep(1)
@@ -238,8 +237,20 @@ class AcpPlugin:
             type="string",
             description="Detailed specifications for service-based items",
         )
+        
+        require_evaluation_arg = Argument(
+            name="requireEvaluation",
+            type="boolean",
+            description="Decide if your job request is complex enough to spend money for evaluator agent to assess the relevancy of the output. For simple job request like generate image, insights, facts does not require evaluation. For complex and high level job like generating a promotion video, a marketing narrative, a trading signal should require evaluator to assess result relevancy.",
+        )
+        
+        evaluator_keyword_arg = Argument(
+            name="evaluatorKeyword",
+            type="string",
+            description="Keyword to search for a evaluator",
+        )
 
-        args = [seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg]
+        args = [seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg, require_evaluation_arg, evaluator_keyword_arg]
         
         if self.twitter_plugin is not None:
             tweet_content_arg = Argument(
@@ -248,7 +259,7 @@ class AcpPlugin:
                 description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
             )
             args.append(tweet_content_arg)
-
+            
         return Function(
             fn_name="initiate_job",
             fn_description="Creates a purchase request for items from another agent's catalog. Only for use when YOU are the buyer. The seller must accept your request before you can proceed with payment.",
@@ -256,21 +267,41 @@ class AcpPlugin:
             executable=self._initiate_job_executable
         )
 
-    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, tweetContent : Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, requireEvaluation: bool, evaluatorKeyword: str, tweetContent: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not price:
             return FunctionResultStatus.FAILED, "Missing price - specify how much you're offering per unit", {}
-
+        
+        if not reasoning:
+            return FunctionResultStatus.FAILED, "Missing reasoning - explain why you're making this purchase request", {}
+        
         try:
             state = self.get_acp_state()
 
             if state["jobs"]["active"]["asABuyer"]:
                 return FunctionResultStatus.FAILED, "You already have an active job as a buyer", {}
-
+            
+            if not sellerWalletAddress:
+                return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
+            
+            if bool(requireEvaluation) and not evaluatorKeyword:
+                return FunctionResultStatus.FAILED, "Missing validator keyword - provide a keyword to search for a validator", {}
+            
+            evaluatorAddress = self.acp_token_client.get_agent_wallet_address()
+            
+            if bool(requireEvaluation):
+                validators = self.acp_client.browse_agents(self.evaluator_cluster, evaluatorKeyword)
+                
+                if len(validators) == 0:
+                    return FunctionResultStatus.FAILED, "No evaluator found - try a different keyword", {}
+                
+                evaluatorAddress = validators[0].wallet_address
+            
             # ... Rest of validation logic ...
             job_id = self.acp_client.create_job(
                 sellerWalletAddress,
                 float(price),
-                serviceRequirements
+                serviceRequirements,
+                evaluatorAddress
             )
             
             if (self.twitter_plugin is not None and tweetContent is not None):
