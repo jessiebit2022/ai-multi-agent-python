@@ -62,8 +62,8 @@ acp_plugin = AcpPlugin(
             "<your-chain-here>",
             "<your-acp-base-url>"
         ),
+        cluster = "<cluster>",
         twitter_plugin = "<twitter_plugin_instance>",
-        on_evaluate = "<on_evaluate_function>" # will initialize socket connection for real-time communication
     )
 )
 ```
