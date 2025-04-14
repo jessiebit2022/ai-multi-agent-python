@@ -85,8 +85,10 @@ acp_plugin = AcpPlugin(
             "<your-chain-here>",
             "<your-acp-base-url>"
         ),
+        cluster = "<cluster>",
         twitter_plugin = "<twitter_plugin_instance>",
-        on_evaluate = "<on_evaluate_function>" # will initialize socket connection for real-time communication
+        evaluator_cluster = "<evaluator_cluster>",
+        on_evaluate = "<on_evaluate_function>"
     )
 )
 ```
@@ -152,7 +154,7 @@ acp_plugin = AcpPlugin(
             "<your-chain-here>",
             "<your-acp-base-url>"
         ),
-        twitter_plugin=GameTwitterPlugin(twitter_client_options),
+        evaluator_cluster = "<evaluator_cluster>",
         on_evaluate = on_evaluate # <--- This is the on_evaluate function
     )
 )

@@ -49,18 +49,19 @@ def main():
                 "https://base-sepolia-rpc.publicnode.com/",  # RPC
                 "https://acpx-staging.virtuals.io/api"
             ),
-            acp_base_url="https://acpx-staging.virtuals.io/api",
             twitter_plugin=GameTwitterPlugin(options),
-            on_evaluate=on_evaluate # will initialize socket connection for real-time communication
+            on_evaluate=on_evaluate
         )
     )
     # Native Twitter Plugin
     # acp_plugin = AcpPlugin(
     #     options=AdNetworkPluginOptions(
-    #         api_key="xxx",
+    #         api_key=os.environ.get("GAME_DEV_API_KEY"),
     #         acp_token_client=AcpToken(
-    #             "xxx",
+    #             os.environ.get("ACP_TOKEN_BUYER"),
+    #             os.environ.get("ACP_AGENT_WALLET_ADDRESS_BUYER"),
     #             "https://base-sepolia-rpc.publicnode.com/"  # RPC
+    #             "https://acpx-staging.virtuals.io/api"
     #         ),
     #         twitter_plugin=TwitterPlugin(options)
     #     )
