@@ -84,9 +84,7 @@ class AcpPlugin:
             self.socket.connect("https://sdk-dev.game.virtuals.io", auth=self.socket.auth)
             
             if (self.socket.connected):
-                print("Connecting socket")
                 self.socket.emit(SocketEvents["JOIN_EVALUATOR_ROOM"], self.acp_token_client.agent_wallet_address)
-                print(f"Joined evaluator room with address: {self.acp_token_client.agent_wallet_address}")
         
             
             # Set up event handler for evaluation requests
@@ -104,7 +102,6 @@ class AcpPlugin:
             def cleanup():
                 if self.socket:
                     print("Disconnecting socket")
-                    self.socket.emit("leaveEvaluatorRoom", self.acp_token_client.agent_wallet_address, callback=lambda: print("Successfully left evaluator room"))
                     
                     import time
                     time.sleep(1)
