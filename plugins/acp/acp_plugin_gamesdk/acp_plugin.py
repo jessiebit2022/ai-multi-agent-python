@@ -72,7 +72,6 @@ class AcpPlugin:
         Returns a tuple of (success, message).
         """
         try:
-            print("Initializing socket after")
             self.socket = socketio.Client()
                 
             # Set up authentication before connecting
