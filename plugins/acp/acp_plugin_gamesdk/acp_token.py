@@ -96,7 +96,6 @@ class AcpToken:
     def validate_transaction(self, hash_value: str) -> object:
         try:
             response = requests.post(f"{self.acp_base_url}/acp-agent-wallets/trx-result", json={"userOpHash": hash_value})
-            print(f"validate_transaction response status code: {response.status_code}")
             return response.json()
         except Exception as error:
             raise Exception(f"Failed to get job_id {error}")
