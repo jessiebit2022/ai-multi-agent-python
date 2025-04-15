@@ -188,11 +188,11 @@ class HLPResponse:
             f"🟢 HLP Response:\n"
             f"- Plan ID: {self.plan_id}\n"
             f"- Reflection on Observation:\n{self.observation_reflection}\n"
-            f"- Steps in Plan:\n{steps}\n"
+            # f"- Steps in Plan:\n{steps}\n"
             f"- Plan Reasoning:\n{self.plan_reasoning}\n"
-            f"- Current State in Plan:\n{self.current_state_of_execution}\n"
-            f"- Change Indicator: {self.change_indicator}\n"
-            f"- Logs:\n{logs_str}\n"
+            # f"- Current State in Plan:\n{self.current_state_of_execution}\n"
+            # f"- Change Indicator: {self.change_indicator}\n"
+            # f"- Logs:\n{logs_str}\n"
         )
         return output
 
@@ -297,7 +297,7 @@ class RecentReasoningResponse:
             f"- Plan Reflection:\n{self.plan_reflection}\n"
             f"- Plan Reasoning:\n{self.plan_reasoning}\n"
             f"- Worker ID: {self.worker_id}\n"
-            f"- Actions to take:\n{curr_actions}\n"
+            # f"- Actions to take:\n{curr_actions}\n"
         )
         return output
     
@@ -329,7 +329,7 @@ class CurrentTaskResponse:
             f"- Task Reason:\n{self.task_reasoning}\n"
             f"- Task Result:\n{self.task_result}\n"
             f"- Location ID: {self.location_id}\n"
-            f"{llp_response}\n"
+            # f"{llp_response}\n"
         )
         return output
 
@@ -385,7 +385,7 @@ class ActionResponse(BaseModel):
             f"# Agent State:\n{self.agent_state}\n\n"
             f"# Action Arguments:\n{self.action_args}\n\n"
             f"# Reaction Info:\n{self.reaction_info}\n\n"
-            f"# Agents:\n{self.agents}\n\n"
+            # f"# Agents:\n{self.agents}\n\n"
             f"========= Action Response End ========\n"
         )
         return output
