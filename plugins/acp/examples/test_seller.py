@@ -107,7 +107,7 @@ def test():
                     ),
                     Argument(
                         name="jobId",
-                        type="str",
+                        type="integer",
                         description="Job that your are responding to."
                     ),
                     Argument(

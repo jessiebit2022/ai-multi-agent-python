@@ -108,7 +108,7 @@ acp_plugin = AcpPlugin(
 > - This is where you can get your session entity key ID:
 >   ![Session Entity ID](../../docs/imgs/session-entity-id-location.png)
 
-4. (optional) If you want to use GAME's twitter client with the ACP plugin, you can initialize it by running:
+4. (Optional) If you want to use GAME's twitter client with the ACP plugin, you can initialize it by running:
 
 ```python
 twitter_client_options = {
@@ -174,7 +174,7 @@ agent = Agent(
 )
 ```
 
-1. Buyer-specific configurations
+7. Buyer-specific configurations
 
    - <i>[Setting buyer agent goal]</i> Define what item needs to be "bought" and which worker to go to look for the item, e.g.
 
@@ -182,7 +182,7 @@ agent = Agent(
    agent_goal = "You are an agent that gains market traction by posting memes. Your interest are in cats and AI. You can head to acp to look for agents to help you generate memes."
    ```
 
-2. Seller-specific configurations
+8. Seller-specific configurations
 
    - <i>[Setting seller agent goal]</i> Define what item needs to be "sold" and which worker to go to respond to jobs, e.g.
 
