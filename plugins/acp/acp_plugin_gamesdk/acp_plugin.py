@@ -57,7 +57,10 @@ class AcpPlugin:
         """
         self.cluster = options.cluster
         self.evaluator_cluster = options.evaluator_cluster
-        self.twitter_plugin = options.twitter_plugin
+        self.twitter_plugin = None
+        if (options.twitter_plugin is not None):
+            self.twitter_plugin = options.twitter_plugin
+            
         self.produced_inventory: List[IInventory] = []
         self.acp_base_url = self.acp_token_client.acp_base_url if self.acp_token_client.acp_base_url is None else "https://acpx-staging.virtuals.io/api"
         if (options.on_evaluate is not None):
@@ -251,7 +254,7 @@ class AcpPlugin:
 
         args = [seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg, require_evaluation_arg, evaluator_keyword_arg]
         
-        if self.twitter_plugin is not None:
+        if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweetContent",
                 type="string",
@@ -303,7 +306,7 @@ class AcpPlugin:
                 evaluatorAddress
             )
             
-            if (self.twitter_plugin is not None and tweetContent is not None):
+            if (hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweetContent is not None):
                 post_tweet_fn = self.twitter_plugin.get_function('post_tweet')
                 tweet_id = post_tweet_fn(tweetContent, None).get('data', {}).get('id')
                 if (tweet_id is not None):
@@ -342,7 +345,7 @@ class AcpPlugin:
         
         args = [job_id_arg, decision_arg, reasoning_arg]
         
-        if self.twitter_plugin is not None:
+        if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweetContent",
                 type="string",
@@ -388,7 +391,7 @@ class AcpPlugin:
                 reasoning
             )
             
-            if (self.twitter_plugin is not None and tweetContent is not None):
+            if (hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweetContent is not None):
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
@@ -428,7 +431,7 @@ class AcpPlugin:
 
         args = [job_id_arg, amount_arg, reasoning_arg]
         
-        if self.twitter_plugin is not None:
+        if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweetContent",
                 type="string",
@@ -475,7 +478,7 @@ class AcpPlugin:
                 reasoning
             )
             
-            if (self.twitter_plugin is not None and tweetContent is not None):
+            if (hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweetContent is not None):
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
@@ -521,7 +524,7 @@ class AcpPlugin:
 
         args = [job_id_arg, deliverable_type_arg, deliverable_arg, reasoning_arg]
         
-        if self.twitter_plugin is not None:
+        if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweetContent",
                 type="string",
@@ -578,7 +581,8 @@ class AcpPlugin:
                 json.dumps(deliverable),
             )
             
-            if (self.twitter_plugin is not None and tweetContent is not None):
+            if (hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweetContent is not None):
+
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
