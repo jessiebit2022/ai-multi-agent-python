@@ -98,6 +98,7 @@ class AcpToken:
             response = requests.post(f"{self.acp_base_url}/acp-agent-wallets/trx-result", json={"userOpHash": hash_value})
             return response.json()
         except Exception as error:
+            print(traceback.format_exc())
             raise Exception(f"Failed to get job_id {error}")
 
     def create_job(
@@ -159,8 +160,8 @@ class AcpToken:
                 raise Exception(f"Failed to approve allowance {response.json().get('error').get('status')}, Message: {response.json().get('error').get('message')}")
             
             return response.json()
-        except Exception as error:
-            raise Exception(f"{error}")
+        except Exception as e:
+            raise
 
     def create_memo(
         self,
@@ -171,6 +172,7 @@ class AcpToken:
         next_phase: int
     ) -> dict:
         retries = 3
+        error = None
         while retries > 0:
             try:
                 trx_data, signature = self._sign_transaction(
@@ -191,12 +193,15 @@ class AcpToken:
                     raise Exception(f"Failed to create memo {response.json().get('error').get('status')}, Message: {response.json().get('error').get('message')}")
                 
                 return { "txHash": response.json().get("txHash", response.json().get("id", "")), "memoId": response.json().get("memoId", "")}
-            except Exception as error:
-                print(f"{error}")
+            except Exception as e:
+                print(f"{e}")
+                print(traceback.format_exc())
+                error = e
                 retries -= 1
                 time.sleep(2 * (3 - retries))
                 
-        raise Exception(f"{error}")
+            if error:
+                raise Exception(f"{error}")
 
     def _sign_transaction(self, method_name: str, args: list, contract_address: Optional[str] = None) -> Tuple[dict, str]:
         if contract_address:

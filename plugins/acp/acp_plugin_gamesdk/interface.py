@@ -81,12 +81,12 @@ class AcpJob:
 
 @dataclass
 class IDeliverable:
-    type: Literal["url", "text"]
+    type: str
     value: str
 
 @dataclass
 class IInventory(IDeliverable):
-    job_id: int
+    jobId: int
 
 @dataclass
 class AcpJobsSection:
@@ -125,13 +125,13 @@ class AcpJobs:
     
 @dataclass
 class AcpInventory:
-    aquired: List[IInventory]
+    acquired: List[IInventory]
     produced: Optional[List[IInventory]]
 
     def __str__(self) -> str:
         output = (
             f"💼 Inventory\n"
-            f"Acquired: {self.aquired}\n"
+            f"Acquired: {self.acquired}\n"
             f"Produced: {self.produced}\n"
         )
         return output

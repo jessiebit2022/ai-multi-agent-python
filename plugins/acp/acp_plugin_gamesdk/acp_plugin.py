@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional,Tuple
 import json
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import traceback
 
 import socketio
 import socketio.client
@@ -323,6 +324,7 @@ class AcpPlugin:
                 "timestamp": datetime.now().timestamp(),
             }), {}
         except Exception as e:
+            print(traceback.format_exc())
             return FunctionResultStatus.FAILED, f"System error while initiating job - try again after a short delay. {str(e)}", {}
 
     @property
@@ -601,4 +603,5 @@ class AcpPlugin:
                 "timestamp": datetime.now().timestamp()
             }), {}
         except Exception as e:
+            print(traceback.format_exc())
             return FunctionResultStatus.FAILED, f"System error while delivering items - try again after a short delay. {str(e)}", {}

@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, Optional, List, Union, Sequence, Callable, Tuple
 from pydantic import BaseModel, Field
 from enum import Enum
@@ -45,6 +46,16 @@ class FunctionResult(BaseModel):
     action_status: FunctionResultStatus
     feedback_message: Optional[str] = None
     info: Optional[Dict[str, Any]] = None
+
+    def __str__(self) -> str:
+        output = (
+            f"➡️  Function Result:\n"
+            f"- Action ID: {self.action_id}\n"
+            f"- Action Status: {self.action_status.value}\n"
+            f"- Feedback Message: {self.feedback_message}\n"
+            f"- Info: {self.info}\n"
+        )
+        return output
 
 class Function(BaseModel):
     """
@@ -354,9 +365,9 @@ class AgentStateResponse:
                 recent_reasonings += f"💭 #{index+1} {str(reason)}\n"
 
         output = (
-            f"{self.hlp}"
-            f"{self.current_task}"
-            f"{recent_reasonings}"
+            f"{self.hlp}\n"
+            f"{self.current_task}\n"
+            f"{recent_reasonings}\n"
         )
         return output
 
@@ -383,7 +394,7 @@ class ActionResponse(BaseModel):
             f"========= 📋 Action Response =========\n"
             f"# Action Type: {self.action_type.value}\n\n"
             f"# Agent State:\n{self.agent_state}\n\n"
-            f"# Action Arguments:\n{self.action_args}\n\n"
+            f"# Action Arguments:\n{json.dumps(self.action_args, indent=4)}\n\n"
             f"# Reaction Info:\n{self.reaction_info}\n\n"
             # f"# Agents:\n{self.agents}\n\n"
             f"========= Action Response End ========\n"

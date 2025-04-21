@@ -240,7 +240,7 @@ class Agent:
             model_name=self._model_name
         )
         
-        print(f"123 Response: {response}")
+        # print(f"123 Response: {response}")
 
         return ActionResponse.model_validate(response)
 
@@ -249,7 +249,6 @@ class Agent:
         action_response = self._get_action(self._session.function_result)
         action_type = action_response.action_type
         
-        print("#" * 50)
         print("👟 Agent Step")
         # print(action_response.agent_state.current_task)
         print(action_response)
@@ -268,19 +267,22 @@ class Agent:
             ActionType.CALL_FUNCTION,
             ActionType.CONTINUE_FUNCTION,
         ]:
-            print(f"Action Selected: {action_response.action_args['fn_name']}")
-            print(f"Action Args: {action_response.action_args['args']}")
+            # print(f"Action Selected: {action_response.action_args['fn_name']}")
+            # print(f"Action Args: {action_response.action_args['args']}")
 
             if not action_response.action_args:
                 raise ValueError("No function information provided by GAME")
+            
+            # Get the worker and function
+            worker = self.workers[self.current_worker_id]
+            function_name = action_response.action_args["fn_name"]
+            function = worker.action_space[function_name]
+            print(f"👷‍♂️ Worker: {worker}")
+            print(f"🔧 Function Name: {function_name}")
+            print(f"🔧 Function: {function}")
 
-            self._session.function_result = (
-                self.workers[self.current_worker_id]
-                .action_space[action_response.action_args["fn_name"]]
-                .execute(**action_response.action_args)
-            )
-
-            print(f"Function result: {self._session.function_result}")
+            self._session.function_result = function.execute(**action_response.action_args)
+            print(f"🏭 Function Results: {self._session.function_result}")
 
             # update worker states
             updated_worker_state = self.workers[self.current_worker_id].get_state_fn(
@@ -290,6 +292,7 @@ class Agent:
             update_observation = "worker"
 
         elif action_response.action_type == ActionType.WAIT:
+            print("🔄 Waiting...")
             print("Task ended completed or ended (not possible with current actions)")
             update_observation = "task"
 
@@ -298,11 +301,13 @@ class Agent:
                 raise ValueError("No location information provided by GAME")
 
             next_worker = action_response.action_args["location_id"]
-            print(f"Next worker selected: {next_worker}")
+            print(f"🚶 Going to... {next_worker}")
+            # print(f"Next worker selected: {next_worker}")
             self.current_worker_id = next_worker
             
             update_observation = "worker"
         else:
+            print(f"🚫 Unknown action type: {action_response.action_type}")
             raise ValueError(
                 f"Unknown action type: {action_response.action_type}")
 
