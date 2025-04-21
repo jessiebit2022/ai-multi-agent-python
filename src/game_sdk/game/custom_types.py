@@ -145,6 +145,17 @@ class Function(BaseModel):
                 feedback_message=f"Error executing function: {str(e)}",
                 info={},
             )
+        
+    def __str__(self) -> str:
+        output = (
+            f"🔧 Function:\n"
+            f"- Name: {self.fn_name}\n"
+            f"- Description: {self.fn_description}\n"
+            f"- Args: {self.args}\n"
+            f"- Hint: {self.hint}\n"
+        )
+        return output
+
 
 # Different ActionTypes returned by the GAME API
 class ActionType(Enum):
@@ -391,13 +402,13 @@ class ActionResponse(BaseModel):
 
     def __str__(self) -> str:
         output = (
-            f"========= 📋 Action Response =========\n"
-            f"# Action Type: {self.action_type.value}\n\n"
-            f"# Agent State:\n{self.agent_state}\n\n"
-            f"# Action Arguments:\n{json.dumps(self.action_args, indent=4)}\n\n"
-            f"# Reaction Info:\n{self.reaction_info}\n\n"
+            f"📋 Action Response".center(50, '=') + "\n" + \
+            f"# Action Type: {self.action_type.value}\n\n" + \
+            f"# Agent State:\n{self.agent_state}\n\n" + \
+            f"# Action Arguments:\n{json.dumps(self.action_args, indent=4)}\n\n" + \
+            f"# Reaction Info:\n{self.reaction_info}\n\n" + \
             # f"# Agents:\n{self.agents}\n\n"
-            f"========= Action Response End ========\n"
+            f"📋 Action Response End".center(50, '=') + "\n"
         )
         return output
 

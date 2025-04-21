@@ -143,9 +143,9 @@ class AcpState:
 
     def __str__(self) -> str:
         output = (
-            f"========= 🤖 Agent State =========\n"
-            f"{str(self.inventory)}\n"
-            f"{str(self.jobs)}\n"
-            f"========= State End ==============\n"
+            f"🤖 Agent State".center(50, '=') + "\n" + \
+            f"{str(self.inventory)}\n" + \
+            f"{str(self.jobs)}\n" + \
+            f"State End".center(50, '=') + "\n"
         )
         return output
