@@ -176,7 +176,15 @@ class AcpClient:
         time.sleep(5)
         self.acp_token.approve_allowance(amount_wei)
         time.sleep(5)
-        return self.acp_token.sign_memo(memo_id, True, reason)
+        self.acp_token.sign_memo(memo_id, True, reason)
+        time.sleep(5)
+        return self.acp_token.create_memo(
+            job_id=job_id,
+            content=f"Payment of {amount} made {reason}",
+            memo_type=MemoType.MESSAGE,
+            is_secured=False,
+            next_phase=AcpJobPhases.EVALUATION
+        )
 
     def deliver_job(self, job_id: int, deliverable: str):
         return self.acp_token.create_memo(
@@ -226,3 +234,16 @@ class AcpClient:
                 f"Response description: {response.text}\n"
             )
             raise Exception(f"Failed to reset state: {response.status_code} {response.text}")
+        
+    def delete_completed_job(self, job_id: int) -> None:
+        response = requests.delete(
+            f"{self.base_url}/{job_id}/wallet/{self.agent_wallet_address}",
+            headers={"x-api-key": self.api_key}
+        )
+        
+        if response.status_code not in [200, 204]:
+            raise Exception(
+                f"Error occurred in delete_completed_job function. Failed to delete job.\n"
+                f"Response status code: {response.status_code}\n"
+                f"Response description: {response.text}\n"
+            )
