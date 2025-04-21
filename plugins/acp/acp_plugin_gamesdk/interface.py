@@ -34,7 +34,13 @@ class AcpJobPhasesDesc(str, Enum):
 class AcpRequestMemo:
     id: int
     created_at: int
-
+    
+@dataclass
+class ITweet:
+    type: Literal["buyer", "seller"]
+    tweet_id: str
+    content: str
+    created_at: int
 @dataclass
 class AcpJob:
     job_id: int
@@ -42,6 +48,7 @@ class AcpJob:
     price: str
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
+    tweet_history : ITweet
     last_updated: int
 
 @dataclass

@@ -173,7 +173,15 @@ class AcpClient:
         time.sleep(5)
         self.acp_token.approve_allowance(amount_wei)
         time.sleep(5)
-        return self.acp_token.sign_memo(memo_id, True, reason)
+        self.acp_token.sign_memo(memo_id, True, reason)
+        time.sleep(5)
+        return self.acp_token.create_memo(
+            job_id=job_id,
+            content=f"Payment of {amount} made {reason}",
+            memo_type=MemoType.MESSAGE,
+            is_secured=False,
+            next_phase=AcpJobPhases.EVALUATION
+        )
 
     def deliver_job(self, job_id: int, deliverable: str):
         return self.acp_token.create_memo(
