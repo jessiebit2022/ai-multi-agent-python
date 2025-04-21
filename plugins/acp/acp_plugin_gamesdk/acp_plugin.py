@@ -15,7 +15,7 @@ from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from acp_plugin_gamesdk.acp_client import AcpClient
 from acp_plugin_gamesdk.acp_token import AcpToken
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IDeliverable, IInventory
+from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IDeliverable, IInventory, AcpJob
 
 @dataclass
 class AcpPluginOptions:
@@ -25,12 +25,15 @@ class AcpPluginOptions:
     cluster: Optional[str] = None
     evaluator_cluster: Optional[str] = None
     on_evaluate: Optional[Callable[[IDeliverable], Tuple[bool, str]]] = None
+    on_phase_change: Optional[Callable[[AcpJob], None]] = None
+    
 
 SocketEvents = {
     "JOIN_EVALUATOR_ROOM": "joinEvaluatorRoom",
     "LEAVE_EVALUATOR_ROOM": "leaveEvaluatorRoom", 
     "ON_EVALUATE": "onEvaluate",
-    "ROOM_JOINED" : "roomJoined"
+    "ROOM_JOINED" : "roomJoined",
+    "ON_PHASE_CHANGE": "onPhaseChange"
 }
 
 class AcpPlugin:
@@ -63,11 +66,16 @@ class AcpPlugin:
             
         self.produced_inventory: List[IInventory] = []
         self.acp_base_url = self.acp_token_client.acp_base_url if self.acp_token_client.acp_base_url is None else "https://acpx-staging.virtuals.io/api"
-        if (options.on_evaluate is not None):
+        if options.on_evaluate is not None or options.on_phase_change is not None:
             print("Initializing socket")
-            self.on_evaluate = options.on_evaluate
             self.socket = None
+            if options.on_evaluate is not None:
+                self.on_evaluate = options.on_evaluate
+            if options.on_phase_change is not None:
+                self.on_phase_change = options.on_phase_change
             self.initializeSocket()
+        
+        
         
     def initializeSocket(self) -> Tuple[bool, str]:
         """
@@ -99,15 +107,23 @@ class AcpPlugin:
                     is_approved, reasoning = self.on_evaluate(deliverable)
                     
                     self.acp_token_client.sign_memo(memo_id, is_approved, reasoning)
+                    
+                        # Set up event handler for phase changes
+            @self.socket.on(SocketEvents["ON_PHASE_CHANGE"])
+            def on_phase_change(data):
+                if hasattr(self, 'on_phase_change') and self.on_phase_change:
+                    print(f"on_phase_change: {data}")
+                    self.on_phase_change(data)
             
             # Set up cleanup function for graceful shutdown
             def cleanup():
                 if self.socket:
                     print("Disconnecting socket")
-                    
                     import time
                     time.sleep(1)
                     self.socket.disconnect()
+                    
+                    
             
             def signal_handler(sig, frame):
                 cleanup()
@@ -122,12 +138,17 @@ class AcpPlugin:
             return False, f"Failed to initialize socket: {str(e)}"
     
     
+    def set_on_phase_change(self, on_phase_change: Callable[[AcpJob], None]) -> None:
+        self.on_phase_change = on_phase_change
 
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
         
     def reset_state(self) -> None:
         self.acp_client.reset_state()
+        
+    def delete_completed_job(self, job_id: int) -> None:
+        self.acp_client.delete_completed_job(job_id)
         
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
