@@ -132,7 +132,6 @@ class AcpPlugin:
         
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
-        print(server_state)
         server_state.inventory.produced = self.produced_inventory
         state = asdict(server_state)
         return state
