@@ -29,14 +29,15 @@ class AcpClient:
 
     def browse_agents(self, cluster: Optional[str] = None, query: Optional[str] = None) -> List[AcpAgent]:
         url = f"{self.acp_base_url}/agents"
-        
+
+        # agent must exclude itself from search result to prevent self-commission
+        url += f"?filters[walletAddress][$notIn]={self.agent_wallet_address}"
+
         if query:
-            url += f"?search={requests.utils.quote(query)}"
+            url += f"&_q={requests.utils.quote(query)}"
             
         if cluster:
-            # Add & if there's already a parameter, otherwise add ?
-            separator = "&" if query else "?"
-            url += f"{separator}filters[cluster]={requests.utils.quote(cluster)}"
+            url += f"&filters[cluster]={requests.utils.quote(cluster)}"
 
         response = requests.get(url)
         
