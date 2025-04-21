@@ -161,6 +161,7 @@ class AcpToken:
             
             return response.json()
         except Exception as e:
+            print(f"An error occurred while approving allowance: {e}")
             raise
 
     def create_memo(
