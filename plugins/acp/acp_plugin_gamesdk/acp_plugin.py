@@ -497,6 +497,7 @@ class AcpPlugin:
                 "timestamp": datetime.now().timestamp()
             }), {}
         except Exception as e:
+            print(traceback.format_exc())
             return FunctionResultStatus.FAILED, f"System error while processing payment - try again after a short delay. {str(e)}", {}
 
     @property
