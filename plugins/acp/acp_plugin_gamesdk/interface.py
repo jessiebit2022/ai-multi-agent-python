@@ -53,7 +53,7 @@ class AcpJobPhasesDesc(str, Enum):
 @dataclass
 class AcpRequestMemo:
     id: int
-    created_at: int
+    createdAt: int
 
     def __repr__(self) -> str:
         output = f"Memo(ID: {self.id}, created at: {self.createdAt})"
@@ -68,14 +68,14 @@ class ITweet:
 
 @dataclass
 class AcpJob:
-    jobId: int
+    jobId: Optional[int]
     desc: str
     price: str
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
     lastUpdated: int
-    tweet_history : ITweet
-    last_updated: int
+    tweetHistory : ITweet | List
+    lastUpdated: int
 
     def __repr__(self) -> str:
         output =(
@@ -85,8 +85,8 @@ class AcpJob:
             f"Phase: {self.phase.value}, "
             f"Memo: {self.memo}, "
             f"Last Updated: {self.lastUpdated})"
-            f"Tweet History: {self.tweet_history}, "
-            f"Last Updated: {self.last_updated})"
+            f"Tweet History: {self.tweetHistory}, "
+            f"Last Updated: {self.lastUpdated})"
         ) 
         return output
 

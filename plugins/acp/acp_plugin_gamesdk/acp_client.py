@@ -233,7 +233,6 @@ class AcpClient:
                 f"Response status code: {response.status_code}\n"
                 f"Response description: {response.text}\n"
             )
-            raise Exception(f"Failed to reset state: {response.status_code} {response.text}")
         
     def delete_completed_job(self, job_id: int) -> None:
         response = requests.delete(

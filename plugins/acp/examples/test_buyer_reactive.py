@@ -6,6 +6,10 @@ from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from acp_plugin_gamesdk.interface import AcpJob, IDeliverable
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
+from dacite import from_dict
+from dacite.config import Config
+from rich import print, box
+from rich.panel import Panel
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
@@ -45,15 +49,17 @@ options = {
 #Buyer
 def main():
     def on_phase_change(job: AcpJob) -> None:
-        print(f"buyer agent reacting to job: {job}")
+        out = ""
+        out +=(f"Buyer agent is reacting to job:\n{job}\n\n")
         
-        worker = buyer_agent.get_worker("acp_worker")
+        worker = agent.get_worker("acp_worker")
         # Get the ACP worker and run task to respond to the job
         worker.run(
             f"Respond to the following transaction: {job}",
         )
         
-        print("buyer agent has responded to the job")
+        out += ("Buyer agent has responded to the job\n")
+        print(Panel(out, title="🔁 Reaction", box=box.ROUNDED, title_align="left", border_style="red"))
         
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
@@ -86,10 +92,8 @@ def main():
     
     
 
-    def get_agent_state(_: Any, _e: Any) -> dict:
+    def get_agent_state() -> dict:
         state = acp_plugin.get_acp_state()
-        print(f"State:")
-        print(state)
         return state
     
     def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
@@ -163,7 +167,13 @@ def main():
     agent.compile()
 
     while True:
+        print("🟢"*40)
+        init_state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
+        print(Panel(f"{init_state}", title="Initial Agent State", box=box.ROUNDED, title_align="left"))
         agent.step()
+        end_state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
+        print(Panel(f"{end_state}", title="End Agent State", box=box.ROUNDED, title_align="left"))
+        print("🔴"*40)
         ask_question("\nPress any key to continue...\n")
 
 if __name__ == "__main__":

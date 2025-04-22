@@ -136,8 +136,8 @@ class AcpToken:
             # Return transaction hash or response ID
             return {"txHash": response.json().get("data", {}).get("userOpHash", "")}
         
-        except Exception as error:
-            raise Exception(f"{error}")
+        except Exception as e:
+            raise
 
     def approve_allowance(self, price_in_wei: int) -> str:
         try:
