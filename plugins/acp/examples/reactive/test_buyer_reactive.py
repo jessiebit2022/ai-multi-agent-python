@@ -1,7 +1,7 @@
 from typing import Any,Tuple
 import os
 
-from game_sdk.game.agent import Agent
+from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from acp_plugin_gamesdk.interface import AcpJob, IDeliverable
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
@@ -48,6 +48,7 @@ options = {
 
 #Buyer
 def main():
+    # upon phase change, the buyer agent will respond to the transaction
     def on_phase_change(job: AcpJob) -> None:
         out = ""
         out +=(f"Buyer agent is reacting to job:\n{job}\n\n")
@@ -75,22 +76,6 @@ def main():
             on_phase_change=on_phase_change
         )
     )
-    
-    # Native Twitter Plugin
-    # acp_plugin = AcpPlugin(
-    #     options=AdNetworkPluginOptions(
-    #         api_key=os.environ.get("GAME_DEV_API_KEY"),
-    #         acp_token_client=AcpToken(
-    #             os.environ.get("ACP_TOKEN_BUYER"),
-    #             os.environ.get("ACP_AGENT_WALLET_ADDRESS_BUYER"),
-    #             "https://base-sepolia-rpc.publicnode.com/"  # RPC
-    #             "https://acpx-staging.virtuals.io/api"
-    #         ),
-    #         twitter_plugin=TwitterPlugin(options)
-    #     )
-    # )
-    
-    
 
     def get_agent_state() -> dict:
         state = acp_plugin.get_acp_state()
@@ -104,22 +89,36 @@ def main():
         
         return FunctionResultStatus.FAILED, "Twitter plugin is not initialized", {}
 
-    post_tweet_function = Function(
-        fn_name="post_tweet",
-        fn_description="This function is to post tweet",
-        args=[
-            Argument(name="content", type="string", description="The content of the tweet"),
-            Argument(name="reasoning", type="string", description="The reasoning of the tweet")
+    core_worker = WorkerConfig(
+        id="core-worker",
+        worker_description="This worker is to post tweet",
+        action_space=[
+            Function(
+                fn_name="post_tweet",
+                fn_description="This function is to post tweet",
+                args=[
+                    Argument(
+                        name="content",
+                        type="string",
+                        description="The content of the tweet"
+                    ),
+                    Argument(
+                        name="reasoning",
+                        type="string",
+                        description="The reasoning of the tweet"
+                    )
+                ],
+                executable=post_tweet
+            )
         ],
-        executable=post_tweet
+        get_state_fn=get_agent_state
     )
     
     acp_worker = acp_plugin.get_worker(
         {
             "functions": [
                 acp_plugin.search_agents_functions,
-                acp_plugin.initiate_job,
-                post_tweet_function
+                acp_plugin.initiate_job
             ]
         }
     )
@@ -134,10 +133,11 @@ def main():
         
         {acp_plugin.agent_description}
         """,
-        workers=[acp_worker],
+        workers=[core_worker, acp_worker],
         get_agent_state_fn=get_agent_state
     )
     
+    # Buyer agent is meant to handle payments
     buyer_worker = acp_plugin.get_worker(
         {
             "functions": [
@@ -151,14 +151,12 @@ def main():
         name="Buyer",
         agent_goal="Peform and complete transanction with seller",
         agent_description=f"""
-            Agent that gain market traction by posting meme. Your interest are in cats and AI. 
-    You can head to acp to look for agents to help you generating meme.
-    Do not look a relavent validator to validate the deliverable.
-
-    Your wallet address is {os.environ.get("ACP_AGENT_WALLET_ADDRESS_BUYER")}.
-    
-     {acp_plugin.agent_description}
-    """,
+        Agent that gain market traction by posting meme. Your interest are in cats and AI. 
+        You can head to acp to look for agents to help you generating meme.
+        Do not look a relevant validator to validate the deliverable.
+        
+        {acp_plugin.agent_description}
+        """,
         workers=[buyer_worker],
         get_agent_state_fn=get_agent_state
     )
