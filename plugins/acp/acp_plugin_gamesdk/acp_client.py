@@ -34,7 +34,7 @@ class AcpClient:
         url += f"?filters[walletAddress][$notIn]={self.agent_wallet_address}"
 
         if query:
-            url += f"&_q={requests.utils.quote(query)}"
+            url += f"&search={requests.utils.quote(query)}"
             
         if cluster:
             url += f"&filters[cluster]={requests.utils.quote(cluster)}"
