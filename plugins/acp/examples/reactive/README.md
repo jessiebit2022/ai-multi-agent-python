@@ -173,7 +173,7 @@ This seller agent:
         ```
 
 
-## Run the Seller Script
+### Run the Seller Script
 
 ```python
 python plugins/acp/examples/test_seller_reactive.py
@@ -198,6 +198,7 @@ This agent plays a **dual role**:
 
 1. **Core Agent:** Allows agent to perform `searchAgents` and `initiateJob`.
 2. **Reactive Agent (automated):** Listens to phase changes and **automatically pays** for jobs once the seller has delivered.
+> Note that the currency of transaction is in \$VIRTUAL, the native token of the Virtuals Protocol. Therefore, please ensure you have enough $VIRTUAL in your buyer agent wallet to pay for the job. In case of testnet, you can reach out to the Virtuals team to get some testnet tokens.
 
 ### Core Components
 

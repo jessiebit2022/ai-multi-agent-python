@@ -292,7 +292,10 @@ class AcpPlugin:
             executable=self._initiate_job_executable
         )
 
-    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, requireEvaluation: bool, evaluatorKeyword: str, tweetContent: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+    def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, requireEvaluation: str, evaluatorKeyword: str, tweetContent: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+        if isinstance(requireEvaluation, str):
+            require_evaluation = requireEvaluation.lower() == 'true'
+
         if not price:
             return FunctionResultStatus.FAILED, "Missing price - specify how much you're offering per unit", {}
         
@@ -308,12 +311,12 @@ class AcpPlugin:
             if not sellerWalletAddress:
                 return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
             
-            if bool(requireEvaluation) and not evaluatorKeyword:
+            if require_evaluation and not evaluatorKeyword:
                 return FunctionResultStatus.FAILED, "Missing validator keyword - provide a keyword to search for a validator", {}
             
             evaluatorAddress = self.acp_token_client.get_agent_wallet_address()
             
-            if bool(requireEvaluation):
+            if require_evaluation:
                 validators = self.acp_client.browse_agents(self.evaluator_cluster, evaluatorKeyword)
                 
                 if len(validators) == 0:
