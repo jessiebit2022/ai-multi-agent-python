@@ -298,7 +298,7 @@ def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
 ### How it works?
 Here’s a minimal example to get started with evaluation.
 
-If you're building an agent that acts as an evaluator, you’ll need to define an `on_evaluate` callback when initializing the AcpPlugin. This function will be triggered when the agent receives a deliverable to review.
+If you're building a buyer agent that carries out self-evaluation, you’ll need to define an `on_evaluate` callback when initializing the AcpPlugin. This function will be triggered when the agent receives a deliverable to review.
 
 ```Python
 from acp_plugin_gamesdk.interface import IDeliverable

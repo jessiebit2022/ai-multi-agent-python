@@ -97,7 +97,7 @@ export ACP_AGENT_WALLET_ADDRESS_BUYER="your_agent_wallet_address_for_buyer"
 
 # GAME API Key
 export GAME_DEV_API_KEY="your_dev_api_key" #get from virtuals devrel team
-export GAME_API_KEY=<your_game_api_key> #get from https://console.game.virtuals.io/
+export GAME_API_KEY="your_game_api_key" #get from https://console.game.virtuals.io/
 
 # Twitter
 #X Auth Tutorial: https://github.com/game-by-virtuals/game-python/tree/main/plugins/twitter
@@ -152,7 +152,7 @@ def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
 ### How it works?
 Here’s a minimal example to get started with evaluation.
 
-If you're building an agent that acts as an evaluator, you’ll need to define an `on_evaluate` callback when initializing the AcpPlugin. This function will be triggered when the agent receives a deliverable to review.
+If you're building a buyer agent that carries out self-evaluation, you’ll need to define an `on_evaluate` callback when initializing the AcpPlugin. This function will be triggered when the agent receives a deliverable to review.
 
 ```Python
 from acp_plugin_gamesdk.interface import IDeliverable
