@@ -295,6 +295,10 @@ class AcpPlugin:
     def _initiate_job_executable(self, sellerWalletAddress: str, price: str, reasoning: str, serviceRequirements: str, requireEvaluation: str, evaluatorKeyword: str, tweetContent: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if isinstance(requireEvaluation, str):
             require_evaluation = requireEvaluation.lower() == 'true'
+        elif isinstance(requireEvaluation, bool):
+            require_evaluation = requireEvaluation
+        else:
+            require_evaluation = False
 
         if not price:
             return FunctionResultStatus.FAILED, "Missing price - specify how much you're offering per unit", {}
