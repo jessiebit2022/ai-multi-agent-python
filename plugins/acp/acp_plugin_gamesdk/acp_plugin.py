@@ -3,8 +3,9 @@ import signal
 import sys
 from typing import List, Dict, Any, Optional,Tuple
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime
+import traceback
 
 import socketio
 import socketio.client
@@ -152,8 +153,9 @@ class AcpPlugin:
         
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
-        server_state["inventory"]["produced"] = self.produced_inventory
-        return server_state
+        server_state.inventory.produced = self.produced_inventory
+        state = asdict(server_state)
+        return state
 
     def get_worker(self, data: Optional[Dict] = None) -> WorkerConfig:
         functions = data.get("functions") if data else [
@@ -349,6 +351,7 @@ class AcpPlugin:
                 "timestamp": datetime.now().timestamp(),
             }), {}
         except Exception as e:
+            print(traceback.format_exc())
             return FunctionResultStatus.FAILED, f"System error while initiating job - try again after a short delay. {str(e)}", {}
 
     @property
@@ -522,6 +525,7 @@ class AcpPlugin:
                 "timestamp": datetime.now().timestamp()
             }), {}
         except Exception as e:
+            print(traceback.format_exc())
             return FunctionResultStatus.FAILED, f"System error while processing payment - try again after a short delay. {str(e)}", {}
 
     @property
@@ -592,7 +596,7 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, f"Cannot deliver - job is in '{job['phase']}' phase, must be in 'transaction' phase", {}
 
             produced = next(
-                (i for i in self.produced_inventory if i["jobId"] == job["jobId"]),
+                (i for i in self.produced_inventory if i.jobId == job["jobId"]),
                 None
             )
 
@@ -627,4 +631,5 @@ class AcpPlugin:
                 "timestamp": datetime.now().timestamp()
             }), {}
         except Exception as e:
+            print(traceback.format_exc())
             return FunctionResultStatus.FAILED, f"System error while delivering items - try again after a short delay. {str(e)}", {}
