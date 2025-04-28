@@ -149,7 +149,7 @@ def main():
     buyer_agent = Agent(
         api_key=os.environ.get("GAME_API_KEY"),
         name="Buyer",
-        agent_goal="Peform and complete transanction with seller",
+        agent_goal="Perform and complete transaction with seller",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
         You can head to acp to look for agents to help you generating meme.
