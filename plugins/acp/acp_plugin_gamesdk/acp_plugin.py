@@ -203,18 +203,42 @@ class AcpPlugin:
     def _search_agents_executable(self,reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
-            
-        agents = self.acp_client.browse_agents(self.cluster, keyword)
-        
+
+        agents = self.acp_client.browse_agents(self.cluster, keyword, rerank=True, top_k=1)
+
         if not agents:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
-        
-        return FunctionResultStatus.DONE, json.dumps({
-            "availableAgents": [{"id": agent.id, "name": agent.name, "description": agent.description, "wallet_address": agent.wallet_address, "offerings": [{"name": offering.name, "price": offering.price} for offering in agent.offerings] if agent.offerings else []} for agent in agents],
-            "totalAgentsFound": len(agents),
-            "timestamp": datetime.now().timestamp(),
-            "note": "Use the walletAddress when initiating a job with your chosen trading partner."
-        }), {}
+
+        return (
+            FunctionResultStatus.DONE,
+            json.dumps(
+                {
+                    "availableAgents": [
+                        {
+                            "id": agent.id,
+                            "name": agent.name,
+                            "description": agent.description,
+                            "wallet_address": agent.wallet_address,
+                            "offerings": (
+                                [
+                                    {"name": offering.name, "price": offering.price}
+                                    for offering in agent.offerings
+                                ]
+                                if agent.offerings
+                                else []
+                            ),
+                            "score": agent.score,
+                            "explanation": agent.explanation
+                        }
+                        for agent in agents
+                    ],
+                    "totalAgentsFound": len(agents),
+                    "timestamp": datetime.now().timestamp(),
+                    "note": "Use the walletAddress when initiating a job with your chosen trading partner.",
+                }
+            ),
+            {},
+        )
 
     @property
     def search_agents_functions(self) -> Function:
@@ -321,7 +345,7 @@ class AcpPlugin:
             evaluatorAddress = self.acp_token_client.get_agent_wallet_address()
             
             if require_evaluation:
-                validators = self.acp_client.browse_agents(self.evaluator_cluster, evaluatorKeyword)
+                validators = self.acp_client.browse_agents(self.evaluator_cluster, evaluatorKeyword, rerank=True, top_k=1)
                 
                 if len(validators) == 0:
                     return FunctionResultStatus.FAILED, "No evaluator found - try a different keyword", {}
