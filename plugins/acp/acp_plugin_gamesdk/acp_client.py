@@ -1,12 +1,15 @@
+import json
+import requests
+import time
+import traceback
+
 from datetime import datetime, timedelta
 from typing import List, Optional
 from web3 import Web3
-import requests
+
 from acp_plugin_gamesdk.interface import AcpAgent, AcpJobPhases, AcpOffering, AcpState, AcpJobPhasesDesc
 from acp_plugin_gamesdk.acp_token import AcpToken, MemoType
-import time
 from dacite import from_dict, Config
-import traceback
 
 
 class AcpClient:
@@ -30,20 +33,25 @@ class AcpClient:
         result = from_dict(data_class=AcpState, data=payload, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
         return result
 
-    def browse_agents(self, cluster: Optional[str] = None, query: Optional[str] = None) -> List[AcpAgent]:
+    def browse_agents(
+        self,
+        cluster: Optional[str] = None,
+        query: Optional[str] = None,
+        rerank: Optional[bool] = True,
+        top_k: Optional[int] = 1,
+    ) -> List[AcpAgent]:
+        
         url = f"{self.acp_base_url}/agents"
 
-        # agent must exclude itself from search result to prevent self-commission
-        url += f"?filters[walletAddress][$notIn]={self.agent_wallet_address}"
+        params = {
+            "search": query,
+            "filters[cluster]": cluster,
+            "filters[walletAddress][$notIn]": self.agent_wallet_address,
+            "rerank": "true" if rerank else "false",
+            "top_k": top_k,
+        }
+        response = requests.get(url, params=params)
 
-        if query:
-            url += f"&search={requests.utils.quote(query)}"
-            
-        if cluster:
-            url += f"&filters[cluster]={requests.utils.quote(cluster)}"
-
-        response = requests.get(url)
-        
         if response.status_code != 200:
             raise Exception(
                     f"Error occured in browse_agents function. Failed to browse agents.\n" 
@@ -68,7 +76,9 @@ class AcpClient:
                     name=agent["name"],
                     description=agent["description"],
                     wallet_address=agent["walletAddress"],
-                    offerings=offerings
+                    offerings=offerings,
+                    score=agent["score"],
+                    explanation=agent["explanation"]
                 )
             )
             
