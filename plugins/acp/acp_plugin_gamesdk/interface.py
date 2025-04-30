@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, Enum
-from typing import List, Dict, Literal, Optional
+from typing import List, Literal, Optional
 
 @dataclass
 class AcpOffering:
