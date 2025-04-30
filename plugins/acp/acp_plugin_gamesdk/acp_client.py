@@ -3,7 +3,7 @@ import requests
 import time
 import traceback
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from web3 import Web3
 
@@ -84,13 +84,18 @@ class AcpClient:
             
         return result
 
-    def create_job(self, provider_address: str, price: float, job_description: str, evaluator_address: str) -> int:
-        expire_at = datetime.now() + timedelta(days=1)
-        
-        tx_result =  self.acp_token.create_job(
-            provider_address=provider_address,
-            evaluator_address=evaluator_address,
-            expire_at=expire_at
+    def create_job(
+            self,
+            provider_address: str,
+            price: float,
+            job_description: str,
+            evaluator_address: str,
+            expired_at: datetime,
+    ) -> int:
+        tx_result = self.acp_token.create_job(
+            provider_address = provider_address,
+            evaluator_address = evaluator_address,
+            expire_at = expired_at
         )
         
         job_id = None
@@ -142,7 +147,7 @@ class AcpClient:
             "providerAddress": provider_address,
             "description": job_description,
             "price": price,
-            "expiredAt": expire_at.isoformat(),
+            "expiredAt": expired_at.astimezone(timezone.utc).isoformat(),
             "evaluatorAddress": evaluator_address
         }
 

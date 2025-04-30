@@ -4,7 +4,7 @@ import sys
 from typing import List, Dict, Any, Optional,Tuple
 import json
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import traceback
 
 import socketio
@@ -27,6 +27,7 @@ class AcpPluginOptions:
     evaluator_cluster: Optional[str] = None
     on_evaluate: Optional[Callable[[IDeliverable], Tuple[bool, str]]] = None
     on_phase_change: Optional[Callable[[AcpJob], None]] = None
+    job_expiry_duration_mins: Optional[int] = None
     
 
 SocketEvents = {
@@ -75,6 +76,7 @@ class AcpPlugin:
             if options.on_phase_change is not None:
                 self.on_phase_change = options.on_phase_change
             self.initializeSocket()
+        self.job_expiry_duration_mins = options.job_expiry_duration_mins if options.job_expiry_duration_mins is not None else 1440
         
         
         
@@ -353,11 +355,13 @@ class AcpPlugin:
                 evaluatorAddress = validators[0].wallet_address
             
             # ... Rest of validation logic ...
+            expired_at = datetime.now(timezone.utc) + timedelta(minutes=self.job_expiry_duration_mins)
             job_id = self.acp_client.create_job(
                 sellerWalletAddress,
                 float(price),
                 serviceRequirements,
-                evaluatorAddress
+                evaluatorAddress,
+                expired_at
             )
             
             if (hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweetContent is not None):
