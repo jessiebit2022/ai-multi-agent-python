@@ -624,7 +624,7 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, f"Cannot deliver - job is in '{job['phase']}' phase, must be in 'transaction' phase", {}
 
             produced = next(
-                (i for i in self.produced_inventory if i.jobId == job["jobId"]),
+                (i for i in self.produced_inventory if (i["jobId"] if isinstance(i, dict) else i.jobId) == job["jobId"]),
                 None
             )
 
