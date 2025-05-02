@@ -9,7 +9,7 @@ from typing import Any,Tuple
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc
+from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IInventory
 from acp_plugin_gamesdk.acp_token import AcpToken
 from game_sdk.game.custom_types import Argument, Function, FunctionResult, FunctionResultStatus
 from game_sdk.game.agent import Agent
@@ -137,11 +137,13 @@ def test():
 
         url = "http://example.com/meme"
 
-        acp_plugin.add_produce_item({
-            "jobId": int(jobId),
-            "type": "url",
-            "value": url
-        })
+        meme = IInventory(
+            jobId=int(jobId),
+            type="url",
+            value=url
+        )
+
+        acp_plugin.add_produce_item(meme)
 
         return FunctionResultStatus.DONE, f"Meme generated with the URL: {url}", {}
 
