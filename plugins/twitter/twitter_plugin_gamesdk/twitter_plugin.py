@@ -67,6 +67,10 @@ class TwitterPlugin:
         credentials = options.get("credentials")
         if not credentials:
             raise ValueError("Twitter API credentials are required.")
+        for key in ["bearerToken", "apiKey", "apiSecretKey", "accessToken", "accessTokenSecret"]:
+            if not credentials.get(key):
+                raise ValueError(f"Missing required Twitter API credential: {key}")
+
         # Init Tweepy client
         self.twitter_client: tweepy.Client = tweepy.Client(
             bearer_token = credentials.get("bearerToken"),
@@ -76,6 +80,11 @@ class TwitterPlugin:
             access_token_secret=credentials.get("accessTokenSecret"),
             return_type = dict
         )
+        # Configure logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        # Check if the credentials are valid by verifying the authenticated user
+        self._check_authentication()
         # Define internal function mappings
         self._functions: Dict[str, Callable[..., Any]] = {
             "get_metrics": self._get_metrics,
@@ -86,9 +95,17 @@ class TwitterPlugin:
             "get_user_from_handle": self._get_user_from_handle,
             "get_user_mentions": self._get_user_mentions
         }
-        # Configure logging
-        logging.basicConfig(level=logging.INFO)
-        self.logger: logging.Logger = logging.getLogger(__name__)
+
+    def _check_authentication(self) -> None:
+        """
+        Check if the credentials provided are valid by calling the /me endpoint or fetching user info.
+        """
+        try:
+            user = self.twitter_client.get_me(user_fields=["public_metrics"]).get('data')
+            self.logger.info(f"Authenticated as: {user.get('name')} (@{user.get('username')})")
+        except tweepy.TweepyException as e:
+            self.logger.error(f"Authentication failed: {e}")
+            raise ValueError("Invalid Twitter credentials or failed authentication.")
 
     @property
     def available_functions(self) -> List[str]:
