@@ -1,5 +1,8 @@
 import os
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Define your options with the necessary credentials
 options = {

@@ -46,12 +46,19 @@ class GameTwitterPlugin:
         credentials = options.get("credentials")
         if not credentials:
             raise ValueError("Twitter API credentials are required.")
+        if not credentials.get("gameTwitterAccessToken"):
+            raise ValueError("Missing required GAME Twitter API credential: gameTwitterAccessToken")
         # Set GAME Twitter configs, e.g. base URL
         self.base_url = "https://twitter.game.virtuals.io/tweets"
         self.headers = {
             "Content-Type": "application/json",
             "x-api-key": credentials.get("gameTwitterAccessToken", None),
         }
+        # Configure logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        # Check if the credentials are valid by verifying the authenticated user
+        self._check_authentication()
         # Define internal function mappings
         self._functions: Dict[str, Callable[..., Any]] = {
             "reply_tweet": self._reply_tweet,
@@ -64,9 +71,6 @@ class GameTwitterPlugin:
             "followers": self._followers,
             "following": self._following
         }
-        # Configure logging
-        logging.basicConfig(level=logging.INFO)
-        self.logger: logging.Logger = logging.getLogger(__name__)
 
     @property
     def available_functions(self) -> List[str]:
@@ -160,6 +164,17 @@ class GameTwitterPlugin:
         if media_ids:
             payload["mediaIds"] = media_ids
         return self._fetch_api(f"/quote/{tweet_id}", "POST", data=payload)
+
+    def _check_authentication(self) -> None:
+        """
+        Check if the credentials provided are valid by calling the /me endpoint.
+        """
+        try:
+            user_info = self._get_authenticated_user().get('data', {})
+            self.logger.info(f"Authenticated as: {user_info.get('name')} (@{user_info.get('username')})")
+        except Exception as e:
+            self.logger.error(f"Authentication failed: {str(e)}")
+            raise ValueError("Invalid Twitter credentials or failed authentication.")
 
     def _get_authenticated_user(self) -> Dict[str, Any]:
         """
