@@ -632,8 +632,8 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, "Cannot deliver - you should be producing the deliverable first before delivering it", {}
 
             deliverable: dict = {
-                "type": deliverableType,
-                "value": deliverable
+                "type": produced.type,
+                "value": produced.value
             }
 
             self.acp_client.deliver_job(
