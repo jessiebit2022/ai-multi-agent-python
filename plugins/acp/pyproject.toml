@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acp-plugin-gamesdk"
-version = "0.1.8"
+version = "0.1.12"
 description = "ACP Plugin for Python SDK for GAME by Virtuals"
 authors = ["Steven Lee Soon Fatt <steven@virtuals.io>"]
 readme = "README.md"
@@ -21,7 +21,7 @@ python-socketio = "^5.11.1"
 websocket-client = "^1.7.0"
 python-dotenv = "^1.1.0"
 dacite = "^1.9.2"
-rich = ">=14.0.0,<15.0.0"
+rich = ">=13.9.4,<15.0.0"
 
 [build-system]
 requires = ["poetry-core"]

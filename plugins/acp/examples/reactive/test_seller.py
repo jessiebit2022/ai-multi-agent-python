@@ -12,6 +12,7 @@ from dacite.config import Config
 from rich import print, box
 from rich.panel import Panel
 
+
 def ask_question(query: str) -> str:
     return input(query)
 
@@ -114,7 +115,7 @@ def test():
     #     )
     # )
     
-    def get_agent_state() -> dict:
+    def get_agent_state(_: Any, _e: Any) -> dict:
         state = acp_plugin.get_acp_state()
         return state
     
@@ -134,11 +135,13 @@ def test():
 
         url = "http://example.com/meme"
 
-        acp_plugin.add_produce_item({
-            "jobId": int(jobId),
-            "type": "url",
-            "value": url
-        })
+        meme = IInventory(
+            jobId=int(jobId),
+            type="url",
+            value=url
+        )
+
+        acp_plugin.add_produce_item(meme)
 
         return FunctionResultStatus.DONE, f"Meme generated with the URL: {url}", {}
 
