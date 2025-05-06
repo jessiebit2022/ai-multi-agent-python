@@ -3,7 +3,7 @@ import os
 
 from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
-from acp_plugin_gamesdk.interface import AcpJob, IDeliverable
+from acp_plugin_gamesdk.interface import AcpJob, IDeliverable, AcpJobPhasesDesc,AcpState
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from dacite import from_dict

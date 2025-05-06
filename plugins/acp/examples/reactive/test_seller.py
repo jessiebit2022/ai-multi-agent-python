@@ -1,19 +1,16 @@
 import json
 import os
+from typing import Any,Tuple
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
+from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, AcpState
+from acp_plugin_gamesdk.acp_token import AcpToken
+from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
+from game_sdk.game.agent import Agent
 from dacite import from_dict
 from dacite.config import Config
 from rich import print, box
 from rich.panel import Panel
-
-from typing import Any,Tuple
-from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
-from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
-from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc
-from acp_plugin_gamesdk.acp_token import AcpToken
-from game_sdk.game.custom_types import Argument, Function, FunctionResult, FunctionResultStatus
-from game_sdk.game.agent import Agent
-
 
 def ask_question(query: str) -> str:
     return input(query)
@@ -97,7 +94,7 @@ def test():
                 "https://base-sepolia-rpc.publicnode.com/",
                 "https://acpx-staging.virtuals.io/api"
             ),
-            twitter_plugin=GameTwitterPlugin(options),
+            twitter_plugin=TwitterPlugin(options),
             on_phase_change=on_phase_change
         )
     )
