@@ -13,7 +13,6 @@ import socketio.client
 from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
-from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from acp_plugin_gamesdk.acp_client import AcpClient
 from acp_plugin_gamesdk.acp_token import AcpToken
 from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IDeliverable, IInventory, AcpJob
@@ -22,7 +21,7 @@ from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IDeliverable, IInvent
 class AcpPluginOptions:
     api_key: str
     acp_token_client: AcpToken
-    twitter_plugin: TwitterPlugin | GameTwitterPlugin = None
+    twitter_plugin: TwitterPlugin  = None
     cluster: Optional[str] = None
     evaluator_cluster: Optional[str] = None
     on_evaluate: Optional[Callable[[IDeliverable], Tuple[bool, str]]] = None
@@ -365,8 +364,8 @@ class AcpPlugin:
             )
             
             if (hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweetContent is not None):
-                post_tweet_fn = self.twitter_plugin.get_function('post_tweet')
-                tweet_id = post_tweet_fn(tweetContent, None).get('data', {}).get('id')
+                post_tweet_fn = self.twitter_plugin.twitter_client.create_tweet
+                tweet_id = post_tweet_fn(text=tweetContent).get('data', {}).get('id')
                 if (tweet_id is not None):
                     self.acp_client.add_tweet(job_id, tweet_id, tweetContent)
                     print("Tweet has been posted")
@@ -454,8 +453,8 @@ class AcpPlugin:
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
-                    reply_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
-                    tweet_id = reply_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    reply_tweet_fn = self.twitter_plugin.twitter_client.create_tweet
+                    tweet_id = reply_tweet_fn(in_reply_to_tweet_id=tweet_id, text=tweetContent).get('data', {}).get('id')
                     if (tweet_id is not None):
                         self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
                         print("Tweet has been posted")
@@ -541,8 +540,8 @@ class AcpPlugin:
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
-                    reply_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
-                    tweet_id = reply_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    reply_tweet_fn = self.twitter_plugin.twitter_client.create_tweet
+                    tweet_id = reply_tweet_fn(in_reply_to_tweet_id=tweet_id, text=tweetContent).get('data', {}).get('id')
                     if (tweet_id is not None):
                         self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
                         print("Tweet has been posted")
@@ -646,8 +645,8 @@ class AcpPlugin:
                 tweet_history = job.get("tweetHistory", [])
                 tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
                 if (tweet_id is not None):
-                    reply_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
-                    tweet_id = reply_tweet_fn(tweet_id,tweetContent, None).get('data', {}).get('id')
+                    reply_tweet_fn = self.twitter_plugin.twitter_client.create_tweet
+                    tweet_id = reply_tweet_fn(in_reply_to_tweet_id=tweet_id, text=tweetContent).get('data', {}).get('id')
                     if (tweet_id is not None):
                         self.acp_client.add_tweet(jobId ,tweet_id, tweetContent)
                         print("Tweet has been posted")

@@ -76,8 +76,8 @@ def main():
     
     def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
         if (acp_plugin.twitter_plugin is not None):
-            post_tweet_fn = acp_plugin.twitter_plugin.get_function('post_tweet')
-            post_tweet_fn(content, None)
+            post_tweet_fn = acp_plugin.twitter_plugin.twitter_client.create_tweet
+            post_tweet_fn(text=content)
             return FunctionResultStatus.DONE, "Tweet has been posted", {}
         
         return FunctionResultStatus.FAILED, "Twitter plugin is not initialized", {}

@@ -15,7 +15,7 @@ from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 # Using GAME Twitter API credentials
 options = {
     "credentials": {
-        "gameTwitterAccessToken": "apx-xxx",
+        "gameTwitterAccessToken": "apx-a48d498e3667d5dad5bb8d0d830ccb64",
     },
 }
 
@@ -25,7 +25,7 @@ twitter_plugin = TwitterPlugin(options)
 # Test case 1: Post a Tweet
 print("\nRunning Test Case 1: Post a Tweet")
 post_tweet_fn = twitter_plugin.twitter_client.create_tweet
-post_tweet_fn(text="Hello world! This is a test tweet from the Twitter Plugin!")
+data = post_tweet_fn(text="Hello world! This is a test tweet from the Twitter Plugin!")
 print("Posted tweet!")
 
 # Test case 2: Post a Tweet with Media
