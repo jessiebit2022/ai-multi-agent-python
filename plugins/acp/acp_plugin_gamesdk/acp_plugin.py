@@ -335,8 +335,14 @@ class AcpPlugin:
         try:
             state = self.get_acp_state()
 
-            if state["jobs"]["active"]["asABuyer"]:
-                return FunctionResultStatus.FAILED, "You already have an active job as a buyer", {}
+            existing_job = next(
+                (job for job in state["jobs"]["active"]["asABuyer"]
+                 if job["providerAddress"] == sellerWalletAddress),
+                None
+            )
+
+            if existing_job:
+                return FunctionResultStatus.FAILED, f"You already have an active job as a buyer with {existing_job['providerAddress']} - complete the current job before initiating a new one", {}  
             
             if not sellerWalletAddress:
                 return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
