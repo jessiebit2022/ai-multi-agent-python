@@ -73,6 +73,7 @@ class ITweet:
 @dataclass
 class AcpJob:
     jobId: Optional[int]
+    clientName : Optional[str]
     desc: str
     price: str
     phase: AcpJobPhasesDesc
@@ -84,6 +85,7 @@ class AcpJob:
     def __repr__(self) -> str:
         output =(
             f"Job ID: {self.jobId}, "
+            f"Client Name: {self.clientName}, "
             f"Description: {self.desc}, "
             f"Price: {self.price}, "
             f"Phase: {self.phase.value}, "
@@ -98,6 +100,7 @@ class AcpJob:
 class IDeliverable:
     type: str
     value: str
+    clientName: Optional[str]
 
 @dataclass
 class IInventory(IDeliverable):
