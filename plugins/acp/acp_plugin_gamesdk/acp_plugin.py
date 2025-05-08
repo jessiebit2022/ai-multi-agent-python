@@ -168,7 +168,7 @@ class AcpPlugin:
             self.deliver_job,
         ]
         
-        def get_environment(_e, __) -> Dict[str, Any]:
+        def get_environment() -> Dict[str, Any]:
             environment = data.get_environment() if hasattr(data, "get_environment") else {}
             return {
                 **environment,
