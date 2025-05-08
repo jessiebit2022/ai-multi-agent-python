@@ -74,6 +74,7 @@ class ITweet:
 class AcpJob:
     jobId: Optional[int]
     clientName : Optional[str]
+    providerAddress: Optional[str]
     desc: str
     price: str
     phase: AcpJobPhasesDesc
@@ -86,6 +87,7 @@ class AcpJob:
         output =(
             f"Job ID: {self.jobId}, "
             f"Client Name: {self.clientName}, "
+            f"Provider Address: {self.providerAddress}, "
             f"Description: {self.desc}, "
             f"Price: {self.price}, "
             f"Phase: {self.phase.value}, "
@@ -101,10 +103,12 @@ class IDeliverable:
     type: str
     value: str
     clientName: Optional[str]
-
+    providerAddress: Optional[str]
 @dataclass
 class IInventory(IDeliverable):
     jobId: int
+    clientName: Optional[str]
+    providerAddress: Optional[str]
 
 @dataclass
 class AcpJobsSection:
