@@ -52,7 +52,7 @@ def main():
         out = ""
         out +=(f"Buyer agent is reacting to job:\n{job}\n\n")
         
-        worker = agent.get_worker("acp_worker")
+        worker = buyer_agent.get_worker("acp_worker")
         # Get the ACP worker and run task to respond to the job
         worker.run(
             f"Respond to the following transaction: {job}",
