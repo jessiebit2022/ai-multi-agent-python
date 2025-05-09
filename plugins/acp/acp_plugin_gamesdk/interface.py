@@ -74,12 +74,12 @@ class ITweet:
 class AcpJob:
     jobId: Optional[int]
     clientName : Optional[str]
-    providerAddress: Optional[str]
+    providerName: Optional[str]
     desc: str
     price: str
+    providerAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    lastUpdated: int
     tweetHistory : ITweet | List
     lastUpdated: int
 
@@ -87,12 +87,12 @@ class AcpJob:
         output =(
             f"Job ID: {self.jobId}, "
             f"Client Name: {self.clientName}, "
-            f"Provider Address: {self.providerAddress}, "
+            f"Provider Name: {self.providerName}, "
             f"Description: {self.desc}, "
             f"Price: {self.price}, "
+            f"Provider Address: {self.providerAddress}, "
             f"Phase: {self.phase.value}, "
             f"Memo: {self.memo}, "
-            f"Last Updated: {self.lastUpdated})"
             f"Tweet History: {self.tweetHistory}, "
             f"Last Updated: {self.lastUpdated})"
         ) 
