@@ -76,7 +76,7 @@ def main():
         )
     )
 
-    def get_agent_state() -> dict:
+    def get_agent_state(_: Any, _e: Any) -> dict:
         state = acp_plugin.get_acp_state()
         return state
     
