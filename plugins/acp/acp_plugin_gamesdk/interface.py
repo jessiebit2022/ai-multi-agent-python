@@ -103,12 +103,12 @@ class IDeliverable:
     type: str
     value: str
     clientName: Optional[str]
-    providerAddress: Optional[str]
+    providerName: Optional[str]
 @dataclass
 class IInventory(IDeliverable):
     jobId: int
     clientName: Optional[str]
-    providerAddress: Optional[str]
+    providerName: Optional[str]
 
 @dataclass
 class AcpJobsSection:
