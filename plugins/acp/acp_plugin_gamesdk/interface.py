@@ -79,7 +79,6 @@ class AcpJob:
     price: str
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    lastUpdated: int
     tweetHistory : ITweet | List
     lastUpdated: int
 
@@ -92,7 +91,6 @@ class AcpJob:
             f"Price: {self.price}, "
             f"Phase: {self.phase.value}, "
             f"Memo: {self.memo}, "
-            f"Last Updated: {self.lastUpdated})"
             f"Tweet History: {self.tweetHistory}, "
             f"Last Updated: {self.lastUpdated})"
         ) 
