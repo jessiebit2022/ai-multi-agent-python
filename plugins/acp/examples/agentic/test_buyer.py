@@ -70,7 +70,7 @@ def main():
     #     )
     # )
 
-    def get_agent_state() -> dict:
+    def get_agent_state(function_result, current_state) -> dict:
         state = acp_plugin.get_acp_state()
         return state
     

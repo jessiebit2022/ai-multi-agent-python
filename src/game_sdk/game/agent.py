@@ -72,7 +72,7 @@ class WorkerConfig:
         self.get_state_fn = lambda function_result, current_state: {
             "instructions": self.instruction,  # instructions are set up in the state
             # places the rest of the output of the get_state_fn in the state
-            **get_state_fn(),
+            **get_state_fn(function_result, current_state),
         }
 
         self.action_space: Dict[str, Function] = {
@@ -151,7 +151,7 @@ class Agent:
         self.get_agent_state_fn = get_agent_state_fn
 
         # initialize and set up agent states
-        self.agent_state = self.get_agent_state_fn()
+        self.agent_state = self.get_agent_state_fn(None, None)
 
         # initialize observation
         self.observation = None
@@ -323,7 +323,7 @@ class Agent:
         
 
         # update agent state
-        self.agent_state = self.get_agent_state_fn()
+        self.agent_state = self.get_agent_state_fn(self._session.function_result, self.agent_state)
         
         # update observation (saved state) - no interruptions (is_global should always be False)
         if update_observation == "task":
