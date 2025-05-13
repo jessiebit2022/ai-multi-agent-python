@@ -9,6 +9,7 @@ from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 from acp_plugin_gamesdk.interface import IDeliverable, AcpState, AcpJobPhasesDesc
 def ask_question(query: str) -> str:
     return input(query)
@@ -52,7 +53,7 @@ def main():
                 "https://base-sepolia-rpc.publicnode.com/",  # RPC
                 "https://acpx-staging.virtuals.io/api"
             ),
-            twitter_plugin=TwitterPlugin(options),
+            twitter_plugin=GameTwitterPlugin(options),
             on_evaluate=on_evaluate
         )
     )
@@ -76,8 +77,8 @@ def main():
     
     def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
         if (acp_plugin.twitter_plugin is not None):
-            post_tweet_fn = acp_plugin.twitter_plugin.twitter_client.create_tweet
-            post_tweet_fn(text=content)
+            post_tweet_fn = acp_plugin.twitter_plugin.get_function('post_tweet')
+            post_tweet_fn(content, None)
             return FunctionResultStatus.DONE, "Tweet has been posted", {}
         
         return FunctionResultStatus.FAILED, "Twitter plugin is not initialized", {}
