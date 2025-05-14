@@ -3,7 +3,7 @@ import os
 from typing import Any,Tuple
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, AcpState
+from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, AcpState, IInventory
 from acp_plugin_gamesdk.acp_token import AcpToken
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
