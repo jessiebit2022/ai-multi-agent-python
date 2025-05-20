@@ -75,7 +75,6 @@ def buyer():
             ),
             on_evaluate=on_evaluate,
             on_phase_change=on_phase_change,
-            cluster="yang_test",
             # GAME Twitter Plugin
             twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin

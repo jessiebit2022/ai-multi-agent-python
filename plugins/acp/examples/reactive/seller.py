@@ -172,10 +172,11 @@ def seller():
     )
 
     agent = Agent(
-            api_key=os.environ.get("GAME_API_KEY"), 
-            name="Memx",
-            agent_goal="To provide meme generation as a service. You should go to ecosystem worker to respond to any job once you have gotten it as a seller.",
-            agent_description=f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
+        api_key=os.environ.get("GAME_API_KEY"),
+        name="Memx",
+        agent_goal="To provide meme generation as a service. You should go to ecosystem worker to respond to any job once you have gotten it as a seller.",
+        agent_description=f"""
+        You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
 
         {acp_plugin.agent_description}
         """,
