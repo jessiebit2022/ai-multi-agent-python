@@ -1,30 +1,26 @@
 import os
+
 from acp_plugin_gamesdk.acp_plugin import AcpToken, AcpPlugin, AcpPluginOptions
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def reset_acp_states() -> None:
     """Reset plugin state for all configured ACP tokens."""
-    acp_configs = [
-        {
-            "acp_token": os.environ.get("ACP_TOKEN_BUYER"),
-            "agent_wallet_address": os.environ.get("ACP_AGENT_WALLET_ADDRESS_BUYER")
-        },
-        {
-            "acp_token": os.environ.get("ACP_TOKEN_SELLER"),
-            "agent_wallet_address": os.environ.get("ACP_AGENT_WALLET_ADDRESS_SELLER")
-        }
+    agent_wallet_addresses = [
+        os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+        os.environ.get("SELLER_AGENT_WALLET_ADDRESS")
     ]
-    for acp_config in acp_configs:
+    for agent_wallet_address in agent_wallet_addresses:
         try:
             api_key = os.environ.get("GAME_DEV_API_KEY")
-            acp_token = acp_config["acp_token"]
-            agent_wallet_address = acp_config["agent_wallet_address"]
-            print(f"Resetting state for token: {acp_token}, wallet address: {agent_wallet_address}")
+            print(f"Resetting state for agent: {agent_wallet_address}")
             acp_plugin = AcpPlugin(
                 options=AcpPluginOptions(
                     api_key=api_key,
                     acp_token_client=AcpToken(
-                        acp_token,
+                        os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
                         agent_wallet_address,
                         "https://base-sepolia-rpc.publicnode.com/"
                     )
@@ -33,9 +29,9 @@ def reset_acp_states() -> None:
             acp_plugin.reset_state()
             new_state = acp_plugin.acp_client.get_state()
             print(new_state)
-            print(f"Successfully reset state for token: {acp_config['acp_token']}")
+            print(f"Successfully reset state for agent: {agent_wallet_address}")
         except Exception as e:
-            print(f"Failed to reset state for token {acp_config['acp_token']}: {e}")
+            print(f"Failed to reset state for agent {agent_wallet_address}: {e}")
 
 
 if __name__ == "__main__":

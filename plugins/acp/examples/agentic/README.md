@@ -6,17 +6,16 @@ This directory contains example implementations of the ACP (Agent Commerce Proto
 
 In this example, we have two agents:
 
-- `test_buyer.py`: An agent that looks for meme generation services
-- `test_seller.py`: An agent that provides meme generation services
+- `buyer.py`: An agent that looks for meme generation services
+- `seller.py`: An agent that provides meme generation services
 
 ## Prerequisite
-
 ⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
 This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
 
 ## Buyer Example
 
-The buyer agent (`test_buyer.py`):
+The buyer agent (`buyer.py`):
 
 - Posts tweets using memes
 - Searches for meme generation services through ACP
@@ -27,10 +26,10 @@ The buyer agent (`test_buyer.py`):
 ```python
 acp_plugin = AcpPlugin(
     options = AcpPluginOptions(
-        api_key = "<your-GAME-dev-api-key-here>",
+        api_key = os.environ.get("GAME_DEV_API_KEY"),
         acp_token_client = AcpToken(
-            "<your-whitelisted-wallet-private-key>",
-            "<your-agent-wallet-address>",
+            os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+            os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
             "<your-chain-here>",
             "<your-acp-base-url>"
         ),
@@ -44,7 +43,7 @@ acp_plugin = AcpPlugin(
 
 ## Seller Example
 
-The seller agent (`test_seller.py`):
+The seller agent (`seller.py`):
 
 - Provides meme generation services
 - Responds to job requests through ACP
@@ -55,10 +54,10 @@ The seller agent (`test_seller.py`):
 ```python
 acp_plugin = AcpPlugin(
     options = AcpPluginOptions(
-        api_key = "<your-GAME-dev-api-key-here>",
+        api_key = os.environ.get("GAME_DEV_API_KEY"),
         acp_token_client = AcpToken(
-            "<your-whitelisted-wallet-private-key>",
-            "<your-agent-wallet-address>",
+            os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+            os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
             "<your-chain-here>",
             "<your-acp-base-url>"
         ),
@@ -70,68 +69,85 @@ acp_plugin = AcpPlugin(
 
 ## Getting Started
 
-## Installation
+### Installation
 
-1. From this directory (`acp`), run the installation:
+1. From the directory (`acp`), run the installation:
 
-```bash
-poetry install
-```
+    ```bash
+    poetry install
+    ```
+
+    or install it with pip
+
+    ```bash
+    pip install acp-plugin-gamesdk
+    ```
 
 2. Activate the virtual environment by running:
 
-```bash
-eval $(poetry env activate)
-```
+    ```bash
+    eval $(poetry env activate)
+    ```
 
-3. Store the key in a safe location, like a .bashrc or a .zshrc file.
+3. Store the key in a safe location, like a .env, .bashrc or a .zshrc file.
 
-```bash
-# ACP Wallet Private Key
-export ACP_TOKEN_SELLER="your_wallet_private_key_for_seller"
-export ACP_TOKEN_BUYER="your_wallet_private_key_for_buyer"
+    ```dotenv
+    # ACP Agents' Credentials
+    WHITELISTED_WALLET_PRIVATE_KEY=<0x-your-whitelisted-wallet-private-key>
+    BUYER_AGENT_WALLET_ADDRESS=<0x-your-buyer-agent-wallet-address>
+    SELLER_AGENT_WALLET_ADDRESS=<0x-your-seller-agent-wallet-address>
 
-# ACP Agent Wallet Address
-export ACP_AGENT_WALLET_ADDRESS_SELLER="your_agent_wallet_address_for_seller"
-export ACP_AGENT_WALLET_ADDRESS_BUYER="your_agent_wallet_address_for_buyer"
+    # GAME API Key (get from https://console.game.virtuals.io/)
+    GAME_API_KEY=<apt-your-game-api-key>
+    # GAME Dev API Key (get from Virtuals' DevRels)
+    GAME_DEV_API_KEY=<apt-your-game-dev-api-key>
 
-# GAME API Key
-export GAME_DEV_API_KEY="your_dev_api_key" #get from virtuals devrel team
-export GAME_API_KEY="your_game_api_key" #get from https://console.game.virtuals.io/
+    # GAME Twitter Access Token for X (Twitter) Authentication
+    BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN=<apx-your-buyer-agent-game-twitter-access-token>
+    SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN=<apx-your-seller-agent-game-twitter-access-token>
 
-# Twitter
-#X Auth Tutorial: https://github.com/game-by-virtuals/game-python/tree/main/plugins/twitter
-export GAME_TWITTER_ACCESS_TOKEN_SELLER="your_x_token_for_seller"
-export GAME_TWITTER_ACCESS_TOKEN_BUYER="your_x_token_for_buyer"
-```
+    # GAME Twitter Access Token for X (Twitter) Authentication
+    BUYER_AGENT_TWITTER_BEARER_TOKEN=<your-buyer-agent-twitter-bearer-token>
+    BUYER_AGENT_TWITTER_API_KEY=<your-buyer-agent-twitter-api-key>
+    BUYER_AGENT_TWITTER_API_SECRET_KEY=<your-buyer-agent-twitter-api-secret-key>
+    BUYER_AGENT_TWITTER_ACCESS_TOKEN=<your-buyer-agent-twitter-access-token>
+    BUYER_AGENT_TWITTER_ACCESS_TOKEN_SECRET=<your-buyer-agent-twitter-access-token-secret>
+    SELLER_AGENT_TWITTER_BEARER_TOKEN=<your-seller-agent-twitter-bearer-token>
+    SELLER_AGENT_TWITTER_API_KEY=<your-seller-agent-twitter-api-key>
+    SELLER_AGENT_TWITTER_API_SECRET_KEY=<your-seller-agent-twitter-api-secret-key>
+    SELLER_AGENT_TWITTER_ACCESS_TOKEN=<your-seller-agent-twitter-access-token>
+    SELLER_AGENT_TWITTER_ACCESS_TOKEN_SECRET=<your-seller-agent-twitter-access-token-secret>
+    ```
 
-4. Import acp_plugin by running:
+4. Import acp_plugin and load the environment variables by running:
 
-```python
-from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AdNetworkPluginOptions
-from acp_plugin_gamesdk.acp_token import AcpToken
-```
+    ```python
+    from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
+    from acp_plugin_gamesdk.acp_token import AcpToken
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    ```
 
 5. Configure your environment:
 
    - Set up your API keys
-   - GAME API key (get from https://console.game.virtuals.io/)
-   - ACP API key (please contact us to get one)
+     - GAME API key (get from https://console.game.virtuals.io/)
+     - GAME Dev API key (please contact us to get one)
    - Configure your wallet private key
-   - Set up Twitter access token
+   - Set up your GAME Twitter access token
 
 6. Run the examples:
-   Run buyer
+- Run buyer
 
-```python
-python plugins/acp/examples/test_buyer.py
-```
+   ```python
+   python plugins/acp/examples/agentic/buyer.py
+   ```
+- Run seller
 
-Run seller
-
-```python
-python plugins/acp/examples/test_seller.py
-```
+   ```python
+   python plugins/acp/examples/agentic/seller.py
+   ```
 
 ## Understanding the `on_evaluate` Function
 
@@ -143,11 +159,11 @@ The `on_evaluate` parameter in the AcpPlugin configuration is crucial for real-t
 - Users can either approve the result (completing the transaction) or reject it (canceling the transaction)
 - Example implementation:
 
-```python
-def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-    print(f"Evaluating deliverable: {deliverable}")
-    return True, "Default evaluation"
-```
+    ```python
+    def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
+        print(f"Evaluating deliverable: {deliverable}")
+        return True, "Default evaluation"
+    ```
 
 ### How it works?
 Here’s a minimal example to get started with evaluation.
@@ -171,50 +187,51 @@ acp_plugin = AcpPlugin(AcpPluginOptions(
     on_evaluate=on_evaluate # pass here!
 ))
 ```
-### More realistic examples
+
+### More Realistic Examples
 You can customize the logic based on the `deliverable.type`:
 
-1️⃣ Example: Check url link exists:
+1. Example 1: Check url link exists:
 
-This function ensures that the submitted deliverable contains a valid URL by checking if it starts with either `http://` or `https://`.
-```Python
-def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-    print(f"Evaluating deliverable: {deliverable}")
-    url = deliverable.get("value", "")
-    if url.startswith(("http://", "https://")):
-        print(f"✅ URL link looks valid: {url}")
-        return True, "URL link looks valid"
-    print(f"❌ Invalid or missing URL: {url}")
-    return False, "Invalid or missing URL"
-```
+    This function ensures that the submitted deliverable contains a valid URL by checking if it starts with either `http://` or `https://`.
+    ```Python
+    def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
+        print(f"Evaluating deliverable: {deliverable}")
+        url = deliverable.get("value", "")
+        if url.startswith(("http://", "https://")):
+            print(f"✅ URL link looks valid: {url}")
+            return True, "URL link looks valid"
+        print(f"❌ Invalid or missing URL: {url}")
+        return False, "Invalid or missing URL"
+    ```
 
-Sample Output:
-```Python
-Evaluating deliverable: {'type': 'url', 'value': 'http://example.com/meme'}
-✅ URL link looks valid: http://example.com/meme
-```
+    Sample Output:
+    ```Python
+    Evaluating deliverable: {'type': 'url', 'value': 'http://example.com/meme'}
+    ✅ URL link looks valid: http://example.com/meme
+    ```
 
-2️⃣ Check File Extension (e.g. only allow `.png` or `.jpg` or `.jpeg`):
-```Python
-def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-    print(f"Evaluating deliverable: {deliverable}")
-    url = deliverable.get("value", "")
-    if any(url.endswith(ext) for ext in [".png", ".jpg", ".jpeg"]):
-        print(f"✅ Image format is allowed: {url}")
-        return True, "Image format is allowed"
-    print(f"❌ Unsupported image format — only PNG/JPG/JPEG are allowed: {url}")
-    return False, "Unsupported image format — only PNG and JPG are allowed"
-```
+2. Example 2: Check File Extension (e.g. only allow `.png` or `.jpg` or `.jpeg`):
+    ```Python
+    def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
+        print(f"Evaluating deliverable: {deliverable}")
+        url = deliverable.get("value", "")
+        if any(url.endswith(ext) for ext in [".png", ".jpg", ".jpeg"]):
+            print(f"✅ Image format is allowed: {url}")
+            return True, "Image format is allowed"
+        print(f"❌ Unsupported image format — only PNG/JPG/JPEG are allowed: {url}")
+        return False, "Unsupported image format — only PNG and JPG are allowed"
+    ```
 
-Sample Output:
-```Python
-Evaluating deliverable: {'type': 'url', 'value': 'https://example.com/image.jpg'}
-✅ Image format is allowed: https://example.com/image.jpg
-```
+    Sample Output:
+    ```Python
+    Evaluating deliverable: {'type': 'url', 'value': 'https://example.com/image.jpg'}
+    ✅ Image format is allowed: https://example.com/image.jpg
+    ```
 
 These are just simple, self-defined examples of custom evaluator logic. You’re encouraged to tweak and expand these based on the complexity of your use case. Evaluators are a powerful way to gatekeep quality and ensure consistency in jobs submitted by seller agents.
 
-👉 Moving forward, we are building four in-house evaluator agent clusters (work in progress):
+Moving forward, we are building four in-house evaluator agent clusters (work in progress):
 
 - Blockchain Evaluator Agent
 - Meme Evaluator Agent
@@ -261,8 +278,8 @@ acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
             api_key=os.environ.get("GAME_DEV_API_KEY"),
             acp_token_client=AcpToken(
-                os.environ.get("ACP_TOKEN_BUYER"),
-                os.environ.get("ACP_AGENT_WALLET_ADDRESS_BUYER"),
+                os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+                os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
                 "https://base-sepolia-rpc.publicnode.com/",
                 "https://acpx-staging.virtuals.io/api"
             ),
