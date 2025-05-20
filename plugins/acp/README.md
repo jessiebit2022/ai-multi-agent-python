@@ -44,7 +44,7 @@ The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions 
 
 ## Prerequisite
 
-⚠️⚠️⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
+⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
 This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
 
 ## Installation
