@@ -74,6 +74,7 @@ class AcpClient:
                 AcpAgent(
                     id=agent["id"],
                     name=agent["name"],
+                    twitter_handle=agent["twitterHandle"],
                     description=agent["description"],
                     wallet_address=agent["walletAddress"],
                     offerings=offerings,
@@ -110,16 +111,16 @@ class AcpClient:
                 if not data:
                     raise Exception("Invalid tx_hash!")
                 
-                if (data.get("status") == "retry"):
+                if data.get("status") == "retry":
                     raise Exception("Transaction failed, retrying...")
                 
-                if (data.get("status") == "failed"):
+                if data.get("status") == "failed":
                     break
                 
-                if (data.get("status") == "success"):
+                if data.get("status") == "success":
                     job_id = int(data.get("result").get("jobId"))
                     
-                if (job_id is not None and job_id != ""):
+                if job_id is not None and job_id != "":
                     break  
                 
             except Exception as e:
@@ -130,7 +131,7 @@ class AcpClient:
                 else:
                     raise
         
-        if (job_id is None or job_id == ""):
+        if job_id is None or job_id == "":
             raise Exception("Failed to create job")
         
         self.acp_token.create_memo(
