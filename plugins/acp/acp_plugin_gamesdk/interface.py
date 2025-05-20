@@ -17,6 +17,7 @@ class AcpOffering:
 class AcpAgent:
     id: str
     name: str
+    twitter_handle: str
     description: str
     wallet_address: str
     offerings: Optional[List[AcpOffering]]
