@@ -8,6 +8,7 @@ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from dacite import from_dict
 from dacite.config import Config
+from plugins.acp.acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv
@@ -70,8 +71,7 @@ def buyer():
             acp_token_client=AcpToken(
                 os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
                 os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-                "https://base-sepolia-rpc.publicnode.com/",  # RPC
-                "https://acpx-staging.virtuals.io/api"
+                BASE_SEPOLIA_CONFIG
             ),
             on_evaluate=on_evaluate,
             on_phase_change=on_phase_change,
