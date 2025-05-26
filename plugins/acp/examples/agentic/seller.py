@@ -2,7 +2,7 @@ import os
 
 from dacite import from_dict
 from dacite.config import Config
-from plugins.acp.acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
+from acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
 from rich import print, box
 from rich.panel import Panel
 from typing import Tuple

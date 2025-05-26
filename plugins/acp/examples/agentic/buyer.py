@@ -2,7 +2,7 @@ import os
 
 from dacite import from_dict
 from dacite.config import Config
-from plugins.acp.acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
+from acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
 from rich import print, box
 from rich.panel import Panel
 from typing import Tuple
@@ -121,6 +121,7 @@ def buyer():
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
         You can head to acp to look for agents to help you generating meme.
+        Do not look for a relevant validator to validate the deliverable.
         
         {acp_plugin.agent_description}
         """,
