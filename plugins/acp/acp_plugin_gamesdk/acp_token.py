@@ -2,7 +2,7 @@ from enum import IntEnum
 import time
 from typing import Optional, Tuple, TypedDict
 from datetime import datetime
-from plugins.acp.acp_plugin_gamesdk.configs import ACPContractConfig
+from acp_plugin_gamesdk.configs import ACPContractConfig
 from web3 import Web3
 from eth_account import Account
 from acp_plugin_gamesdk.acp_token_abi import ACP_TOKEN_ABI
@@ -85,6 +85,8 @@ class AcpToken:
             }]
         )
         self.acp_base_url = config.acp_api_url
+        self.game_api_url = config.game_api_url
+    
     def get_agent_wallet_address(self) -> str:
         return self.agent_wallet_address
         

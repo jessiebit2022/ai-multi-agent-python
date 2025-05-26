@@ -8,7 +8,7 @@ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.acp_token import AcpToken
 from dacite import from_dict
 from dacite.config import Config
-from plugins.acp.acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
+from acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv

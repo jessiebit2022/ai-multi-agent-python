@@ -42,7 +42,7 @@ class AcpPlugin:
     def __init__(self, options: AcpPluginOptions):
         print("Initializing AcpPlugin")
         self.acp_token_client = options.acp_token_client
-        self.acp_client = AcpClient(options.api_key, options.acp_token_client, options.acp_token_client.acp_base_url)
+        self.acp_client = AcpClient(options.api_key, options.acp_token_client)
         self.id = "acp_worker"
         self.name = "ACP Worker"
         self.description = """
