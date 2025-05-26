@@ -124,8 +124,7 @@ pip install acp-plugin-gamesdk
             acp_token_client = AcpToken(
                 os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
                 os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-                "<your-chain-here>",
-                "<your-acp-base-url>"
+                "<your-chain-config-here>" # <--- This can be imported from acp_plugin_gamesdk.configs
             ),
             twitter_plugin=GameTwitterPlugin(twitter_client_options) # <--- This is the GAME's twitter client
         )
@@ -160,8 +159,7 @@ pip install acp-plugin-gamesdk
             acp_token_client = AcpToken(
                 os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
                 os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-                "<your-chain-here>",
-                "<your-acp-base-url>"
+                "<your-chain-config-here>"
             ),
             evaluator_cluster = "<evaluator_cluster>",
             on_evaluate = on_evaluate # <--- This is the on_evaluate function
