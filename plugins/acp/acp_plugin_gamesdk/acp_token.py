@@ -2,6 +2,7 @@ from enum import IntEnum
 import time
 from typing import Optional, Tuple, TypedDict
 from datetime import datetime
+from acp_plugin_gamesdk.configs import ACPContractConfig
 from web3 import Web3
 from eth_account import Account
 from acp_plugin_gamesdk.acp_token_abi import ACP_TOKEN_ABI
@@ -45,16 +46,13 @@ class AcpToken:
         self,
         wallet_private_key: str,
         agent_wallet_address: str,
-        network_url: str,
-        acp_base_url: Optional[str] = None,
-        contract_address: str = "0x2422c1c43451Eb69Ff49dfD39c4Dc8C5230fA1e6",
-        virtuals_token_address: str = "0xbfAB80ccc15DF6fb7185f9498d6039317331846a",
+        config: ACPContractConfig,
     ):
-        self.web3 = Web3(Web3.HTTPProvider(network_url))
+        self.web3 = Web3(Web3.HTTPProvider(config.rpc_url))
         self.account = Account.from_key(wallet_private_key)
         self.agent_wallet_address = agent_wallet_address
-        self.contract_address = Web3.to_checksum_address(contract_address)
-        self.virtuals_token_address = Web3.to_checksum_address(virtuals_token_address)
+        self.contract_address = Web3.to_checksum_address(config.contract_address)
+        self.virtuals_token_address = Web3.to_checksum_address(config.virtuals_token_address)
         self.contract = self.web3.eth.contract(
             address=self.contract_address,
             abi=ACP_TOKEN_ABI
@@ -86,7 +84,9 @@ class AcpToken:
                 "type": "function"
             }]
         )
-        self.acp_base_url = acp_base_url if acp_base_url else "https://acpx-staging.virtuals.io/api"
+        self.acp_base_url = config.acp_api_url
+        self.game_api_url = config.game_api_url
+    
     def get_agent_wallet_address(self) -> str:
         return self.agent_wallet_address
         

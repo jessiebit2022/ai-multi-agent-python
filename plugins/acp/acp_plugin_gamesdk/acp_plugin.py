@@ -42,7 +42,7 @@ class AcpPlugin:
     def __init__(self, options: AcpPluginOptions):
         print("Initializing AcpPlugin")
         self.acp_token_client = options.acp_token_client
-        self.acp_client = AcpClient(options.api_key, options.acp_token_client, options.acp_token_client.acp_base_url)
+        self.acp_client = AcpClient(options.api_key, options.acp_token_client)
         self.id = "acp_worker"
         self.name = "ACP Worker"
         self.description = """
@@ -67,7 +67,7 @@ class AcpPlugin:
             self.twitter_plugin = options.twitter_plugin
             
         self.produced_inventory: List[IInventory] = []
-        self.acp_base_url = self.acp_token_client.acp_base_url if self.acp_token_client.acp_base_url is None else "https://acpx-staging.virtuals.io/api"
+        self.acp_base_url = self.acp_token_client.acp_base_url
         if options.on_evaluate is not None or options.on_phase_change is not None:
             print("Initializing socket")
             self.socket = None
@@ -94,7 +94,7 @@ class AcpPlugin:
             }
             
             # Connect socket to GAME SDK dev server
-            self.socket.connect("https://sdk-dev.game.virtuals.io", auth=self.socket.auth)
+            self.socket.connect(self.acp_client.base_url, auth=self.socket.auth)
             
             if self.socket.connected:
                 self.socket.emit(SocketEvents["JOIN_EVALUATOR_ROOM"], self.acp_token_client.agent_wallet_address)

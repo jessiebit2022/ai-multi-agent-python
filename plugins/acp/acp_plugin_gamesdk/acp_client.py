@@ -13,12 +13,13 @@ from dacite import from_dict, Config
 
 
 class AcpClient:
-    def __init__(self, api_key: str, acp_token: AcpToken, acp_base_url: Optional[str] = None):
-        self.base_url = "https://sdk-dev.game.virtuals.io/acp"
+    def __init__(self, api_key: str, acp_token: AcpToken):
         self.api_key = api_key
         self.acp_token = acp_token
         self.web3 = Web3()
-        self.acp_base_url = acp_base_url if acp_base_url else "https://acpx-staging.virtuals.io/api"
+
+        self.acp_base_url = self.acp_token.acp_base_url
+        self.base_url = self.acp_token.game_api_url + "/acp"
 
     @property
     def agent_wallet_address(self) -> str:
