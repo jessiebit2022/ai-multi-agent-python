@@ -3,7 +3,7 @@ import threading
 
 from typing import Any,Tuple
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, AcpState, IInventory
+from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, AcpState, IInventory, AcpJob
 from acp_plugin_gamesdk.acp_token import AcpToken
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
@@ -48,17 +48,22 @@ options = {
 # }
 
 def seller():
-    def on_phase_change(job: Any) -> None:
+    def on_phase_change(job: AcpJob) -> None:
         out = ""
         out += f"Reacting to job:\n{job}\n\n"
         prompt = ""
 
+        print("job", job)
         if isinstance(job, dict):
             phase = job.get('phase')
         else:
             phase = job.phase
 
         out += f"Phase: {phase}\n\n"
+        
+        if "getAgentByWalletAddress" in job and job["getAgentByWalletAddress"] is not None:
+            client_agent = job["getAgentByWalletAddress"](job["clientAddress"])
+            print("client_agent", client_agent.twitter_handle)
 
         if phase == AcpJobPhasesDesc.REQUEST:
             prompt = f"""
@@ -99,8 +104,9 @@ def seller():
                 BASE_SEPOLIA_CONFIG
             ),
             on_phase_change=on_phase_change,
+            cluster="999"
             # GAME Twitter Plugin
-            twitter_plugin=GameTwitterPlugin(options)
+            # twitter_plugin=GameTwitterPlugin(options)
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options)
         )

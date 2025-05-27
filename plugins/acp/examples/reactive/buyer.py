@@ -55,7 +55,11 @@ def buyer():
     def on_phase_change(job: AcpJob) -> None:
         out = ""
         out += f"Buyer agent is reacting to job:\n{job}\n\n"
-
+        
+        if "getAgentByWalletAddress" in job and job["getAgentByWalletAddress"] is not None:
+            provider_agent = job["getAgentByWalletAddress"](job["providerAddress"])
+            print("provider_agent", provider_agent.twitter_handle)
+        
         worker = buyer_agent.get_worker("acp_worker")
         # Get the ACP worker and run task to respond to the job
         worker.run(
@@ -75,8 +79,9 @@ def buyer():
             ),
             on_evaluate=on_evaluate,
             on_phase_change=on_phase_change,
+            cluster="999"
             # GAME Twitter Plugin
-            twitter_plugin=GameTwitterPlugin(options),
+            # twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options),
         )
