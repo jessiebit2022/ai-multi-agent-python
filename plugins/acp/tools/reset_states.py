@@ -1,6 +1,7 @@
 import os
 
 from acp_plugin_gamesdk.acp_plugin import AcpToken, AcpPlugin, AcpPluginOptions
+from acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,7 +23,7 @@ def reset_acp_states() -> None:
                     acp_token_client=AcpToken(
                         os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
                         agent_wallet_address,
-                        "https://base-sepolia-rpc.publicnode.com/"
+                        BASE_SEPOLIA_CONFIG # Use BASE_SEPOLIA_CONFIG for testing; switch to BASE_MAINNET_CONFIG for production
                     )
                 )
             )
