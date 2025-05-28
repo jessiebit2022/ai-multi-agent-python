@@ -118,7 +118,6 @@ class AcpPlugin:
             @self.socket.on(SocketEvents["ON_PHASE_CHANGE"])
             def on_phase_change(data):
                 if hasattr(self, 'on_phase_change') and self.on_phase_change:
-                    print(f"on_phase_change: {data}")
                     self.on_phase_change(data)
             
             # Set up cleanup function for graceful shutdown
