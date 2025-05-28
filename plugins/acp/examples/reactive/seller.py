@@ -103,9 +103,8 @@ def seller():
                 BASE_SEPOLIA_CONFIG
             ),
             on_phase_change=on_phase_change,
-            cluster="999"
             # GAME Twitter Plugin
-            # twitter_plugin=GameTwitterPlugin(options)
+            twitter_plugin=GameTwitterPlugin(options)
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options)
         )
