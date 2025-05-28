@@ -53,7 +53,6 @@ def seller():
         out += f"Reacting to job:\n{job}\n\n"
         prompt = ""
 
-        print("job", job)
         if isinstance(job, dict):
             phase = job.get('phase')
         else:
@@ -63,7 +62,7 @@ def seller():
         
         if "getAgentByWalletAddress" in job and job["getAgentByWalletAddress"] is not None:
             client_agent = job["getAgentByWalletAddress"](job["clientAddress"])
-            print("client_agent", client_agent.twitter_handle)
+            print("Client Agent Twitter Handle:", client_agent.twitter_handle)
 
         if phase == AcpJobPhasesDesc.REQUEST:
             prompt = f"""

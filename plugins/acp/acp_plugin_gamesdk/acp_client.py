@@ -299,5 +299,4 @@ class AcpClient:
                     explanation=""
                 )
             )
-        print("result", result, result[0])
         return result[0]
