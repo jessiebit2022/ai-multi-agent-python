@@ -3,6 +3,7 @@ import time
 from typing import Dict, Any
 from pprint import pprint
 from acp_plugin_gamesdk.acp_plugin import AcpToken, AcpPlugin, AcpPluginOptions
+from acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG, BASE_MAINNET_CONFIG
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -95,7 +96,7 @@ if __name__ == "__main__":
             acp_token_client=AcpToken(
                 whitelisted_wallet_private_key,
                 agent_wallet_address,
-                "https://base-sepolia-rpc.publicnode.com/"
+                BASE_SEPOLIA_CONFIG # Use BASE_SEPOLIA_CONFIG for testing; switch to BASE_MAINNET_CONFIG for production
             )
         )
     )
