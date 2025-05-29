@@ -96,7 +96,7 @@ if __name__ == "__main__":
             acp_token_client=AcpToken(
                 whitelisted_wallet_private_key,
                 agent_wallet_address,
-                BASE_SEPOLIA_CONFIG # Use BASE_SEPOLIA_CONFIG for testing; switch to BASE_MAINNET_CONFIG for production
+                BASE_MAINNET_CONFIG # Use BASE_SEPOLIA_CONFIG for testing; switch to BASE_MAINNET_CONFIG for production
             )
         )
     )
