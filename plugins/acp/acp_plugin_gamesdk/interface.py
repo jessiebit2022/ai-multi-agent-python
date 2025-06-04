@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from enum import IntEnum, Enum
-from typing import List, Literal, Optional, Callable
+from enum import Enum, IntEnum
+from typing import Any, Callable, Dict, List, Literal, Optional, Union
+
 
 @dataclass
 class AcpOffering:
@@ -12,7 +13,8 @@ class AcpOffering:
             f"Offering(name={self.name}, price={self.price})"
         )
         return output
-    
+
+
 @dataclass
 class AcpAgent:
     id: str
@@ -28,7 +30,7 @@ class AcpAgent:
         offer = ""
         if self.offerings:
             for index, off in enumerate(self.offerings):
-                offer += f"{index+1}. {str(off)}\n"
+                offer += f"{index + 1}. {str(off)}\n"
 
         output = (
             f"😎 Agent ID={self.id}\n"
@@ -38,7 +40,8 @@ class AcpAgent:
             f"Explanation:\n{self.explanation}"
         )
         return output
-    
+
+
 class AcpJobPhases(IntEnum):
     REQUEST = 0
     NEGOTIATION = 1
@@ -46,6 +49,7 @@ class AcpJobPhases(IntEnum):
     EVALUATION = 3
     COMPLETED = 4
     REJECTED = 5
+
 
 class AcpJobPhasesDesc(str, Enum):
     REQUEST = "request"
@@ -55,6 +59,7 @@ class AcpJobPhasesDesc(str, Enum):
     COMPLETED = "completed"
     REJECTED = "rejected"
 
+
 @dataclass
 class AcpRequestMemo:
     id: int
@@ -63,7 +68,8 @@ class AcpRequestMemo:
     def __repr__(self) -> str:
         output = f"Memo(ID: {self.id}, created at: {self.createdAt})"
         return output
-    
+
+
 @dataclass
 class ITweet:
     type: Literal["buyer", "seller"]
@@ -71,10 +77,11 @@ class ITweet:
     content: str
     created_at: int
 
+
 @dataclass
 class AcpJob:
     jobId: Optional[int]
-    clientName : Optional[str]
+    clientName: Optional[str]
     providerName: Optional[str]
     desc: str
     price: str
@@ -82,13 +89,12 @@ class AcpJob:
     clientAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    tweetHistory : ITweet | List
+    tweetHistory: ITweet | List
     lastUpdated: int
     getAgentByWalletAddress: Optional[Callable[[str], AcpAgent]]
-    
 
     def __repr__(self) -> str:
-        output =(
+        output = (
             f"Job ID: {self.jobId}, "
             f"Client Name: {self.clientName}, "
             f"Provider Name: {self.providerName}, "
@@ -100,8 +106,9 @@ class AcpJob:
             f"Memo: {self.memo}, "
             f"Tweet History: {self.tweetHistory}, "
             f"Last Updated: {self.lastUpdated})"
-        ) 
+        )
         return output
+
 
 @dataclass
 class IDeliverable:
@@ -109,11 +116,14 @@ class IDeliverable:
     value: Union[str, Dict[str, Any], List[Any]]
     clientName: Optional[str]
     providerName: Optional[str]
+
+
 @dataclass
 class IInventory(IDeliverable):
     jobId: int
     clientName: Optional[str]
     providerName: Optional[str]
+
 
 @dataclass
 class AcpJobsSection:
@@ -123,17 +133,18 @@ class AcpJobsSection:
     def __str__(self) -> str:
         buyer_jobs = ""
         for index, job in enumerate(self.asABuyer):
-            buyer_jobs += f"#{index+1} {str(job)} \n"
+            buyer_jobs += f"#{index + 1} {str(job)} \n"
 
         seller_jobs = ""
         for index, job in enumerate(self.asASeller):
-            seller_jobs += f"#{index+1} {str(job)} \n"
+            seller_jobs += f"#{index + 1} {str(job)} \n"
 
         output = (
             f"As Buyer:\n{buyer_jobs}\n"
             f"As Seller:\n{seller_jobs}\n"
         )
         return output
+
 
 @dataclass
 class AcpJobs:
@@ -149,7 +160,8 @@ class AcpJobs:
             f"🔴 Cancelled:\n{self.cancelled}\n"
         )
         return output
-    
+
+
 @dataclass
 class AcpInventory:
     acquired: List[IInventory]
@@ -163,6 +175,7 @@ class AcpInventory:
         )
         return output
 
+
 @dataclass
 class AcpState:
     inventory: AcpInventory
@@ -170,9 +183,9 @@ class AcpState:
 
     def __str__(self) -> str:
         output = (
-            f"🤖 Agent State".center(50, '=') + "\n" + \
-            f"{str(self.inventory)}\n" + \
-            f"{str(self.jobs)}\n" + \
-            f"State End".center(50, '=') + "\n"
+                f"🤖 Agent State".center(50, '=') + "\n" + \
+                f"{str(self.inventory)}\n" + \
+                f"{str(self.jobs)}\n" + \
+                f"State End".center(50, '=') + "\n"
         )
         return output

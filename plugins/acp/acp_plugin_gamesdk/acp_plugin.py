@@ -1,22 +1,27 @@
-from collections.abc import Callable
+import json
 import signal
 import sys
-from typing import List, Dict, Any, Optional,Tuple
-import json
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone, timedelta
 import traceback
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
 import socketio
-import socketio.client
-
 from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
-from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+
 from acp_plugin_gamesdk.acp_client import AcpClient
 from acp_plugin_gamesdk.acp_token import AcpToken
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IDeliverable, IInventory, AcpJob
+from acp_plugin_gamesdk.interface import (
+    AcpJob,
+    AcpJobPhasesDesc,
+    IDeliverable,
+    IInventory,
+)
+
 
 @dataclass
 class AcpPluginOptions:
@@ -28,15 +33,16 @@ class AcpPluginOptions:
     on_evaluate: Optional[Callable[[IDeliverable], Tuple[bool, str]]] = None
     on_phase_change: Optional[Callable[[AcpJob], None]] = None
     job_expiry_duration_mins: Optional[int] = None
-    
+
 
 SocketEvents = {
     "JOIN_EVALUATOR_ROOM": "joinEvaluatorRoom",
-    "LEAVE_EVALUATOR_ROOM": "leaveEvaluatorRoom", 
+    "LEAVE_EVALUATOR_ROOM": "leaveEvaluatorRoom",
     "ON_EVALUATE": "onEvaluate",
-    "ROOM_JOINED" : "roomJoined",
+    "ROOM_JOINED": "roomJoined",
     "ON_PHASE_CHANGE": "onPhaseChange"
 }
+
 
 class AcpPlugin:
     def __init__(self, options: AcpPluginOptions):
@@ -65,7 +71,7 @@ class AcpPlugin:
         self.twitter_plugin = None
         if options.twitter_plugin is not None:
             self.twitter_plugin = options.twitter_plugin
-            
+
         self.produced_inventory: List[IInventory] = []
         self.acp_base_url = self.acp_token_client.acp_base_url
         if options.on_evaluate is not None or options.on_phase_change is not None:
@@ -74,15 +80,14 @@ class AcpPlugin:
             if options.on_evaluate is not None:
                 self.on_evaluate = options.on_evaluate
             if options.on_phase_change is not None:
-                def phase_change_wrapper(job : AcpJob):
+                def phase_change_wrapper(job: AcpJob):
                     job["getAgentByWalletAddress"] = self.acp_client.get_agent_by_wallet_address
                     return options.on_phase_change(job)
+
                 self.on_phase_change = phase_change_wrapper
             self.initialize_socket()
         self.job_expiry_duration_mins = options.job_expiry_duration_mins if options.job_expiry_duration_mins is not None else 1440
-        
-        
-        
+
     def initialize_socket(self) -> Tuple[bool, str]:
         """
         Initialize socket connection for real-time communication.
@@ -90,36 +95,36 @@ class AcpPlugin:
         """
         try:
             self.socket = socketio.Client()
-                
+
             # Set up authentication before connecting
             self.socket.auth = {
                 "evaluatorAddress": self.acp_token_client.agent_wallet_address
             }
-            
+
             # Connect socket to GAME SDK dev server
             self.socket.connect(self.acp_client.base_url, auth=self.socket.auth)
-            
+
             if self.socket.connected:
                 self.socket.emit(SocketEvents["JOIN_EVALUATOR_ROOM"], self.acp_token_client.agent_wallet_address)
-        
-            
+
             # Set up event handler for evaluation requests
             @self.socket.on(SocketEvents["ON_EVALUATE"])
             def on_evaluate(data):
                 if self.on_evaluate:
                     deliverable = data.get("deliverable")
                     memo_id = data.get("memoId")
-                    
+
                     is_approved, reasoning = self.on_evaluate(deliverable)
-                    
+
                     self.acp_token_client.sign_memo(memo_id, is_approved, reasoning)
-                    
-                        # Set up event handler for phase changes
+
+                    # Set up event handler for phase changes
+
             @self.socket.on(SocketEvents["ON_PHASE_CHANGE"])
             def on_phase_change(data):
                 if hasattr(self, 'on_phase_change') and self.on_phase_change:
                     self.on_phase_change(data)
-            
+
             # Set up cleanup function for graceful shutdown
             def cleanup():
                 if self.socket:
@@ -127,34 +132,31 @@ class AcpPlugin:
                     import time
                     time.sleep(1)
                     self.socket.disconnect()
-                    
-                    
-            
+
             def signal_handler(_sig, _frame):
                 cleanup()
                 sys.exit(0)
-                
+
             signal.signal(signal.SIGINT, signal_handler)
             signal.signal(signal.SIGTERM, signal_handler)
-            
+
             return True, "Socket initialized successfully"
-            
+
         except Exception as e:
             return False, f"Failed to initialize socket: {str(e)}"
-    
-    
+
     def set_on_phase_change(self, on_phase_change: Callable[[AcpJob], None]) -> None:
         self.on_phase_change = on_phase_change
 
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
-        
+
     def reset_state(self) -> None:
         self.acp_client.reset_state()
-        
+
     def delete_completed_job(self, job_id: int) -> None:
         self.acp_client.delete_completed_job(job_id)
-        
+
     def get_acp_state(self) -> Dict:
         server_state = self.acp_client.get_state()
         server_state.inventory.produced = self.produced_inventory
@@ -169,7 +171,7 @@ class AcpPlugin:
             self.pay_job,
             self.deliver_job,
         ]
-        
+
         def get_environment(_function_result, _current_state) -> Dict[str, Any]:
             environment = data.get_environment() if hasattr(data, "get_environment") else {}
             return {
@@ -184,7 +186,7 @@ class AcpPlugin:
             get_state_fn=get_environment,
             instruction=data.get("instructions") if data else None
         )
-        
+
         return worker_config
 
     @property
@@ -203,8 +205,8 @@ class AcpPlugin:
           - Each job tracks:
             * phase: request (seller should response to accept/reject to the job) → pending_payment (as a buyer to make the payment for the service) → in_progress (seller to deliver the service) → evaluation → completed/rejected
         """
-        
-    def _search_agents_executable(self,reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
+
+    def _search_agents_executable(self, reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
 
@@ -291,21 +293,22 @@ class AcpPlugin:
             type="string",
             description="Detailed specifications for service-based items",
         )
-        
+
         require_evaluation_arg = Argument(
             name="require_evaluation",
             type="boolean",
             description="Decide if your job request is complex enough to spend money for evaluator agent to assess the relevancy of the output. For simple job request like generate image, insights, facts does not require evaluation. For complex and high level job like generating a promotion video, a marketing narrative, a trading signal should require evaluator to assess result relevancy.",
         )
-        
+
         evaluator_keyword_arg = Argument(
             name="evaluator_keyword",
             type="string",
             description="Keyword to search for a evaluator",
         )
 
-        args = [seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg, require_evaluation_arg, evaluator_keyword_arg]
-        
+        args = [seller_wallet_address_arg, price_arg, reasoning_arg, service_requirements_arg, require_evaluation_arg,
+                evaluator_keyword_arg]
+
         if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweet_content",
@@ -313,7 +316,7 @@ class AcpPlugin:
                 description="Tweet content that will be posted about this job. Must include the seller's Twitter handle (with @ symbol) to notify them",
             )
             args.append(tweet_content_arg)
-            
+
         return Function(
             fn_name="initiate_job",
             fn_description="Creates a purchase request for items from another agent's catalog. Only for use when YOU are the buyer. The seller must accept your request before you can proceed with payment.",
@@ -321,7 +324,9 @@ class AcpPlugin:
             executable=self._initiate_job_executable
         )
 
-    def _initiate_job_executable(self, seller_wallet_address: str, price: str, reasoning: str, service_requirements: str, require_evaluation: str, evaluator_keyword: str, tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+    def _initiate_job_executable(self, seller_wallet_address: str, price: str, reasoning: str,
+                                 service_requirements: str, require_evaluation: str, evaluator_keyword: str,
+                                 tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if isinstance(require_evaluation, str):
             require_evaluation = require_evaluation.lower() == 'true'
         elif isinstance(require_evaluation, bool):
@@ -331,10 +336,10 @@ class AcpPlugin:
 
         if not price:
             return FunctionResultStatus.FAILED, "Missing price - specify how much you're offering per unit", {}
-        
+
         if not reasoning:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you're making this purchase request", {}
-        
+
         try:
             state = self.get_acp_state()
 
@@ -345,24 +350,25 @@ class AcpPlugin:
             )
 
             if existing_job:
-                return FunctionResultStatus.FAILED, f"You already have an active job as a buyer with {existing_job['providerAddress']} - complete the current job before initiating a new one", {}  
-            
+                return FunctionResultStatus.FAILED, f"You already have an active job as a buyer with {existing_job['providerAddress']} - complete the current job before initiating a new one", {}
+
             if not seller_wallet_address:
                 return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
-            
+
             if require_evaluation and not evaluator_keyword:
                 return FunctionResultStatus.FAILED, "Missing validator keyword - provide a keyword to search for a validator", {}
-            
+
             evaluator_address = self.acp_token_client.get_agent_wallet_address()
-            
+
             if require_evaluation:
-                validators = self.acp_client.browse_agents(self.evaluator_cluster, evaluator_keyword, rerank=True, top_k=1)
-                
+                validators = self.acp_client.browse_agents(self.evaluator_cluster, evaluator_keyword, rerank=True,
+                                                           top_k=1)
+
                 if len(validators) == 0:
                     return FunctionResultStatus.FAILED, "No evaluator found - try a different keyword", {}
 
                 evaluator_address = validators[0].wallet_address
-            
+
             # ... Rest of validation logic ...
             expired_at = datetime.now(timezone.utc) + timedelta(minutes=self.job_expiry_duration_mins)
             job_id = self.acp_client.create_job(
@@ -410,9 +416,9 @@ class AcpPlugin:
             type="string",
             description="Why you made this decision",
         )
-        
+
         args = [job_id_arg, decision_arg, reasoning_arg]
-        
+
         if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweet_content",
@@ -428,19 +434,20 @@ class AcpPlugin:
             executable=self._respond_job_executable
         )
 
-    def _respond_job_executable(self, job_id: int, decision: str, reasoning: str, tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+    def _respond_job_executable(self, job_id: int, decision: str, reasoning: str,
+                                tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not job_id:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're responding to", {}
-        
+
         if not decision or decision not in ["ACCEPT", "REJECT"]:
             return FunctionResultStatus.FAILED, "Invalid decision - must be either 'ACCEPT' or 'REJECT'", {}
-            
+
         if not reasoning:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you made this decision", {}
 
         try:
             state = self.get_acp_state()
-            
+
             job = next(
                 (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == job_id),
                 None
@@ -490,7 +497,7 @@ class AcpPlugin:
         )
 
         args = [job_id_arg, amount_arg, reasoning_arg]
-        
+
         if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweet_content",
@@ -506,7 +513,8 @@ class AcpPlugin:
             executable=self._pay_job_executable
         )
 
-    def _pay_job_executable(self, job_id: int, amount: float, reasoning: str, tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+    def _pay_job_executable(self, job_id: int, amount: float, reasoning: str, tweet_content: Optional[str] = None) -> \
+            Tuple[FunctionResultStatus, str, dict]:
         if not job_id:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're paying for", {}
 
@@ -518,7 +526,7 @@ class AcpPlugin:
 
         try:
             state = self.get_acp_state()
-            
+
             job = next(
                 (c for c in state["jobs"]["active"]["asABuyer"] if c["jobId"] == job_id),
                 None
@@ -529,7 +537,6 @@ class AcpPlugin:
 
             if job["phase"] != AcpJobPhasesDesc.NEGOTIATION:
                 return FunctionResultStatus.FAILED, f"Cannot pay - job is in '{job['phase']}' phase, must be in 'negotiation' phase", {}
-
 
             self.acp_client.make_payment(
                 job_id,
@@ -570,7 +577,7 @@ class AcpPlugin:
         )
 
         args = [job_id_arg, deliverable_arg, reasoning_arg]
-        
+
         if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
                 name="tweet_content",
@@ -586,19 +593,20 @@ class AcpPlugin:
             executable=self._deliver_job_executable
         )
 
-    def _deliver_job_executable(self, job_id: int, deliverable: str, reasoning: str, tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+    def _deliver_job_executable(self, job_id: int, deliverable: str, reasoning: str,
+                                tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not job_id:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're delivering for", {}
-            
+
         if not reasoning:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you're making this delivery", {}
-            
+
         if not deliverable:
             return FunctionResultStatus.FAILED, "Missing deliverable - specify what you're delivering", {}
 
         try:
             state = self.get_acp_state()
-            
+
             job = next(
                 (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == job_id),
                 None
@@ -611,7 +619,8 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, f"Cannot deliver - job is in '{job['phase']}' phase, must be in 'transaction' phase", {}
 
             produced = next(
-                (i for i in self.produced_inventory if (i["jobId"] if isinstance(i, dict) else i.jobId) == job["jobId"]),
+                (i for i in self.produced_inventory if
+                 (i["jobId"] if isinstance(i, dict) else i.jobId) == job["jobId"]),
                 None
             )
 
@@ -645,7 +654,7 @@ class AcpPlugin:
             tweet_id = tweet_history[-1].get("tweetId") if tweet_history else None
             if tweet_id is not None:
                 reply_tweet_fn = self.twitter_plugin.get_function('reply_tweet')
-                tweet_id = reply_tweet_fn(tweet_id,tweet_content, None).get('data', {}).get('id')
+                tweet_id = reply_tweet_fn(tweet_id, tweet_content, None).get('data', {}).get('id')
                 if tweet_id is not None:
-                    self.acp_client.add_tweet(job.get("jobId") ,tweet_id, tweet_content)
+                    self.acp_client.add_tweet(job.get("jobId"), tweet_id, tweet_content)
                     print("Tweet has been posted")

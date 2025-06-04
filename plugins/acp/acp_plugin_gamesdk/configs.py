@@ -3,6 +3,7 @@ from typing import Literal
 
 ChainEnv = Literal["base-sepolia", "base"]
 
+
 @dataclass
 class ACPContractConfig:
     chain_env: ChainEnv
@@ -12,6 +13,7 @@ class ACPContractConfig:
     virtuals_token_address: str
     acp_api_url: str
     game_api_url: str
+
 
 # Configuration for Base Sepolia
 BASE_SEPOLIA_CONFIG = ACPContractConfig(
@@ -27,16 +29,16 @@ BASE_SEPOLIA_CONFIG = ACPContractConfig(
 # Configuration for Base Mainnet
 BASE_MAINNET_CONFIG = ACPContractConfig(
     chain_env="base",
-    rpc_url="https://mainnet.base.org", 
+    rpc_url="https://mainnet.base.org",
     chain_id=8453,
     contract_address="0x6a1FE26D54ab0d3E1e3168f2e0c0cDa5cC0A0A4A",
     virtuals_token_address="0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
-    acp_api_url="https://acpx.virtuals.io/api", # PROD
+    acp_api_url="https://acpx.virtuals.io/api",  # PROD
     game_api_url="https://sdk.game.virtuals.io"
 )
 
 # Define the default configuration for the SDK
 # For a production-ready SDK, this would typically be BASE_MAINNET_CONFIG.
 # For initial development/testing, BASE_SEPOLIA_CONFIG might be more appropriate.
-DEFAULT_CONFIG = BASE_MAINNET_CONFIG 
+DEFAULT_CONFIG = BASE_MAINNET_CONFIG
 # Or: DEFAULT_CONFIG = BASE_SEPOLIA_CONFIG
