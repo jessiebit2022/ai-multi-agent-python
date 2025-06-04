@@ -106,7 +106,7 @@ class AcpJob:
 @dataclass
 class IDeliverable:
     type: str
-    value: str
+    value: Union[str, Dict[str, Any], List[Any]]
     clientName: Optional[str]
     providerName: Optional[str]
 @dataclass
