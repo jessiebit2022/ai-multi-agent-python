@@ -2,12 +2,12 @@ import os
 
 from dacite import from_dict
 from dacite.config import Config
-from acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
 from rich import print, box
 from rich.panel import Panel
 from typing import Tuple
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.acp_token import AcpToken
+from virtuals_acp.client import VirtualsACP
+from virtuals_acp.configs import BASE_SEPOLIA_CONFIG
 from acp_plugin_gamesdk.interface import AcpState, AcpJobPhasesDesc, IInventory
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent, WorkerConfig
@@ -50,13 +50,13 @@ def seller():
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
             api_key=os.environ.get("GAME_DEV_API_KEY"),
-            acp_token_client=AcpToken(
-                os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-                os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
-                BASE_SEPOLIA_CONFIG
+            acp_client=VirtualsACP(
+                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+                agent_wallet_address=os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
+                config=BASE_SEPOLIA_CONFIG
             ),
             # GAME Twitter Plugin
-            twitter_plugin=GameTwitterPlugin(options)
+            twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options)
         )

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import IntEnum, Enum
+from enum import Enum
 from typing import List, Literal, Optional
 
 @dataclass
@@ -12,40 +12,6 @@ class AcpOffering:
             f"Offering(name={self.name}, price={self.price})"
         )
         return output
-    
-@dataclass
-class AcpAgent:
-    id: str
-    name: str
-    twitter_handle: str
-    description: str
-    wallet_address: str
-    offerings: Optional[List[AcpOffering]]
-    score: Optional[float]
-    explanation: Optional[str]
-
-    def __str__(self) -> str:
-        offer = ""
-        if self.offerings:
-            for index, off in enumerate(self.offerings):
-                offer += f"{index+1}. {str(off)}\n"
-
-        output = (
-            f"😎 Agent ID={self.id}\n"
-            f"Name={self.name}, Description={self.description}, Wallet={self.wallet_address}\n"
-            f"Offerings:\n{offer}"
-            f"Score:\n{self.score}"
-            f"Explanation:\n{self.explanation}"
-        )
-        return output
-    
-class AcpJobPhases(IntEnum):
-    REQUEST = 0
-    NEGOTIATION = 1
-    TRANSACTION = 2
-    EVALUATION = 3
-    COMPLETED = 4
-    REJECTED = 5
 
 class AcpJobPhasesDesc(str, Enum):
     REQUEST = "request"
@@ -58,11 +24,9 @@ class AcpJobPhasesDesc(str, Enum):
 @dataclass
 class AcpRequestMemo:
     id: int
-    createdAt: int
 
     def __repr__(self) -> str:
-        output = f"Memo(ID: {self.id}, created at: {self.createdAt})"
-        return output
+        return f"Memo(ID: {self.id})"
     
 @dataclass
 class ITweet:
@@ -72,7 +36,7 @@ class ITweet:
     created_at: int
 
 @dataclass
-class AcpJob:
+class IAcpJob:
     jobId: Optional[int]
     clientName : Optional[str]
     providerName: Optional[str]
@@ -81,8 +45,6 @@ class AcpJob:
     providerAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    tweetHistory : ITweet | List
-    lastUpdated: int
 
     def __repr__(self) -> str:
         output =(
@@ -94,8 +56,6 @@ class AcpJob:
             f"Provider Address: {self.providerAddress}, "
             f"Phase: {self.phase.value}, "
             f"Memo: {self.memo}, "
-            f"Tweet History: {self.tweetHistory}, "
-            f"Last Updated: {self.lastUpdated})"
         ) 
         return output
 
@@ -113,8 +73,8 @@ class IInventory(IDeliverable):
 
 @dataclass
 class AcpJobsSection:
-    asABuyer: List[AcpJob]
-    asASeller: List[AcpJob]
+    asABuyer: List[IAcpJob]
+    asASeller: List[IAcpJob]
 
     def __str__(self) -> str:
         buyer_jobs = ""
@@ -134,8 +94,8 @@ class AcpJobsSection:
 @dataclass
 class AcpJobs:
     active: AcpJobsSection
-    completed: List[AcpJob]
-    cancelled: List[AcpJob]
+    completed: List[IAcpJob]
+    cancelled: List[IAcpJob]
 
     def __str__(self) -> str:
         output = (

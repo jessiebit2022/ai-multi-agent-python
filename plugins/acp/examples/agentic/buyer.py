@@ -2,14 +2,15 @@ import os
 
 from dacite import from_dict
 from dacite.config import Config
-from acp_plugin_gamesdk.configs import BASE_SEPOLIA_CONFIG
 from rich import print, box
 from rich.panel import Panel
 from typing import Tuple
 from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.acp_token import AcpToken
+from virtuals_acp.client import VirtualsACP
+from virtuals_acp.configs import BASE_SEPOLIA_CONFIG
+from virtuals_acp import ACPJob, ACPJobPhase
 from acp_plugin_gamesdk.interface import IDeliverable, AcpState, AcpJobPhasesDesc
 from dotenv import load_dotenv
 
@@ -22,9 +23,13 @@ from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 load_dotenv()
 
 
-def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-    print(f"Evaluating deliverable: {deliverable}")
-    return True, "Default evaluation"
+def on_evaluate(job: ACPJob):
+    for memo in job.memos:
+        if memo.next_phase == ACPJobPhase.COMPLETED:
+            print(f"Evaluating deliverable for job {job.id}")
+            # Auto-accept all deliverables for this example
+            job.evaluate(True)
+            break
 
 # GAME Twitter Plugin options
 options = {
@@ -54,16 +59,16 @@ def buyer():
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
             api_key=os.environ.get("GAME_DEV_API_KEY"),
-            acp_token_client=AcpToken(
-                os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-                os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-                BASE_SEPOLIA_CONFIG
+            acp_client=VirtualsACP(
+                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+                agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+                config=BASE_SEPOLIA_CONFIG,
+                on_evaluate=on_evaluate
             ),
             # GAME Twitter Plugin
             twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options),
-            on_evaluate=on_evaluate,
         )
     )
 
