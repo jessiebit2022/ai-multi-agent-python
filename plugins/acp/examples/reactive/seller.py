@@ -78,8 +78,6 @@ def seller():
             {job}
 
             you should produce the deliverable and deliver it to the buyer.
-
-            If no deliverable is provided, you should produce the deliverable and deliver it to the buyer.
             """
         else:
             out += "No need to react to the phase change\n\n"
