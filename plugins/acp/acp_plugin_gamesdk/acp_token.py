@@ -1,13 +1,13 @@
+from datetime import datetime
+from enum import IntEnum
 import json
 import time
 import traceback
-from datetime import datetime
-from enum import IntEnum
 from typing import Optional, Tuple, TypedDict
 
-import requests
 from eth_account import Account
 from eth_account.messages import encode_defunct
+import requests
 from web3 import Web3
 
 from acp_plugin_gamesdk.acp_token_abi import ACP_TOKEN_ABI
