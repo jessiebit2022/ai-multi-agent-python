@@ -83,8 +83,8 @@ class AcpJob:
     jobId: Optional[int]
     clientName: Optional[str]
     providerName: Optional[str]
-    desc: str
-    price: str
+    desc: Optional[str]
+    price: float
     providerAddress: Optional[str]
     clientAddress: Optional[str]
     phase: AcpJobPhasesDesc
