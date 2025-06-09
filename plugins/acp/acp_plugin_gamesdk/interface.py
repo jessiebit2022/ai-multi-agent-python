@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Dict
+
+from virtuals_acp.models import ACPJobPhase
 
 @dataclass
 class AcpOffering:
@@ -20,6 +22,15 @@ class AcpJobPhasesDesc(str, Enum):
     EVALUATION = "evaluation"
     COMPLETED = "completed"
     REJECTED = "rejected"
+
+ACP_JOB_PHASE_MAP: Dict[ACPJobPhase, AcpJobPhasesDesc] = {
+    ACPJobPhase.REQUEST: AcpJobPhasesDesc.REQUEST,
+    ACPJobPhase.NEGOTIATION: AcpJobPhasesDesc.NEGOTIATION,
+    ACPJobPhase.TRANSACTION: AcpJobPhasesDesc.TRANSACTION,
+    ACPJobPhase.EVALUATION: AcpJobPhasesDesc.EVALUATION,
+    ACPJobPhase.COMPLETED: AcpJobPhasesDesc.COMPLETED,
+    ACPJobPhase.REJECTED: AcpJobPhasesDesc.REJECTED,
+}
 
 @dataclass
 class AcpRequestMemo:

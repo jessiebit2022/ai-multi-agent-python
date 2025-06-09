@@ -9,7 +9,7 @@ from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IInventory
+from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IInventory, ACP_JOB_PHASE_MAP
 from virtuals_acp.client import VirtualsACP 
 from virtuals_acp.models import ACPJobPhase
 from virtuals_acp.job import ACPJob
@@ -56,7 +56,7 @@ class AcpPlugin:
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
 
-    def _to_state_acp_job(self, job: ACPJob, phase_map: Dict[ACPJobPhase, str]) -> Dict:
+    def _to_state_acp_job(self, job: ACPJob) -> Dict:
         client_name = job.client_agent.name if job.client_agent else ""
         provider_name = job.provider_agent.name if job.provider_agent else ""
         
@@ -69,20 +69,11 @@ class AcpPlugin:
             "desc": job.service_requirement or "",
             "price": str(job.price),
             "providerAddress": job.provider_address,
-            "phase": phase_map.get(job.phase, AcpJobPhasesDesc.REQUEST),
+            "phase": ACP_JOB_PHASE_MAP.get(job.phase, AcpJobPhasesDesc.REQUEST),
             "memo": memo_mapped,
         }
 
     def get_acp_state(self) -> Dict:
-        phase_map = {
-            ACPJobPhase.REQUEST: AcpJobPhasesDesc.REQUEST,
-            ACPJobPhase.NEGOTIATION: AcpJobPhasesDesc.NEGOTIATION,
-            ACPJobPhase.TRANSACTION: AcpJobPhasesDesc.TRANSACTION,
-            ACPJobPhase.EVALUATION: AcpJobPhasesDesc.EVALUATION,
-            ACPJobPhase.COMPLETED: AcpJobPhasesDesc.COMPLETED,
-            ACPJobPhase.REJECTED: AcpJobPhasesDesc.REJECTED,
-        }
-        
         active_jobs = self.acp_client.get_active_jobs()
         completed_jobs = self.acp_client.get_completed_jobs()
         cancelled_jobs = self.acp_client.get_cancelled_jobs()
@@ -93,7 +84,7 @@ class AcpPlugin:
         active_seller_jobs = []
         
         for job in active_jobs:
-            processed = self._to_state_acp_job(job, phase_map)
+            processed = self._to_state_acp_job(job)
             client_addr = job.client_address.lower()
             provider_addr = job.provider_address.lower()
             
@@ -102,8 +93,8 @@ class AcpPlugin:
             if provider_addr == agent_addr:
                 active_seller_jobs.append(processed)
 
-        completed = [self._to_state_acp_job(job, phase_map) for job in completed_jobs]
-        cancelled = [self._to_state_acp_job(job, phase_map) for job in cancelled_jobs]
+        completed = [self._to_state_acp_job(job) for job in completed_jobs]
+        cancelled = [self._to_state_acp_job(job) for job in cancelled_jobs]
         
         return {
             "inventory": {
