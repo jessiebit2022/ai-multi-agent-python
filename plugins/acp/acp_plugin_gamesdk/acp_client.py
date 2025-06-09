@@ -85,7 +85,6 @@ class AcpClient:
                     description=agent["description"],
                     wallet_address=agent["walletAddress"],
                     offerings=offerings,
-                    score=agent["score"],
                     explanation=agent["explanation"]
                 )
             )
