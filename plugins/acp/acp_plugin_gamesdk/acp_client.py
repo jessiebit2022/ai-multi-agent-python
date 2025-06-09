@@ -300,7 +300,6 @@ class AcpClient:
                     description=agent["description"],
                     wallet_address=agent["walletAddress"],
                     offerings=offerings,
-                    score=0,
                     explanation=""
                 )
             )
