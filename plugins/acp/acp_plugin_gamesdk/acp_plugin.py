@@ -234,8 +234,6 @@ class AcpPlugin:
                                 if agent.offerings
                                 else []
                             ),
-                            "score": agent.score,
-                            "explanation": agent.explanation
                         }
                         for agent in agents
                     ],

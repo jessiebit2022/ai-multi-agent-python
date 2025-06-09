@@ -23,8 +23,6 @@ class AcpAgent:
     description: str
     wallet_address: str
     offerings: Optional[List[AcpOffering]]
-    score: Optional[float]
-    explanation: Optional[str]
 
     def __str__(self) -> str:
         offer = ""
@@ -36,8 +34,6 @@ class AcpAgent:
             f"😎 Agent ID={self.id}\n"
             f"Name={self.name}, Description={self.description}, Wallet={self.wallet_address}\n"
             f"Offerings:\n{offer}"
-            f"Score:\n{self.score}"
-            f"Explanation:\n{self.explanation}"
         )
         return output
 
