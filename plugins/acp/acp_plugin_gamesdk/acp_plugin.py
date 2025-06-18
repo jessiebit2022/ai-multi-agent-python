@@ -234,7 +234,6 @@ class AcpPlugin:
                                 if agent.offerings
                                 else []
                             ),
-                            "explanation": agent.explanation
                         }
                         for agent in agents
                     ],
