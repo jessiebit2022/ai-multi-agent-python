@@ -268,7 +268,7 @@ class AcpClient:
                 f"Response description: {response.text}\n"
             )
 
-    def get_agent_by_wallet_address(self, wallet_address: str) -> AcpAgent:
+    def get_agent_by_wallet_address(self, wallet_address: str) -> Optional[AcpAgent]:
         url = f"{self.acp_base_url}/agents?filters[walletAddress]={wallet_address}"
 
         response = requests.get(
@@ -283,6 +283,9 @@ class AcpClient:
         response_json = response.json()
 
         result = []
+
+        if len(response_json.get("data", [])) == 0:
+            return None
 
         for agent in response_json.get("data", []):
             if agent["offerings"]:
