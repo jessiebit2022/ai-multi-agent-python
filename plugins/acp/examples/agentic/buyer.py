@@ -15,7 +15,7 @@ from acp_plugin_gamesdk.interface import IDeliverable, AcpState, AcpJobPhasesDes
 from dotenv import load_dotenv
 
 # GAME Twitter Plugin import
-from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+# from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
@@ -58,15 +58,16 @@ options = {
 def buyer():
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_DEV_API_KEY"),
+            api_key=os.environ.get("GAME_DEV_API_KEY",""),
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY",""),
                 agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
                 config=BASE_SEPOLIA_CONFIG,
-                on_evaluate=on_evaluate
+                on_evaluate=on_evaluate,
+                entity_id=int(os.environ.get("ENTITY_ID", 1))
             ),
             # GAME Twitter Plugin
-            twitter_plugin=GameTwitterPlugin(options),
+            # twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options),
         )
@@ -77,12 +78,13 @@ def buyer():
         return state
 
     def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
-        if acp_plugin.twitter_plugin is not None:
-            post_tweet_fn = acp_plugin.twitter_plugin.get_function("post_tweet")
-            post_tweet_fn(content)
-            return FunctionResultStatus.DONE, "Tweet has been posted", {}
+        return FunctionResultStatus.DONE, "Tweet has been posted", {}
+        # if acp_plugin.twitter_plugin is not None:
+        #     post_tweet_fn = acp_plugin.twitter_plugin.get_function("post_tweet")
+        #     post_tweet_fn(content)
+        #     return FunctionResultStatus.DONE, "Tweet has been posted", {}
 
-        return FunctionResultStatus.FAILED, "Twitter plugin is not initialized", {}
+        # return FunctionResultStatus.FAILED, "Twitter plugin is not initialized", {}
 
     core_worker = WorkerConfig(
         id="core-worker",
@@ -120,7 +122,7 @@ def buyer():
     )
 
     agent = Agent(
-        api_key=os.environ.get("GAME_API_KEY"),
+        api_key=os.environ.get("GAME_API_KEY",""),
         name="Virtuals",
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""

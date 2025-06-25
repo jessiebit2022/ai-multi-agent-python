@@ -1,11 +1,14 @@
+import json
 import os
 import threading
 
 from typing import Any, Tuple
+import sys
+sys.path.append("../../")
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, AcpState, IInventory
+from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, AcpJobPhasesDesc, AcpState, IInventory
 from virtuals_acp.client import VirtualsACP
-from virtuals_acp.configs import BASE_SEPOLIA_CONFIG
+from virtuals_acp.configs import BASE_MAINNET_CONFIG
 from virtuals_acp import ACPJob, ACPJobPhase
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
@@ -16,7 +19,7 @@ from rich.panel import Panel
 from dotenv import load_dotenv
 
 # GAME Twitter Plugin import
-from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+# from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
@@ -53,10 +56,9 @@ def seller():
         out = ""
         out += f"Reacting to job:\n{job}\n\n"
         prompt = ""
-        
-        if job.phase == ACPJobPhase.REQUEST:
+        if job.phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.REQUEST):
             for memo in job.memos:
-                if memo.next_phase == ACPJobPhase.NEGOTIATION:
+                if memo.next_phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.NEGOTIATION):
                     prompt = f"""
                     Respond to the following transaction:
                     {job}
@@ -64,9 +66,9 @@ def seller():
                     decide whether you should accept the job or not.
                     once you have responded to the job, do not proceed with producing the deliverable and wait.
                     """
-        elif job.phase == ACPJobPhase.TRANSACTION:
+        elif job.phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.TRANSACTION):
             for memo in job.memos:
-                if memo.next_phase == ACPJobPhase.EVALUATION:
+                if memo.next_phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.EVALUATION):
                     prompt = f"""
                     Respond to the following transaction:
                     {job}
@@ -87,15 +89,16 @@ def seller():
 
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_DEV_API_KEY"),
+            api_key=os.environ.get("GAME_DEV_API_KEY",""),
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY",""),
                 agent_wallet_address=os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
-                config=BASE_SEPOLIA_CONFIG,
-                on_new_task=on_new_task
+                config=BASE_MAINNET_CONFIG,
+                on_new_task=on_new_task,
+                entity_id=int(os.environ.get("ENTITY_ID", 1))
             ),
             # GAME Twitter Plugin
-            twitter_plugin=GameTwitterPlugin(options),
+            #twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options)
         )
@@ -112,7 +115,7 @@ def seller():
         state = acp_plugin.get_acp_state()
         
         job = next(
-            (j for j in state.get('jobs').get('active').get('asASeller') if j.get('jobId') == job_id),
+            (j for j in state.get('jobs',{}).get('active',{}).get('asASeller',[]) if j.get('jobId') == job_id),
             None
         )
 
@@ -167,7 +170,7 @@ def seller():
     )
 
     agent = Agent(
-        api_key=os.environ.get("GAME_API_KEY"),
+        api_key=os.environ.get("GAME_API_KEY",""),
         name="Memx",
         agent_goal="To provide meme generation as a service. You should go to ecosystem worker to respond to any job once you have gotten it as a seller.",
         agent_description=f"""

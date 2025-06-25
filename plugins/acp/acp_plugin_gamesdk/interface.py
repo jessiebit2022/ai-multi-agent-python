@@ -56,7 +56,7 @@ class IAcpJob:
     providerAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    tweetHistory: List[ITweet] | List
+    tweetHistory: List[ITweet] | List[None] | None
 
     def __repr__(self) -> str:
         output =(
@@ -68,7 +68,7 @@ class IAcpJob:
             f"Provider Address: {self.providerAddress}, "
             f"Phase: {self.phase.value}, "
             f"Memo: {self.memo}, "
-            f"Tweet History: {self.tweetHistory}, "
+            #f"Tweet History: {self.tweetHistory}, "
         ) 
         return output
 
