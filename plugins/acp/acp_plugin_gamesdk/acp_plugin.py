@@ -79,6 +79,7 @@ class AcpPlugin:
 
     def get_acp_state(self) -> Dict:
         active_jobs = self.acp_client.get_active_jobs()
+        active_jobs = [job for job in active_jobs if job.id not in (5224, 5225, 5226, 5285, 5286, 5302, 5312)]  
         completed_jobs = self.acp_client.get_completed_jobs()
         cancelled_jobs = self.acp_client.get_cancelled_jobs()
 
@@ -158,11 +159,11 @@ class AcpPlugin:
             * phase: request (seller should response to accept/reject to the job) → pending_payment (as a buyer to make the payment for the service) → in_progress (seller to deliver the service) → evaluation → completed/rejected
         """
         
-    def _search_agents_executable(self,reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _search_agents_executable(self, reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
 
-        agents = self.acp_client.browse_agents("0xFe7d96d64c23E37526Da3657D2BFf60459E8dF6D", self.cluster)
+        agents = self.acp_client.browse_agents(keyword, self.cluster)
 
         if not agents:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
@@ -316,6 +317,11 @@ class AcpPlugin:
                 evaluator_address = validators[0].wallet_address
             
             expired_at = datetime.now(timezone.utc) + timedelta(minutes=self.job_expiry_duration_mins)
+            print("seller_wallet_address", seller_wallet_address)
+            print("service_requirements", service_requirements)
+            print("price", price)
+            print("evaluator_address", evaluator_address)
+            print("expired_at", expired_at)
             job_id = self.acp_client.initiate_job(
                 seller_wallet_address,
                 service_requirements,

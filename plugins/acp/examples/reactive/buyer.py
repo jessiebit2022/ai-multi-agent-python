@@ -3,10 +3,9 @@ import os
 from typing import Tuple
 from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
-import sys
-sys.path.append("../../")
 from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, AcpState, AcpJobPhasesDesc
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
+from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_MAINNET_CONFIG
 from virtuals_acp import ACPJob, ACPJobPhase
@@ -22,7 +21,9 @@ from dotenv import load_dotenv
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
-load_dotenv()
+load_dotenv(override=True)
+
+env = PluginEnvSettings()
 
 
 def on_evaluate(job: ACPJob):
@@ -39,7 +40,7 @@ options = {
     "name": "Twitter Plugin",
     "description": "Twitter Plugin for tweet-related functions.",
     "credentials": {
-        "gameTwitterAccessToken": os.environ.get("BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
+        "gameTwitterAccessToken": env.BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN
     },
 }
 
@@ -49,11 +50,11 @@ options = {
 #     "name": "Twitter Plugin",
 #     "description": "Twitter Plugin for tweet-related functions.",
 #     "credentials": {
-#         "bearerToken": os.environ.get("BUYER_AGENT_TWITTER_BEARER_TOKEN"),
-#         "apiKey": os.environ.get("BUYER_AGENT_TWITTER_API_KEY"),
-#         "apiSecretKey": os.environ.get("BUYER_AGENT_TWITTER_API_SECRET_KEY"),
-#         "accessToken": os.environ.get("BUYER_AGENT_TWITTER_ACCESS_TOKEN"),
-#         "accessTokenSecret": os.environ.get("BUYER_AGENT_TWITTER_ACCESS_TOKEN_SECRET"),
+#         "bearerToken": env.BUYER_AGENT_TWITTER_BEARER_TOKEN,
+#         "apiKey": env.BUYER_AGENT_TWITTER_API_KEY,
+#         "apiSecretKey": env.BUYER_AGENT_TWITTER_API_SECRET_KEY,
+#         "accessToken": env.BUYER_AGENT_TWITTER_ACCESS_TOKEN,
+#         "accessTokenSecret": env.BUYER_AGENT_TWITTER_ACCESS_TOKEN_SECRET,
 #     },
 # }
 
@@ -76,19 +77,20 @@ def buyer():
 
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_DEV_API_KEY",""),
+            api_key=env.GAME_DEV_API_KEY,
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY", ""),
-                agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+                wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+                agent_wallet_address=env.BUYER_AGENT_WALLET_ADDRESS,
                 config=BASE_MAINNET_CONFIG,
                 on_evaluate=on_evaluate,
                 on_new_task=on_new_task,
-                entity_id=int(os.environ.get("ENTITY_ID", 1))
+                entity_id=env.BUYER_ENTITY_ID
             ),
             # GAME Twitter Plugin
             #twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options),
+            cluster="23"
         )
     )
 
@@ -140,12 +142,12 @@ def buyer():
     )
 
     agent = Agent(
-        api_key=os.environ.get("GAME_API_KEY",""),
+        api_key=env.GAME_API_KEY,
         name="Virtuals",
-        agent_goal="Finding the best meme to do tweet posting",
+        agent_goal="Finding the devrel_seller to help me learn about virtuals SDKs",
         agent_description=f"""
-        Agent that gain market traction by posting meme. Your interest are in cats and AI. 
-        You can head to acp to look for agents to help you generating meme.
+        Agent that wants to learn about virtuals SDKs. 
+        You can head to acp to look for devrel_seller.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
@@ -164,12 +166,12 @@ def buyer():
     )
 
     buyer_agent = Agent(
-        api_key=os.environ.get("GAME_API_KEY",""),
+        api_key=env.GAME_API_KEY,
         name="Buyer",
         agent_goal="Perform and complete transaction with seller",
         agent_description=f"""
-        Agent that gain market traction by posting meme. Your interest are in cats and AI. 
-        You can head to acp to look for agents to help you generating meme.
+        Agent that wants to learn about virtuals SDKs. 
+        You can head to acp to look for devrel_seller.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}

@@ -32,6 +32,15 @@ ACP_JOB_PHASE_MAP: Dict[ACPJobPhase, AcpJobPhasesDesc] = {
     ACPJobPhase.REJECTED: AcpJobPhasesDesc.REJECTED,
 }
 
+ACP_JOB_PHASE_REVERSE_MAP: Dict[str, ACPJobPhase] = {
+    "request": ACPJobPhase.REQUEST,
+    "pending_payment": ACPJobPhase.NEGOTIATION,
+    "in_progress": ACPJobPhase.TRANSACTION,
+    "evaluation": ACPJobPhase.EVALUATION,
+    "completed": ACPJobPhase.COMPLETED,
+    "rejected": ACPJobPhase.REJECTED,
+}
+
 @dataclass
 class AcpRequestMemo:
     id: int
