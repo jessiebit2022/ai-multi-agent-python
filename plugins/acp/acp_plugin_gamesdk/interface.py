@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from enum import Enum, IntEnum
-from typing import Any, Callable, Dict, List, Literal, Optional, Union
+from enum import Enum
+from typing import List, Literal, Optional, Dict, Any
 
+from virtuals_acp.models import ACPJobPhase
 
 @dataclass
 class AcpOffering:
@@ -14,39 +15,6 @@ class AcpOffering:
         )
         return output
 
-
-@dataclass
-class AcpAgent:
-    id: str
-    name: str
-    twitter_handle: str
-    description: str
-    wallet_address: str
-    offerings: Optional[List[AcpOffering]]
-
-    def __str__(self) -> str:
-        offer = ""
-        if self.offerings:
-            for index, off in enumerate(self.offerings):
-                offer += f"{index + 1}. {str(off)}\n"
-
-        output = (
-            f"😎 Agent ID={self.id}\n"
-            f"Name={self.name}, Description={self.description}, Wallet={self.wallet_address}\n"
-            f"Offerings:\n{offer}"
-        )
-        return output
-
-
-class AcpJobPhases(IntEnum):
-    REQUEST = 0
-    NEGOTIATION = 1
-    TRANSACTION = 2
-    EVALUATION = 3
-    COMPLETED = 4
-    REJECTED = 5
-
-
 class AcpJobPhasesDesc(str, Enum):
     REQUEST = "request"
     NEGOTIATION = "pending_payment"
@@ -55,17 +23,22 @@ class AcpJobPhasesDesc(str, Enum):
     COMPLETED = "completed"
     REJECTED = "rejected"
 
+ACP_JOB_PHASE_MAP: Dict[ACPJobPhase, AcpJobPhasesDesc] = {
+    ACPJobPhase.REQUEST: AcpJobPhasesDesc.REQUEST,
+    ACPJobPhase.NEGOTIATION: AcpJobPhasesDesc.NEGOTIATION,
+    ACPJobPhase.TRANSACTION: AcpJobPhasesDesc.TRANSACTION,
+    ACPJobPhase.EVALUATION: AcpJobPhasesDesc.EVALUATION,
+    ACPJobPhase.COMPLETED: AcpJobPhasesDesc.COMPLETED,
+    ACPJobPhase.REJECTED: AcpJobPhasesDesc.REJECTED,
+}
 
 @dataclass
 class AcpRequestMemo:
     id: int
-    createdAt: int
 
     def __repr__(self) -> str:
-        output = f"Memo(ID: {self.id}, created at: {self.createdAt})"
-        return output
-
-
+        return f"Memo(ID: {self.id})"
+    
 @dataclass
 class ITweet:
     type: Literal["buyer", "seller"]
@@ -73,67 +46,57 @@ class ITweet:
     content: str
     created_at: int
 
-
 @dataclass
-class AcpJob:
+class IAcpJob:
     jobId: Optional[int]
-    clientName: Optional[str]
+    clientName : Optional[str]
     providerName: Optional[str]
-    desc: Optional[str]
+    desc: str
     price: str
     providerAddress: Optional[str]
-    clientAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    tweetHistory: ITweet | List
-    lastUpdated: int
-    getAgentByWalletAddress: Optional[Callable[[str], AcpAgent]]
+    tweetHistory: List[ITweet] | List
 
     def __repr__(self) -> str:
-        output = (
+        output =(
             f"Job ID: {self.jobId}, "
             f"Client Name: {self.clientName}, "
             f"Provider Name: {self.providerName}, "
             f"Description: {self.desc}, "
             f"Price: {self.price}, "
             f"Provider Address: {self.providerAddress}, "
-            f"Client Address: {self.clientAddress}, "
             f"Phase: {self.phase.value}, "
             f"Memo: {self.memo}, "
             f"Tweet History: {self.tweetHistory}, "
-            f"Last Updated: {self.lastUpdated})"
-        )
+        ) 
         return output
-
 
 @dataclass
 class IDeliverable:
     type: str
-    value: Union[str, Dict[str, Any], List[Any]]
+    value: str
     clientName: Optional[str]
     providerName: Optional[str]
-
-
 @dataclass
 class IInventory(IDeliverable):
     jobId: int
     clientName: Optional[str]
     providerName: Optional[str]
 
-
 @dataclass
 class AcpJobsSection:
-    asABuyer: List[AcpJob]
-    asASeller: List[AcpJob]
+    asABuyer: List[IAcpJob]
+    asASeller: List[IAcpJob]
 
     def __str__(self) -> str:
         buyer_jobs = ""
         for index, job in enumerate(self.asABuyer):
-            buyer_jobs += f"#{index + 1} {str(job)} \n"
+            buyer_jobs += f"#{index+1} {str(job)} \n"
 
         seller_jobs = ""
         for index, job in enumerate(self.asASeller):
-            seller_jobs += f"#{index + 1} {str(job)} \n"
+            seller_jobs += f"#{index+1} {str(job)} \n"
 
         output = (
             f"As Buyer:\n{buyer_jobs}\n"
@@ -141,12 +104,11 @@ class AcpJobsSection:
         )
         return output
 
-
 @dataclass
 class AcpJobs:
     active: AcpJobsSection
-    completed: List[AcpJob]
-    cancelled: List[AcpJob]
+    completed: List[IAcpJob]
+    cancelled: List[IAcpJob]
 
     def __str__(self) -> str:
         output = (
@@ -156,8 +118,7 @@ class AcpJobs:
             f"🔴 Cancelled:\n{self.cancelled}\n"
         )
         return output
-
-
+    
 @dataclass
 class AcpInventory:
     acquired: List[IInventory]
@@ -171,7 +132,6 @@ class AcpInventory:
         )
         return output
 
-
 @dataclass
 class AcpState:
     inventory: AcpInventory
@@ -179,9 +139,9 @@ class AcpState:
 
     def __str__(self) -> str:
         output = (
-                f"🤖 Agent State".center(50, '=') + "\n" + \
-                f"{str(self.inventory)}\n" + \
-                f"{str(self.jobs)}\n" + \
-                f"State End".center(50, '=') + "\n"
+            f"🤖 Agent State".center(50, '=') + "\n" + \
+            f"{str(self.inventory)}\n" + \
+            f"{str(self.jobs)}\n" + \
+            f"State End".center(50, '=') + "\n"
         )
         return output

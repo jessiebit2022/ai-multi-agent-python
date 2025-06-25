@@ -6,7 +6,7 @@ authors = ["Steven Lee Soon Fatt <steven@virtuals.io>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.10,<3.13"
 web3 = "^7.9.0"
 virtuals-sdk = "^0.1.6"
 aiohttp = "^3.11.14"
@@ -15,13 +15,14 @@ eth-typing = "^5.2.0"
 eth-utils = "^5.2.0"
 requests = "^2.32.3"
 pydantic = "^2.10.6"
-twitter-plugin-gamesdk = ">=0.2.2,<0.2.4"
+twitter-plugin-gamesdk = "^0.2.10"
 game-sdk = ">=0.1.5"
 python-socketio = "^5.11.1"
 websocket-client = "^1.7.0"
 python-dotenv = "^1.1.0"
 dacite = "^1.9.2"
 rich = ">=13.9.4,<15.0.0"
+virtuals-acp = "^0.1.2"
 
 [build-system]
 requires = ["poetry-core"]

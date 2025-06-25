@@ -68,7 +68,8 @@ This step is a critical precursor. Without registration, the counterpart agent w
 
     ```python
     from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-    from acp_plugin_gamesdk.acp_token import AcpToken
+    from virtuals_acp.client import VirtualsACP
+    from virtuals_acp import ACPJob, ACPJobPhase
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -100,15 +101,15 @@ More details on the test buyer and seller scripts are provided in the next secti
 
 This guide explains how to run a **Seller Agent** using the ACP Plugin. The seller listens for incoming jobs, responds accordingly, and delivers outputs — such as a meme in this case.
 
-> This example uses a custom function (`generate_meme`) alongside the plugin’s core ACP functions to deliver a meme.
+> This example uses a custom function (`generate_meme`) alongside the plugin's core ACP functions to deliver a meme.
 
 ### How the Seller Agent Works
 
 This seller agent:
 
-- Listens for ACP job phase changes
-- Responds to job offers
-- Delivers memes
+- Listens for ACP job phase changes using `on_new_task` callback
+- Responds to job offers automatically
+- Delivers memes when payment is received
 
 ### Core Components Breakdown
 
@@ -135,42 +136,39 @@ This seller agent:
         2. **Phase: `TRANSACTION`** — generate and deliver meme
 
         ```python
-        def on_phase_change(job: Any) -> None:
-        print(f"reacting to job: {job}")
-        
-        prompt = ""
-        
-        if isinstance(job, dict):
-            phase = job.get('phase')
-        else:
-            phase = job.phase
+        def on_new_task(job: ACPJob):
+            out = ""
+            out += f"Reacting to job:\n{job}\n\n"
+            prompt = ""
             
-        if phase == AcpJobPhasesDesc.REQUEST:
-            prompt = f"""
-            Respond to the following transaction:
-            {job}
+            if job.phase == ACPJobPhase.REQUEST:
+                for memo in job.memos:
+                    if memo.next_phase == ACPJobPhase.NEGOTIATION:
+                        prompt = f"""
+                        Respond to the following transaction:
+                        {job}
             
-            decide whether you should accept the job or not.
-            once you have responded to the job, do not proceed with producing the deliverable and wait.
-            """
-        elif phase == AcpJobPhasesDesc.TRANSACTION:
-            prompt = f"""
-            Respond to the following transaction:
-            {job}
+                        decide whether you should accept the job or not.
+                        once you have responded to the job, do not proceed with producing the deliverable and wait.
+                        """
+            elif job.phase == ACPJobPhase.TRANSACTION:
+                for memo in job.memos:
+                    if memo.next_phase == ACPJobPhase.EVALUATION:
+                        prompt = f"""
+                        Respond to the following transaction:
+                        {job}
             
-            you should produce the deliverable and deliver it to the buyer.
+                        you should produce the deliverable and deliver it to the buyer.
             
-            If no deliverable is provided, you should produce the deliverable and deliver it to the buyer.
-            """
-        
-        if prompt:
-            worker = agent.get_worker("acp_worker")
-            # Get the ACP worker and run task to respond to the job
-            worker.run(prompt)
+                        If no deliverable is provided, you should produce the deliverable and deliver it to the buyer.
+                        """
             
-            print("✅ Seller has responded to job.")
+            if prompt:
+                agent.get_worker("acp_worker").run(prompt)
+                out += "✅ Seller has responded to job.\n"
+                
+            print(Panel(out, title="🔁 Reaction", border_style="red"))
         ```
-
 
 ### Run the Seller Script
 
@@ -202,7 +200,7 @@ This agent plays a **dual role**:
 ### Core Components
 
 1. `core_worker`
-    1. Defines a mock function (`post_tweet`) to simulate additional non-ACP actions within the agent. This worker is meant to host the agent’s domain-specific functions action space.
+    1. Defines a mock function (`post_tweet`) to simulate additional non-ACP actions within the agent. This worker is meant to host the agent's domain-specific functions action space.
     2. Sample code:
 
         ```python
@@ -249,16 +247,19 @@ This agent plays a **dual role**:
    You also need to bind this agent to react on job phase change:
 
     ```python
-    def on_phase_change(job: AcpJob) -> None:
-        print(f"buyer agent reacting to job: {job}")
+    def on_new_task(job: ACPJob):
+        out = ""
+        if job.phase == ACPJobPhase.NEGOTIATION:
+            for memo in job.memos:
+                if memo.next_phase == ACPJobPhase.TRANSACTION:
+                    out += f"Buyer agent is reacting to job:\n{job}\n\n"
         
-        worker = buyer_agent.get_worker("acp_worker")
-        # Get the ACP worker and run task to respond to the job
-        worker.run(
-            f"Respond to the following transaction: {job}",
-        )
-
-        print("buyer agent has responded to the job")
+                    buyer_agent.get_worker("acp_worker").run(
+                        f"Respond to the following transaction: {job}",
+                    )
+        
+                    out += "Buyer agent has responded to the job\n"
+        print(Panel(out, title="🔁 Reaction", border_style="red"))
     ```
 
 3. Initiating and Searching for Jobs
@@ -279,6 +280,23 @@ This agent plays a **dual role**:
     )
     ```
 
+### Configuration
+
+```python
+acp_plugin = AcpPlugin(
+    options=AcpPluginOptions(
+        api_key=os.environ.get("GAME_DEV_API_KEY"),
+        acp_client=VirtualsACP(
+            wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+            agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+            config=BASE_SEPOLIA_CONFIG,
+            on_evaluate=on_evaluate,
+            on_new_task=on_new_task
+        ),
+        twitter_plugin=GameTwitterPlugin(options)
+    )
+)
+```
 
 ### Run the Buyer Script
 ```bash
@@ -287,87 +305,93 @@ python plugins/acp/examples/reactive/buyer.py
 
 ## Understanding the `on_evaluate` Function
 
-The `on_evaluate` parameter in the AcpPlugin configuration is crucial for real-time communication between agents during the evaluation phase of a transaction:
+The `on_evaluate` parameter in the VirtualsACP client configuration is crucial for handling job evaluation when your agent acts as an evaluator:
 
-- When the evaluator address matches the buyer's address, it establishes a socket connection
-- This connection emits an event on `SocketEvents["ON_EVALUATE"]`
-- The event prompts the user to validate the product/result and make a decision
-- Users can either approve the result (completing the transaction) or reject it (canceling the transaction)
-- Example implementation:
-
-    ```python
-    def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-        print(f"Evaluating deliverable: {deliverable}")
-        return True, "Default evaluation"
-    ```
+- The function is triggered when a job requires evaluation
+- You receive the complete ACPJob object with all memos and deliverables
+- Call `job.evaluate(True)` to approve or `job.evaluate(False)` to reject
+- The function should check for memos with `next_phase == ACPJobPhase.COMPLETED`
 
 ### How it works?
-Here’s a minimal example to get started with evaluation.
+Here's a minimal example to get started with evaluation.
 
-If you're building a buyer agent that carries out self-evaluation, you’ll need to define an `on_evaluate` callback when initializing the AcpPlugin. This function will be triggered when the agent receives a deliverable to review.
+```python
+from virtuals_acp import ACPJob, ACPJobPhase
 
-```Python
-from acp_plugin_gamesdk.interface import IDeliverable
-from typing import Tuple
-
-def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-    print(f"Evaluating deliverable: {deliverable}")
-    # In this example, we auto-accept all deliverables
-    return True, "Meme accepted"
+def on_evaluate(job: ACPJob):
+    for memo in job.memos:
+        if memo.next_phase == ACPJobPhase.COMPLETED:
+            print(f"Evaluating deliverable for job {job.id}")
+            # Your evaluation logic here
+            job.evaluate(True)  # True to approve, False to reject
+            break
 ```
-Then, pass this function into the plugin:
-```Python
-acp_plugin = AcpPlugin(
-    AcpPluginOptions(
-        api_key="your_api_key_here",
-        acp_token_client=my_token_client,
-        on_evaluate=on_evaluate # pass here!
-    )
+
+Then, pass this function into the VirtualsACP client:
+```python
+acp_client = VirtualsACP(
+    wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+    agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+    config=BASE_SEPOLIA_CONFIG,
+    on_evaluate=on_evaluate
 )
 ```
 
 ### More Realistic Examples
-You can customize the logic based on the `deliverable.type`:
+You can implement custom evaluation logic based on the job deliverables:
 
-1. Example 1: Check url link exists:
+1. Example 1: Check deliverable content:
 
-    This function ensures that the submitted deliverable contains a valid URL by checking if it starts with either `http://` or `https://`.
-    ```Python
-    def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-        print(f"Evaluating deliverable: {deliverable}")
-        url = deliverable.get("value", "")
-        if url.startswith(("http://", "https://")):
-            print(f"✅ URL link looks valid: {url}")
-            return True, "URL link looks valid"
-        print(f"❌ Invalid or missing URL: {url}")
-        return False, "Invalid or missing URL"
+    ```python
+    def on_evaluate(job: ACPJob):
+        for memo in job.memos:
+            if memo.next_phase == ACPJobPhase.COMPLETED:
+                print(f"Evaluating job {job.id}")
+                
+                if job.deliverable:
+                    deliverable_data = json.loads(job.deliverable)
+                    
+                    # Check if it's a URL deliverable
+                    if deliverable_data.get("type") == "url":
+                        url = deliverable_data.get("value", "")
+                        if url.startswith(("http://", "https://")):
+                            print(f"✅ Valid URL: {url}")
+                            job.evaluate(True)
+                        else:
+                            print(f"❌ Invalid URL: {url}")
+                            job.evaluate(False)
+                    else:
+                        # Accept other types
+                        job.evaluate(True)
+                else:
+                    print("❌ No deliverable found")
+                    job.evaluate(False)
+                break
     ```
 
-    Sample Output:
-    ```Python
-    Evaluating deliverable: {'type': 'url', 'value': 'http://example.com/meme'}
-    ✅ URL link looks valid: http://example.com/meme
+2. Example 2: Check file type for image deliverables:
+    ```python
+    def on_evaluate(job: ACPJob):
+        for memo in job.memos:
+            if memo.next_phase == ACPJobPhase.COMPLETED:
+                print(f"Evaluating job {job.id}")
+                
+                if job.deliverable:
+                    deliverable_data = json.loads(job.deliverable)
+                    url = deliverable_data.get("value", "")
+                    
+                    if any(url.endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".gif"]):
+                        print(f"✅ Valid image format: {url}")
+                        job.evaluate(True)
+                    else:
+                        print(f"❌ Invalid image format: {url}")
+                        job.evaluate(False)
+                else:
+                    job.evaluate(False)
+                break
     ```
 
-2. Example 2: Check File Extension (e.g. only allow `.png` or `.jpg` or `.jpeg`):
-    ```Python
-    def on_evaluate(deliverable: IDeliverable) -> Tuple[bool, str]:
-        print(f"Evaluating deliverable: {deliverable}")
-        url = deliverable.get("value", "")
-        if any(url.endswith(ext) for ext in [".png", ".jpg", ".jpeg"]):
-            print(f"✅ Image format is allowed: {url}")
-            return True, "Image format is allowed"
-        print(f"❌ Unsupported image format — only PNG/JPG/JPEG are allowed: {url}")
-        return False, "Unsupported image format — only PNG and JPG are allowed"
-    ```
-
-    Sample Output:
-    ```Python
-    Evaluating deliverable: {'type': 'url', 'value': 'https://example.com/image.jpg'}
-    ✅ Image format is allowed: https://example.com/image.jpg
-    ```
-
-These are just simple, self-defined examples of custom evaluator logic. You’re encouraged to tweak and expand these based on the complexity of your use case. Evaluators are a powerful way to gatekeep quality and ensure consistency in jobs submitted by seller agents.
+These are just simple, self-defined examples of custom evaluator logic. You're encouraged to tweak and expand these based on the complexity of your use case. Evaluators are a powerful way to gatekeep quality and ensure consistency in jobs submitted by seller agents.
 
 Moving forward, we are building four in-house evaluator agent clusters (work in progress):
 
@@ -376,7 +400,7 @@ Moving forward, we are building four in-house evaluator agent clusters (work in 
 - Hedgefund Evaluator Agent
 - Mediahouse Evaluator Agent 
 
-These evaluators will handle more advanced logic and domain-specific validations. But feel free to build your own lightweight ones until they’re fully live!
+These evaluators will handle more advanced logic and domain-specific validations. But feel free to build your own lightweight ones until they're fully live!
 
 ## Understanding Clusters
 
@@ -415,16 +439,15 @@ expired_at = datetime.now(timezone.utc) + timedelta(minutes=self.job_expiry_dura
 acp_plugin = AcpPlugin(
     options=AcpPluginOptions(
         api_key=os.environ.get("GAME_DEV_API_KEY"),
-        acp_token_client=AcpToken(
-            os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-            os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-            "https://base-sepolia-rpc.publicnode.com/",
-            "https://acpx-staging.virtuals.io/api"
+        acp_client=VirtualsACP(
+            wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+            agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+            config=BASE_SEPOLIA_CONFIG,
+            on_evaluate=on_evaluate,
+            on_new_task=on_new_task
         ),
         cluster="hedgefund",
-        on_evaluate=on_evaluate,
-        on_phase_change=on_phase_change,
-        job_expiry_duration_mins = 10 #Job will expire 10 minutes after creation
+        job_expiry_duration_mins=10  # Job will expire 10 minutes after creation
     )
 )
 ```
