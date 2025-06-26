@@ -2,12 +2,14 @@ import os
 import threading
 
 from typing import Tuple
+import sys
+sys.path.append("../../")
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, ACP_JOB_PHASE_REVERSE_MAP, AcpJobPhasesDesc, AcpState, IInventory
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_MAINNET_CONFIG
-from virtuals_acp import ACPJob, ACPJobPhase
+from virtuals_acp import ACPJob, ACPJobPhase, ACPMemo
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
 from dacite import from_dict
@@ -56,9 +58,9 @@ def seller():
         out = ""
         out += f"Reacting to job:\n{job}\n\n"
         prompt = ""
-        if job.phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.REQUEST):
+        if job.phase == ACPJobPhase.REQUEST:
             for memo in job.memos:
-                if memo.next_phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.NEGOTIATION):
+                if memo.next_phase == ACPJobPhase.NEGOTIATION:
                     prompt = f"""
                     Respond to the following transaction:
                     {job}
@@ -66,9 +68,9 @@ def seller():
                     decide whether you should accept the job or not.
                     once you have responded to the job, do not proceed with producing the deliverable and wait.
                     """
-        elif job.phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.TRANSACTION):
+        elif job.phase == ACPJobPhase.TRANSACTION:
             for memo in job.memos:
-                if memo.next_phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.EVALUATION):
+                if memo.next_phase == ACPJobPhase.EVALUATION:
                     prompt = f"""
                     Respond to the following transaction:
                     {job}
@@ -87,6 +89,12 @@ def seller():
             
         print(Panel(out, title="🔁 Reaction", box=box.ROUNDED, title_align="left", border_style="red"))
 
+    if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
+        return
+    
+    if env.WHITELISTED_WALLET_ENTITY_ID is None:
+        return
+    
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
             api_key=env.GAME_DEV_API_KEY,
@@ -95,7 +103,7 @@ def seller():
                 agent_wallet_address=env.SELLER_AGENT_WALLET_ADDRESS,
                 config=BASE_MAINNET_CONFIG,
                 on_new_task=on_new_task,
-                entity_id=env.SELLER_ENTITY_ID
+                entity_id=env.WHITELISTED_WALLET_ENTITY_ID
             ),
             # GAME Twitter Plugin
             #twitter_plugin=GameTwitterPlugin(options),
@@ -194,20 +202,6 @@ def seller():
     )
     print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
     print("🔴"*40)
-    active_jobs = agent.agent_state.get("jobs").get("active").get("asASeller")
-    if active_jobs:
-        for job in active_jobs:
-            print(job)
-            on_new_task(ACPJob(
-                id=job.get("jobId"),
-                provider_address=job.get("providerAddress", ""),
-                client_address=job.get("clientAddress", ""),
-                evaluator_address=job.get("evaluatorAddress", ""),
-                price=job.get("price", ""),
-                acp_client=acp_plugin.acp_client,
-                memos=job.get("memos", []),
-                phase=ACP_JOB_PHASE_REVERSE_MAP[job.get("phase").value]
-            ))
     print("\nListening\n")
     threading.Event().wait()
 

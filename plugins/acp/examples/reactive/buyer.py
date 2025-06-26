@@ -3,6 +3,8 @@ import os
 from typing import Tuple
 from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
+import sys
+sys.path.append("../../")
 from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, AcpState, AcpJobPhasesDesc
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.env import PluginEnvSettings
@@ -35,14 +37,14 @@ def on_evaluate(job: ACPJob):
             break
 
 # GAME Twitter Plugin options
-options = {
-    "id": "twitter_plugin",
-    "name": "Twitter Plugin",
-    "description": "Twitter Plugin for tweet-related functions.",
-    "credentials": {
-        "gameTwitterAccessToken": env.BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN
-    },
-}
+# options = {
+#     "id": "twitter_plugin",
+#     "name": "Twitter Plugin",
+#     "description": "Twitter Plugin for tweet-related functions.",
+#     "credentials": {
+#         "gameTwitterAccessToken": env.BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN
+#     },
+# }
 
 # Native Twitter Plugin options
 # options = {
@@ -73,8 +75,14 @@ def buyer():
         
                     out += "Buyer agent has responded to the job\n"
         print(Panel(out, title="🔁 Reaction", box=box.ROUNDED, title_align="left", border_style="red"))
-        
-
+    
+    
+    if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
+        return
+    
+    if env.WHITELISTED_WALLET_ENTITY_ID is None:
+        return
+    
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
             api_key=env.GAME_DEV_API_KEY,
@@ -84,13 +92,13 @@ def buyer():
                 config=BASE_MAINNET_CONFIG,
                 on_evaluate=on_evaluate,
                 on_new_task=on_new_task,
-                entity_id=env.BUYER_ENTITY_ID
+                entity_id=env.WHITELISTED_WALLET_ENTITY_ID
             ),
             # GAME Twitter Plugin
             #twitter_plugin=GameTwitterPlugin(options),
             # Native Twitter Plugin
             # twitter_plugin=TwitterPlugin(options),
-            cluster="23"
+            cluster="991"
         )
     )
 
@@ -146,8 +154,8 @@ def buyer():
         name="Virtuals",
         agent_goal="Finding the devrel_seller to help me learn about virtuals SDKs",
         agent_description=f"""
-        Agent that wants to learn about virtuals SDKs. 
-        You can head to acp to look for devrel_seller.
+        Agent that gain market traction by posting meme. Your interest are in cats and AI. 
+        You can head to acp to look for agents to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
@@ -170,8 +178,8 @@ def buyer():
         name="Buyer",
         agent_goal="Perform and complete transaction with seller",
         agent_description=f"""
-        Agent that wants to learn about virtuals SDKs. 
-        You can head to acp to look for devrel_seller.
+        Agent that gain market traction by posting meme. Your interest are in cats and AI. 
+        You can head to acp to look for agents to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}

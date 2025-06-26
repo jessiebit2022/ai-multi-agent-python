@@ -1,3 +1,4 @@
+from typing import Optional
 from virtuals_acp.env import EnvSettings
 from pydantic import field_validator
 
@@ -6,6 +7,7 @@ class PluginEnvSettings(EnvSettings):
     GAME_API_KEY: str
     BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN: str
     SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN: str
+    WHITELISTED_WALLET_ENTITY_ID: Optional[int] = None
     # BUYER_AGENT_TWITTER_BEARER_TOKEN: str
     # BUYER_AGENT_TWITTER_API_KEY: str
     # BUYER_AGENT_TWITTER_API_SECRET_KEY: str

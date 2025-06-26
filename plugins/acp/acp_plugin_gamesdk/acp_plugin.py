@@ -65,7 +65,7 @@ class AcpPlugin:
             "price": str(job.price),
             "providerAddress": job.provider_address,
             "phase": ACP_JOB_PHASE_MAP.get(job.phase),
-            "memo": [{"id": memo.id} for memo in reversed(job.memos)] if job.memos else [],
+            "memo": job.memos if job.memos else [],
             # "tweetHistory": [
             #     {
             #         "type": tweet.get("type"),
@@ -317,11 +317,6 @@ class AcpPlugin:
                 evaluator_address = validators[0].wallet_address
             
             expired_at = datetime.now(timezone.utc) + timedelta(minutes=self.job_expiry_duration_mins)
-            print("seller_wallet_address", seller_wallet_address)
-            print("service_requirements", service_requirements)
-            print("price", price)
-            print("evaluator_address", evaluator_address)
-            print("expired_at", expired_at)
             job_id = self.acp_client.initiate_job(
                 seller_wallet_address,
                 service_requirements,
