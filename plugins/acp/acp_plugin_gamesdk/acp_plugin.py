@@ -55,6 +55,14 @@ class AcpPlugin:
         
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
+    
+    def memo_to_dict(self, m):
+        return {
+            "id": m.id,
+            "type": m.type.name,
+            "content": m.content,
+            "next_phase": m.next_phase.name
+        }
 
     def _to_state_acp_job(self, job: ACPJob) -> Dict:
         return {
@@ -64,8 +72,8 @@ class AcpPlugin:
             "desc": job.service_requirement or "",
             "price": str(job.price),
             "providerAddress": job.provider_address,
-            "phase": ACP_JOB_PHASE_MAP.get(job.phase),
-            "memo": job.memos if job.memos else [],
+            "phase": ACP_JOB_PHASE_MAP.get(job.phase).value,
+            "memo": [self.memo_to_dict(m) for m in job.memos] if job.memos else [],
             # "tweetHistory": [
             #     {
             #         "type": tweet.get("type"),

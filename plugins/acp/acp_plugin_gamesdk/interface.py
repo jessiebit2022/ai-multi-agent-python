@@ -1,19 +1,16 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Literal, Optional, Dict, Any
+from typing import Optional, List, Literal, Union, Dict, Any
+from pydantic import BaseModel
 
 from virtuals_acp.models import ACPJobPhase
 
-@dataclass
-class AcpOffering:
+class AcpOffering(BaseModel):
     name: str
     price: float
 
     def __str__(self) -> str:
-        output = (
-            f"Offering(name={self.name}, price={self.price})"
-        )
-        return output
+        return f"Offering(name={self.name}, price={self.price})"
 
 class AcpJobPhasesDesc(str, Enum):
     REQUEST = "request"
@@ -41,34 +38,31 @@ ACP_JOB_PHASE_REVERSE_MAP: Dict[str, ACPJobPhase] = {
     "rejected": ACPJobPhase.REJECTED,
 }
 
-@dataclass
-class AcpRequestMemo:
+class AcpRequestMemo(BaseModel):
     id: int
 
     def __repr__(self) -> str:
         return f"Memo(ID: {self.id})"
     
-@dataclass
-class ITweet:
+class ITweet(BaseModel):
     type: Literal["buyer", "seller"]
     tweet_id: str
     content: str
     created_at: int
 
-@dataclass
-class IAcpJob:
+class IAcpJob(BaseModel):
     jobId: Optional[int]
-    clientName : Optional[str]
+    clientName: Optional[str]
     providerName: Optional[str]
     desc: str
     price: str
     providerAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    tweetHistory: List[ITweet] | List[None] | None
+    tweetHistory: Optional[List[Optional[ITweet]]]
 
     def __repr__(self) -> str:
-        output =(
+        return (
             f"Job ID: {self.jobId}, "
             f"Client Name: {self.clientName}, "
             f"Provider Name: {self.providerName}, "
@@ -76,81 +70,75 @@ class IAcpJob:
             f"Price: {self.price}, "
             f"Provider Address: {self.providerAddress}, "
             f"Phase: {self.phase.value}, "
-            f"Memo: {self.memo}, "
-            #f"Tweet History: {self.tweetHistory}, "
-        ) 
-        return output
+            f"Memo: {self.memo}"
+        )
 
-@dataclass
-class IDeliverable:
+class IDeliverable(BaseModel):
     type: str
     value: str
     clientName: Optional[str]
     providerName: Optional[str]
-@dataclass
+
+
 class IInventory(IDeliverable):
     jobId: int
     clientName: Optional[str]
     providerName: Optional[str]
 
-@dataclass
-class AcpJobsSection:
+class AcpJobsSection(BaseModel):
     asABuyer: List[IAcpJob]
     asASeller: List[IAcpJob]
 
     def __str__(self) -> str:
-        buyer_jobs = ""
-        for index, job in enumerate(self.asABuyer):
-            buyer_jobs += f"#{index+1} {str(job)} \n"
+        buyer_jobs = "\n".join([f"#{i+1} {str(job)}" for i, job in enumerate(self.asABuyer)])
+        seller_jobs = "\n".join([f"#{i+1} {str(job)}" for i, job in enumerate(self.asASeller)])
+        return f"As Buyer:\n{buyer_jobs}\n\nAs Seller:\n{seller_jobs}"
 
-        seller_jobs = ""
-        for index, job in enumerate(self.asASeller):
-            seller_jobs += f"#{index+1} {str(job)} \n"
-
-        output = (
-            f"As Buyer:\n{buyer_jobs}\n"
-            f"As Seller:\n{seller_jobs}\n"
-        )
-        return output
-
-@dataclass
-class AcpJobs:
+class AcpJobs(BaseModel):
     active: AcpJobsSection
     completed: List[IAcpJob]
     cancelled: List[IAcpJob]
 
     def __str__(self) -> str:
-        output = (
+        return (
             f"💻 Jobs\n"
             f"🌕 Active Jobs:\n{self.active}\n"
             f"🟢 Completed:\n{self.completed}\n"
-            f"🔴 Cancelled:\n{self.cancelled}\n"
+            f"🔴 Cancelled:\n{self.cancelled}"
         )
-        return output
     
-@dataclass
-class AcpInventory:
+class AcpInventory(BaseModel):
     acquired: List[IInventory]
     produced: Optional[List[IInventory]]
 
     def __str__(self) -> str:
-        output = (
+        return (
             f"💼 Inventory\n"
             f"Acquired: {self.acquired}\n"
-            f"Produced: {self.produced}\n"
+            f"Produced: {self.produced}"
         )
-        return output
 
-@dataclass
-class AcpState:
+class AcpState(BaseModel):
     inventory: AcpInventory
     jobs: AcpJobs
 
     def __str__(self) -> str:
-        output = (
-            f"🤖 Agent State".center(50, '=') + "\n" + \
-            f"{str(self.inventory)}\n" + \
-            f"{str(self.jobs)}\n" + \
-            f"State End".center(50, '=') + "\n"
+        return (
+            f"🤖 Agent State".center(50, '=') + "\n"
+            f"{str(self.inventory)}\n"
+            f"{str(self.jobs)}\n"
+            f"State End".center(50, '=')
         )
-        return output
+
+def make_pydantic_friendly(obj: Any) -> Any:
+    if isinstance(obj, Enum):
+        return obj.value
+    elif hasattr(obj, "__dict__"):
+        return {k: make_pydantic_friendly(v) for k, v in obj.__dict__.items() if not k.startswith("_")}
+    elif isinstance(obj, dict):
+        return {k: make_pydantic_friendly(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_pydantic_friendly(v) for v in obj]
+    else:
+        return obj
+    

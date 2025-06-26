@@ -1,11 +1,11 @@
 import os
 import threading
 
-from typing import Tuple
+from typing import Tuple, Any
 import sys
 sys.path.append("../../")
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, ACP_JOB_PHASE_REVERSE_MAP, AcpJobPhasesDesc, AcpState, IInventory
+from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, ACP_JOB_PHASE_REVERSE_MAP, AcpJobPhasesDesc, AcpState, IInventory, make_pydantic_friendly
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_MAINNET_CONFIG
@@ -17,6 +17,8 @@ from dacite.config import Config
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv
+from dataclasses import is_dataclass, asdict
+from enum import Enum
 
 # GAME Twitter Plugin import
 # from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
@@ -92,7 +94,7 @@ def seller():
     if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
         return
     
-    if env.WHITELISTED_WALLET_ENTITY_ID is None:
+    if env.SELLER_ENTITY_ID is None:
         return
     
     acp_plugin = AcpPlugin(
@@ -103,7 +105,7 @@ def seller():
                 agent_wallet_address=env.SELLER_AGENT_WALLET_ADDRESS,
                 config=BASE_MAINNET_CONFIG,
                 on_new_task=on_new_task,
-                entity_id=env.WHITELISTED_WALLET_ENTITY_ID
+                entity_id=env.SELLER_ENTITY_ID
             ),
             # GAME Twitter Plugin
             #twitter_plugin=GameTwitterPlugin(options),
@@ -194,27 +196,26 @@ def seller():
     agent.compile()
 
     print("🟢"*40)
-    print(agent.agent_state)
-    init_state = from_dict(
-        data_class=AcpState,
-        data=agent.agent_state,
-        config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc})
-    )
+    # print(agent.agent_state)
+    cleaned_agent_state = make_pydantic_friendly(agent.agent_state)
+    for job in cleaned_agent_state["jobs"]["completed"]:
+        job.setdefault("tweetHistory", [])
+    init_state = AcpState.model_validate(cleaned_agent_state)
     print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
     print("🔴"*40)
-    active_jobs = agent.agent_state.get("jobs").get("active").get("asASeller")
-    if active_jobs:
-        for job in active_jobs:
-            on_new_task(ACPJob(
-                id=job.get("jobId"),
-                provider_address=job.get("providerAddress", ""),
-                client_address=job.get("clientAddress", ""),
-                evaluator_address=job.get("evaluatorAddress", ""),
-                price=job.get("price", ""),
-                acp_client=acp_plugin.acp_client,
-                memos=job.get("memo", []),
-                phase=ACP_JOB_PHASE_REVERSE_MAP[job.get("phase").value]
-            ))
+    # active_jobs = agent.agent_state.get("jobs").get("active").get("asASeller")
+    # if active_jobs:
+    #     for job in active_jobs:
+    #         on_new_task(ACPJob(
+    #             id=job.get("jobId"),
+    #             provider_address=job.get("providerAddress", ""),
+    #             client_address=job.get("clientAddress", ""),
+    #             evaluator_address=job.get("evaluatorAddress", ""),
+    #             price=job.get("price", ""),
+    #             acp_client=acp_plugin.acp_client,
+    #             memos=job.get("memo", []),
+    #             phase=ACP_JOB_PHASE_REVERSE_MAP[job.get("phase").value]
+    #         ))
     print("\nListening\n")
     threading.Event().wait()
 

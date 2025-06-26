@@ -5,7 +5,7 @@ from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 import sys
 sys.path.append("../../")
-from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, AcpState, AcpJobPhasesDesc
+from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, AcpState, AcpJobPhasesDesc, make_pydantic_friendly
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
@@ -80,7 +80,7 @@ def buyer():
     if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
         return
     
-    if env.WHITELISTED_WALLET_ENTITY_ID is None:
+    if env.BUYER_ENTITY_ID is None:
         return
     
     acp_plugin = AcpPlugin(
@@ -92,7 +92,7 @@ def buyer():
                 config=BASE_MAINNET_CONFIG,
                 on_evaluate=on_evaluate,
                 on_new_task=on_new_task,
-                entity_id=env.WHITELISTED_WALLET_ENTITY_ID
+                entity_id=env.BUYER_ENTITY_ID
             ),
             # GAME Twitter Plugin
             #twitter_plugin=GameTwitterPlugin(options),
@@ -193,7 +193,10 @@ def buyer():
 
     while True:
         print("🟢"*40)
-        init_state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
+        cleaned_agent_state = make_pydantic_friendly(agent.agent_state)
+        for job in cleaned_agent_state["jobs"]["completed"]:
+            job.setdefault("tweetHistory", [])
+        init_state = AcpState.model_validate(cleaned_agent_state)
         print(Panel(f"{init_state}", title="Initial Agent State", box=box.ROUNDED, title_align="left"))
         agent.step()
         end_state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
