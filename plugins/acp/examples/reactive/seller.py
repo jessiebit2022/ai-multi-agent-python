@@ -202,6 +202,19 @@ def seller():
     )
     print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
     print("🔴"*40)
+    active_jobs = agent.agent_state.get("jobs").get("active").get("asASeller")
+    if active_jobs:
+        for job in active_jobs:
+            on_new_task(ACPJob(
+                id=job.get("jobId"),
+                provider_address=job.get("providerAddress", ""),
+                client_address=job.get("clientAddress", ""),
+                evaluator_address=job.get("evaluatorAddress", ""),
+                price=job.get("price", ""),
+                acp_client=acp_plugin.acp_client,
+                memos=job.get("memo", []),
+                phase=ACP_JOB_PHASE_REVERSE_MAP[job.get("phase").value]
+            ))
     print("\nListening\n")
     threading.Event().wait()
 
