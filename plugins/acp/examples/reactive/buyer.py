@@ -3,22 +3,19 @@ import os
 from typing import Tuple
 from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
-import sys
-sys.path.append("../../")
+
 from acp_plugin_gamesdk.interface import AcpState, make_pydantic_friendly
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_MAINNET_CONFIG
-from virtuals_acp import ACPJob, ACPJobPhase, ACPMemo, MemoType
-from dacite import from_dict
-from dacite.config import Config
+from virtuals_acp import ACPJob, ACPJobPhase
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv
 
 # GAME Twitter Plugin import
-# from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
@@ -26,7 +23,6 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 env = PluginEnvSettings()
-
 
 def on_evaluate(job: ACPJob):
     for memo in job.memos:
@@ -37,14 +33,14 @@ def on_evaluate(job: ACPJob):
             break
 
 # GAME Twitter Plugin options
-# options = {
-#     "id": "twitter_plugin",
-#     "name": "Twitter Plugin",
-#     "description": "Twitter Plugin for tweet-related functions.",
-#     "credentials": {
-#         "gameTwitterAccessToken": env.BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN
-#     },
-# }
+options = {
+    "id": "twitter_plugin",
+    "name": "Twitter Plugin",
+    "description": "Twitter Plugin for tweet-related functions.",
+    "credentials": {
+        "game_twitter_access_token": env.BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN
+    },
+}
 
 # Native Twitter Plugin options
 # options = {
@@ -97,11 +93,7 @@ def buyer():
                 on_new_task=on_new_task,
                 entity_id=env.WHITELISTED_WALLET_ENTITY_ID
             ),
-            # GAME Twitter Plugin
-            #twitter_plugin=GameTwitterPlugin(options),
-            # Native Twitter Plugin
-            # twitter_plugin=TwitterPlugin(options),
-            cluster="991"
+            twitter_plugin=TwitterPlugin(options),
         )
     )
 
@@ -155,7 +147,7 @@ def buyer():
     agent = Agent(
         api_key=env.GAME_API_KEY,
         name="Virtuals",
-        agent_goal="Finding the devrel_seller to help me learn about virtuals SDKs",
+        agent_goal="Perform and complete transaction with seller",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
         You can head to acp to look for agents to help you generating meme.
@@ -197,8 +189,8 @@ def buyer():
     while True:
         print("🟢"*40)
         cleaned_agent_state = make_pydantic_friendly(agent.agent_state)
-        # for job in cleaned_agent_state["jobs"]["completed"]:
-        #     job.setdefault("tweetHistory", [])
+        for job in cleaned_agent_state["jobs"]["completed"]:
+            job.setdefault("tweetHistory", [])
         init_state = AcpState.model_validate(cleaned_agent_state)
         print(Panel(f"{init_state}", title="Initial Agent State", box=box.ROUNDED, title_align="left"))
         agent.step()

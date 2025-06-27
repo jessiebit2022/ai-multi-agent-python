@@ -11,11 +11,11 @@ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_SEPOLIA_CONFIG
 from virtuals_acp import ACPJob, ACPJobPhase
-from acp_plugin_gamesdk.interface import IDeliverable, AcpState, AcpJobPhasesDesc
+from acp_plugin_gamesdk.interface import AcpState, AcpJobPhasesDesc
 from dotenv import load_dotenv
 
 # GAME Twitter Plugin import
-# from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
@@ -37,7 +37,7 @@ options = {
     "name": "Twitter Plugin",
     "description": "Twitter Plugin for tweet-related functions.",
     "credentials": {
-        "gameTwitterAccessToken": os.environ.get("BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
+        "game_twitter_access_token": os.environ.get("BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
     },
 }
 
@@ -66,10 +66,7 @@ def buyer():
                 on_evaluate=on_evaluate,
                 entity_id=int(os.environ.get("ENTITY_ID", 1))
             ),
-            # GAME Twitter Plugin
-            # twitter_plugin=GameTwitterPlugin(options),
-            # Native Twitter Plugin
-            # twitter_plugin=TwitterPlugin(options),
+            twitter_plugin=TwitterPlugin(options),
         )
     )
 

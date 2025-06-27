@@ -1,33 +1,26 @@
 import os
 import threading
 
-from typing import Tuple, Any
-import sys
-sys.path.append("../../")
+from typing import Tuple
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, ACP_JOB_PHASE_REVERSE_MAP, AcpJobPhasesDesc, AcpState, IInventory, make_pydantic_friendly
+from acp_plugin_gamesdk.interface import AcpState, IInventory, make_pydantic_friendly
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_MAINNET_CONFIG
-from virtuals_acp import ACPJob, ACPJobPhase, ACPMemo, MemoType
+from virtuals_acp import ACPJob, ACPJobPhase
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
-from dacite import from_dict
-from dacite.config import Config
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv
-from dataclasses import is_dataclass, asdict
-from enum import Enum
 
 # GAME Twitter Plugin import
-# from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 load_dotenv(override=True)
-
 env = PluginEnvSettings()
 
 
@@ -37,7 +30,7 @@ options = {
     "name": "Twitter Plugin",
     "description": "Twitter Plugin for tweet-related functions.",
     "credentials": {
-        "gameTwitterAccessToken": env.SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN
+        "game_twitter_access_token": env.SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN
     },
 }
 
@@ -108,10 +101,7 @@ def seller():
                 entity_id=env.WHITELISTED_WALLET_ENTITY_ID
             ),
             # GAME Twitter Plugin
-            #twitter_plugin=GameTwitterPlugin(options),
-            # Native Twitter Plugin
-            # twitter_plugin=TwitterPlugin(options)
-            cluster="23"
+            twitter_plugin=TwitterPlugin(options),
         )
     )
 
@@ -198,8 +188,8 @@ def seller():
     print("🟢"*40)
     # print(agent.agent_state)
     cleaned_agent_state = make_pydantic_friendly(agent.agent_state)
-    # for job in cleaned_agent_state["jobs"]["completed"]:
-    #     job.setdefault("tweetHistory", [])
+    for job in cleaned_agent_state["jobs"]["completed"]:
+        job.setdefault("tweetHistory", [])
     init_state = AcpState.model_validate(cleaned_agent_state)
     print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
     print("🔴"*40)

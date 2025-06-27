@@ -14,7 +14,7 @@ from game_sdk.game.agent import Agent, WorkerConfig
 from dotenv import load_dotenv
 
 # GAME Twitter Plugin import
-# from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
@@ -28,7 +28,7 @@ options = {
     "name": "Twitter Plugin",
     "description": "Twitter Plugin for tweet-related functions.",
     "credentials": {
-        "gameTwitterAccessToken": os.environ.get("SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
+        "game_twitter_access_token": os.environ.get("SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
     },
 }
 
@@ -55,11 +55,8 @@ def seller():
                 agent_wallet_address=os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
                 config=BASE_SEPOLIA_CONFIG,
                 entity_id=int(os.environ.get("ENTITY_ID", 1))
-            ),
-            # GAME Twitter Plugin
-            # twitter_plugin=GameTwitterPlugin(options),
-            # Native Twitter Plugin
-            # twitter_plugin=TwitterPlugin(options)
+            ),       
+             twitter_plugin=TwitterPlugin(options)
         )
     )
 

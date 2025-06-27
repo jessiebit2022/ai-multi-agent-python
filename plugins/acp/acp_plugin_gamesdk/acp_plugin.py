@@ -4,6 +4,8 @@ from dataclasses import dataclass, asdict
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional,Tuple
 
+import requests
+
 from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
@@ -78,15 +80,15 @@ class AcpPlugin:
             "providerAddress": job.provider_address,
             "phase": ACP_JOB_PHASE_MAP.get(job.phase),
             "memo": list(reversed(memos)),
-            # "tweetHistory": [
-            #     {
-            #         "type": tweet.get("type"),
-            #         "tweetId": tweet.get("tweetId"),
-            #         "content": tweet.get("content"),
-            #         "createdAt": tweet.get("createdAt")
-            #     }
-            #     for tweet in reversed(job.context.get('tweets', []) if job.context else [])
-            # ],
+            "tweetHistory": [
+                {
+                    "type": tweet.get("type"),
+                    "tweet_id": tweet.get("tweetId"),
+                    "content": tweet.get("content"),
+                    "created_at": tweet.get("createdAt")
+                }
+                for tweet in reversed(job.context.get('tweets', []) if job.context else [])
+            ],
         }
 
     def get_acp_state(self) -> Dict:
@@ -303,14 +305,14 @@ class AcpPlugin:
         try:
             state = self.get_acp_state()
 
-            existing_job = next(
-                (job for job in state["jobs"]["active"]["asABuyer"]
-                 if job["providerAddress"] == seller_wallet_address),
-                None
-            )
+            # existing_job = next(
+            #     (job for job in state["jobs"]["active"]["asABuyer"]
+            #      if job["providerAddress"] == seller_wallet_address),
+            #     None
+            # )
 
-            if existing_job:
-                return FunctionResultStatus.FAILED, f"You already have an active job as a buyer with {existing_job['providerAddress']} - complete the current job before initiating a new one", {}  
+            # if existing_job:
+            #     return FunctionResultStatus.FAILED, f"You already have an active job as a buyer with {existing_job['providerAddress']} - complete the current job before initiating a new one", {}  
             
             if not seller_wallet_address:
                 return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
@@ -337,8 +339,8 @@ class AcpPlugin:
                 expired_at
             )
 
-            # if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-            #     self._tweet_job(job_id, f"{tweet_content} #{job_id}")
+            if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
+                self._tweet_job(job_id, f"{tweet_content} #{job_id}")
 
             return FunctionResultStatus.DONE, json.dumps({
                 "jobId": job_id,
@@ -419,10 +421,10 @@ class AcpPlugin:
                 reasoning
             )
 
-            # if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-            #     tweet_id = job.get("tweetHistory", [])[0].get("tweetId") if job.get("tweetHistory") else None
-            #     if tweet_id:
-            #         self._tweet_job(job_id, tweet_content, tweet_id)
+            if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
+                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
+                if tweet_id:
+                    self._tweet_job(job_id, tweet_content, tweet_id)
 
             return FunctionResultStatus.DONE, json.dumps({
                 "jobId": job_id,
@@ -501,10 +503,10 @@ class AcpPlugin:
                 reasoning
             )
 
-            # if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-            #     tweet_id = job.get("tweetHistory", [])[0].get("tweetId") if job.get("tweetHistory") else None
-            #     if tweet_id:
-            #         self._tweet_job(job_id, tweet_content, tweet_id)
+            if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
+                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
+                if tweet_id:
+                    self._tweet_job(job_id, tweet_content, tweet_id)
 
             return FunctionResultStatus.DONE, json.dumps({
                 "jobId": job_id,
@@ -594,10 +596,10 @@ class AcpPlugin:
                 json.dumps(_deliverable),
             )
 
-            # if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-            #     tweet_id = job.get("tweetHistory", [])[0].get("tweetId") if job.get("tweetHistory") else None
-            #     if tweet_id:
-            #         self._tweet_job(job_id, tweet_content, tweet_id)
+            if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
+                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
+                if tweet_id:
+                    self._tweet_job(job_id, tweet_content, tweet_id)
                 
             return FunctionResultStatus.DONE, json.dumps({
                 "status": "success",
@@ -609,46 +611,52 @@ class AcpPlugin:
             print(traceback.format_exc())
             return FunctionResultStatus.FAILED, f"System error while delivering items - try again after a short delay. {str(e)}", {}
 
-    # def _tweet_job(self, job_id: int, content: str, tweet_id: Optional[str] = None):
-    #     if not hasattr(self, 'twitter_plugin') or self.twitter_plugin is None:
-    #         return
+    def _tweet_job(self, job_id: int, content: str, tweet_id: Optional[str] = None):
+        if not hasattr(self, 'twitter_plugin') or self.twitter_plugin is None:
+            return
 
-    #     job = self.acp_client.get_job_by_onchain_id(job_id)
-    #     if not job:
-    #         raise Exception("ERROR (tweetJob): Job not found")
+        job = self.acp_client.get_job_by_onchain_id(job_id)
+        if not job:
+            raise Exception("ERROR (tweetJob): Job not found")
 
-    #     tweet = (
-    #         self.twitter_plugin.twitter_client.create_tweet(
-    #             text=content,
-    #             in_reply_to_tweet_id=tweet_id
-    #         )
-    #         if tweet_id
-    #         else self.twitter_plugin.twitter_client.create_tweet(text=content)
-    #     )
+              
+        if tweet_id :
+            response = self.twitter_plugin.twitter_client.create_tweet(
+                text=content,
+                in_reply_to_tweet_id=tweet_id
+            )
+        else:
+            response = self.twitter_plugin.twitter_client.create_tweet(text=content)
 
-    #     role = "buyer" if job.client_address.lower() == self.acp_client.agent_address.lower() else "seller"
 
-    #     context = {
-    #         **(job.context or {}),
-    #         'tweets': [
-    #             *((job.context or {}).get('tweets', [])),
-    #             {
-    #                 'type': role,
-    #                 'tweetId': tweet['data']['id'],
-    #                 'content': content,
-    #                 'createdAt': int(datetime.now().timestamp() * 1000)
-    #             },
-    #         ],
-    #     }
+        role = "buyer" if job.client_address.lower() == self.acp_client.agent_address.lower() else "seller"
 
-    #     response = requests.patch(
-    #         f"{self.acp_base_url}/jobs/{job_id}/context",
-    #         headers={
-    #             "Content-Type": "application/json",
-    #             "wallet-address": self.acp_client.agent_address,
-    #         },
-    #         json={"data": {"context": context}}
-    #     )
+        # Safely extract tweet ID
+        tweet_id = None
+        if isinstance(response, dict):
+            tweet_id = response.get('data', {}).get('id') or response.get('id')
+        
+        context = {
+            **(job.context or {}),
+            'tweets': [
+                *((job.context or {}).get('tweets', [])),
+                {
+                    'type': role,
+                    'tweetId': tweet_id,
+                    'content': content,
+                    'createdAt': int(datetime.now().timestamp() * 1000)
+                },
+            ],
+        }
 
-    #     if not response.ok:
-    #         raise Exception(f"ERROR (tweetJob): {response.status_code} {response.text}")
+        response = requests.patch(
+            f"{self.acp_base_url}/jobs/{job_id}/context",
+            headers={
+                "Content-Type": "application/json",
+                "wallet-address": self.acp_client.agent_address,
+            },
+            json={"data": {"context": context}}
+        )
+
+        if not response.ok:
+            raise Exception(f"ERROR (tweetJob): {response.status_code} {response.text}")

@@ -59,7 +59,7 @@ class IAcpJob(BaseModel):
     providerAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    #tweetHistory: Optional[List[Optional[ITweet]]]
+    tweetHistory: Optional[List[Optional[ITweet]]]
 
     def __repr__(self) -> str:
         return (
@@ -70,7 +70,8 @@ class IAcpJob(BaseModel):
             f"Price: {self.price}, "
             f"Provider Address: {self.providerAddress}, "
             f"Phase: {self.phase.value}, "
-            f"Memo: {self.memo}"
+            f"Memo: {self.memo}, "
+            f"Tweet History: {self.tweetHistory}"
         )
 
 class IDeliverable(BaseModel):
