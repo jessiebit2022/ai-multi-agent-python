@@ -5,12 +5,12 @@ from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 import sys
 sys.path.append("../../")
-from acp_plugin_gamesdk.interface import ACP_JOB_PHASE_MAP, AcpState, AcpJobPhasesDesc, make_pydantic_friendly
+from acp_plugin_gamesdk.interface import AcpState, make_pydantic_friendly
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_MAINNET_CONFIG
-from virtuals_acp import ACPJob, ACPJobPhase
+from virtuals_acp import ACPJob, ACPJobPhase, ACPMemo, MemoType
 from dacite import from_dict
 from dacite.config import Config
 from rich import print, box
@@ -64,9 +64,11 @@ def buyer():
     # upon phase change, the buyer agent will respond to the transaction
     def on_new_task(job: ACPJob):
         out = ""
-        if job.phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.NEGOTIATION):
+        print(job.phase, "job.phase")
+        if job.phase == ACPJobPhase.NEGOTIATION:
             for memo in job.memos:
-                if memo.next_phase == ACP_JOB_PHASE_MAP.get(ACPJobPhase.TRANSACTION):
+                print(memo.next_phase, "memo.next_phase")
+                if memo.next_phase == ACPJobPhase.TRANSACTION:
                     out += f"Buyer agent is reacting to job:\n{job}\n\n"
         
                     buyer_agent.get_worker("acp_worker").run(
@@ -80,8 +82,9 @@ def buyer():
     if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
         return
     
-    if env.BUYER_ENTITY_ID is None:
+    if env.WHITELISTED_WALLET_ENTITY_ID is None:
         return
+    
     
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
@@ -92,7 +95,7 @@ def buyer():
                 config=BASE_MAINNET_CONFIG,
                 on_evaluate=on_evaluate,
                 on_new_task=on_new_task,
-                entity_id=env.BUYER_ENTITY_ID
+                entity_id=env.WHITELISTED_WALLET_ENTITY_ID
             ),
             # GAME Twitter Plugin
             #twitter_plugin=GameTwitterPlugin(options),
@@ -194,12 +197,12 @@ def buyer():
     while True:
         print("🟢"*40)
         cleaned_agent_state = make_pydantic_friendly(agent.agent_state)
-        for job in cleaned_agent_state["jobs"]["completed"]:
-            job.setdefault("tweetHistory", [])
+        # for job in cleaned_agent_state["jobs"]["completed"]:
+        #     job.setdefault("tweetHistory", [])
         init_state = AcpState.model_validate(cleaned_agent_state)
         print(Panel(f"{init_state}", title="Initial Agent State", box=box.ROUNDED, title_align="left"))
         agent.step()
-        end_state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
+        end_state = AcpState.model_validate(agent.agent_state)
         print(Panel(f"{end_state}", title="End Agent State", box=box.ROUNDED, title_align="left"))
         print("🔴"*40)
         input("\nPress any key to continue...\n")

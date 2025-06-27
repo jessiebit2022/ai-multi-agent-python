@@ -3,7 +3,6 @@ import traceback
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional,Tuple
-import requests
 
 from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
@@ -65,6 +64,11 @@ class AcpPlugin:
         }
 
     def _to_state_acp_job(self, job: ACPJob) -> Dict:
+        memos = []
+        for memo in job.memos:
+            memos.append(self.memo_to_dict(memo))
+            
+        
         return {
             "jobId": job.id,
             "clientName":  job.client_agent.name if job.client_agent else "",
@@ -72,8 +76,8 @@ class AcpPlugin:
             "desc": job.service_requirement or "",
             "price": str(job.price),
             "providerAddress": job.provider_address,
-            "phase": ACP_JOB_PHASE_MAP.get(job.phase).value,
-            "memo": [self.memo_to_dict(m) for m in job.memos] if job.memos else [],
+            "phase": ACP_JOB_PHASE_MAP.get(job.phase),
+            "memo": list(reversed(memos)),
             # "tweetHistory": [
             #     {
             #         "type": tweet.get("type"),
@@ -112,7 +116,7 @@ class AcpPlugin:
         return {
             "inventory": {
                 "acquired": [],
-                "produced": [asdict(item) for item in self.produced_inventory] if self.produced_inventory else [],
+                "produced": [item.model_dump() for item in self.produced_inventory] if self.produced_inventory else [],
             },
             "jobs": {
                 "active": {

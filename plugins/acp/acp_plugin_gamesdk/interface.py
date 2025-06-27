@@ -59,7 +59,7 @@ class IAcpJob(BaseModel):
     providerAddress: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    tweetHistory: Optional[List[Optional[ITweet]]]
+    #tweetHistory: Optional[List[Optional[ITweet]]]
 
     def __repr__(self) -> str:
         return (
