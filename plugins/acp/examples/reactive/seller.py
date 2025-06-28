@@ -1,9 +1,8 @@
-import os
 import threading
 
 from typing import Tuple
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import AcpState, IInventory, make_pydantic_friendly
+from acp_plugin_gamesdk.interface import AcpState, IInventory, to_serializable_dict
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp.configs import BASE_MAINNET_CONFIG
@@ -87,7 +86,7 @@ def seller():
     if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
         return
     
-    if env.WHITELISTED_WALLET_ENTITY_ID is None:
+    if env.SELLER_ENTITY_ID is None:
         return
     
     acp_plugin = AcpPlugin(
@@ -98,7 +97,7 @@ def seller():
                 agent_wallet_address=env.SELLER_AGENT_WALLET_ADDRESS,
                 config=BASE_MAINNET_CONFIG,
                 on_new_task=on_new_task,
-                entity_id=env.WHITELISTED_WALLET_ENTITY_ID
+                entity_id=env.SELLER_ENTITY_ID
             ),
             # GAME Twitter Plugin
             twitter_plugin=TwitterPlugin(options),
@@ -107,7 +106,8 @@ def seller():
 
     def get_agent_state(_: None, _e: None) -> dict:
         state = acp_plugin.get_acp_state()
-        return state
+        state_dict = to_serializable_dict(state)
+        return state_dict
 
     def generate_meme(description: str, job_id: int, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not job_id or job_id == 'None':
@@ -186,11 +186,7 @@ def seller():
     agent.compile()
 
     print("🟢"*40)
-    # print(agent.agent_state)
-    cleaned_agent_state = make_pydantic_friendly(agent.agent_state)
-    for job in cleaned_agent_state["jobs"]["completed"]:
-        job.setdefault("tweetHistory", [])
-    init_state = AcpState.model_validate(cleaned_agent_state)
+    init_state = AcpState.model_validate(agent.agent_state)
     print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
     print("🔴"*40)
     print("\nListening\n")

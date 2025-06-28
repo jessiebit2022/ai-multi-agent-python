@@ -1,6 +1,5 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, Literal, Union, Dict, Any
+from typing import Optional, List, Literal, Dict, Any
 from pydantic import BaseModel
 
 from virtuals_acp.models import ACPJobPhase
@@ -131,15 +130,19 @@ class AcpState(BaseModel):
             f"State End".center(50, '=')
         )
 
-def make_pydantic_friendly(obj: Any) -> Any:
+def to_serializable_dict(obj: Any) -> Any:
     if isinstance(obj, Enum):
         return obj.value
-    elif hasattr(obj, "__dict__"):
-        return {k: make_pydantic_friendly(v) for k, v in obj.__dict__.items() if not k.startswith("_")}
     elif isinstance(obj, dict):
-        return {k: make_pydantic_friendly(v) for k, v in obj.items()}
+        return {k: to_serializable_dict(v) for k, v in obj.items()}
     elif isinstance(obj, list):
-        return [make_pydantic_friendly(v) for v in obj]
+        return [to_serializable_dict(item) for item in obj]
+    elif hasattr(obj, "__dict__"):
+        return {
+            k: to_serializable_dict(v)
+            for k, v in vars(obj).items()
+            if not k.startswith("_")
+        }
     else:
         return obj
     

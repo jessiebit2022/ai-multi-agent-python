@@ -1,10 +1,8 @@
-import os
-
 from typing import Tuple
 from game_sdk.game.agent import Agent, WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 
-from acp_plugin_gamesdk.interface import AcpState, make_pydantic_friendly
+from acp_plugin_gamesdk.interface import AcpState, to_serializable_dict
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
@@ -78,7 +76,7 @@ def buyer():
     if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
         return
     
-    if env.WHITELISTED_WALLET_ENTITY_ID is None:
+    if env.BUYER_ENTITY_ID is None:
         return
     
     
@@ -91,15 +89,16 @@ def buyer():
                 config=BASE_MAINNET_CONFIG,
                 on_evaluate=on_evaluate,
                 on_new_task=on_new_task,
-                entity_id=env.WHITELISTED_WALLET_ENTITY_ID
+                entity_id=env.BUYER_ENTITY_ID
             ),
-            twitter_plugin=TwitterPlugin(options),
+            twitter_plugin=TwitterPlugin(options)
         )
     )
 
     def get_agent_state(_: None, _e: None) -> dict:
         state = acp_plugin.get_acp_state()
-        return state
+        state_dict = to_serializable_dict(state)
+        return state_dict
 
     def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
         return FunctionResultStatus.DONE, "Tweet has been posted", {}
@@ -147,7 +146,7 @@ def buyer():
     agent = Agent(
         api_key=env.GAME_API_KEY,
         name="Virtuals",
-        agent_goal="Perform and complete transaction with seller",
+        agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
         You can head to acp to look for agents to help you generating meme.
@@ -188,11 +187,8 @@ def buyer():
 
     while True:
         print("🟢"*40)
-        cleaned_agent_state = make_pydantic_friendly(agent.agent_state)
-        for job in cleaned_agent_state["jobs"]["completed"]:
-            job.setdefault("tweetHistory", [])
-        init_state = AcpState.model_validate(cleaned_agent_state)
-        print(Panel(f"{init_state}", title="Initial Agent State", box=box.ROUNDED, title_align="left"))
+        init_state = AcpState.model_validate(agent.agent_state)
+        print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
         agent.step()
         end_state = AcpState.model_validate(agent.agent_state)
         print(Panel(f"{end_state}", title="End Agent State", box=box.ROUNDED, title_align="left"))

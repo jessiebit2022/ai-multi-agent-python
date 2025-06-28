@@ -1,6 +1,6 @@
 import json
 import traceback
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional,Tuple
 
@@ -93,7 +93,6 @@ class AcpPlugin:
 
     def get_acp_state(self) -> Dict:
         active_jobs = self.acp_client.get_active_jobs()
-        active_jobs = [job for job in active_jobs if job.id not in (5224, 5225, 5226, 5285, 5286, 5302, 5312)]  
         completed_jobs = self.acp_client.get_completed_jobs()
         cancelled_jobs = self.acp_client.get_cancelled_jobs()
 
@@ -303,17 +302,6 @@ class AcpPlugin:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you're making this purchase request", {}
         
         try:
-            state = self.get_acp_state()
-
-            # existing_job = next(
-            #     (job for job in state["jobs"]["active"]["asABuyer"]
-            #      if job["providerAddress"] == seller_wallet_address),
-            #     None
-            # )
-
-            # if existing_job:
-            #     return FunctionResultStatus.FAILED, f"You already have an active job as a buyer with {existing_job['providerAddress']} - complete the current job before initiating a new one", {}  
-            
             if not seller_wallet_address:
                 return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
             
