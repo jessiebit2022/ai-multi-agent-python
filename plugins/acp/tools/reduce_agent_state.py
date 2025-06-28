@@ -1,7 +1,7 @@
 from copy import deepcopy
 from pprint import pprint
 from dotenv import load_dotenv
-from typing import Dict
+from typing import List, Dict, Any
 
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.interface import to_serializable_dict
@@ -70,10 +70,42 @@ def delete_produced_inventory(state: Dict, keep_most_recent: int = 5) -> Dict:
     )
     return filtered_state
 
-
 def delete_old_inventory(state: Dict, keep_acquired: int = 5, keep_produced: int = 5) -> Dict:
     state = delete_acquired_inventory(state, keep_acquired)
     return delete_produced_inventory(state, keep_produced)
+
+def filter_out_job_ids(state: Dict, job_ids_to_ignore: List[int]) -> Dict:
+    """
+    Filters out jobs with specific job IDs from active job lists.
+
+    Args:
+        state (Dict): The agent state dictionary.
+        job_ids_to_ignore (List[int]): List of job IDs to exclude.
+
+    Returns:
+        Dict: A new state dictionary with specified job IDs removed.
+    """
+    if not job_ids_to_ignore:
+        return state
+
+    filtered_state = state.copy()
+    jobs = filtered_state.get("jobs", {})
+    active = jobs.get("active", {})
+
+    if "asABuyer" in active:
+        active["asABuyer"] = [
+            job for job in active["asABuyer"]
+            if job.get("jobId") not in job_ids_to_ignore
+        ]
+
+    if "asASeller" in active:
+        active["asASeller"] = [
+            job for job in active["asASeller"]
+            if job.get("jobId") not in job_ids_to_ignore
+        ]
+
+    filtered_state["jobs"]["active"] = active
+    return filtered_state
 
 def reduce_agent_state(
     state: Dict,
@@ -81,12 +113,33 @@ def reduce_agent_state(
     keep_cancelled_jobs: int = 5,
     keep_acquired_inventory: int = 5,
     keep_produced_inventory: int = 5,
+    job_ids_to_ignore: List[int] = [],
+    agent_addresses_to_ignore: List[str] = [],
 ) -> Dict:
+     # Step 1: Filter specific job IDs
+    if job_ids_to_ignore:
+        state = filter_out_job_ids(state, job_ids_to_ignore)
+
+    # Step 2: Filter jobs from any ignored agent address
+    if agent_addresses_to_ignore:
+        active_jobs = state.get("jobs", {}).get("active", {})
+        all_active = active_jobs.get("asABuyer", []) + active_jobs.get("asASeller", [])
+        matching_ids = [
+            job["jobId"]
+            for job in all_active
+            if job.get("providerAddress", "") in agent_addresses_to_ignore
+        ]
+        if matching_ids:
+            print(f"Removing {len(matching_ids)} active jobs from ignored agents: {', '.join(map(str, matching_ids))}")
+            state = filter_out_job_ids(state, matching_ids)
+    
+    # Step 3: Clean up historical data
     state = delete_old_jobs(state, keep_completed_jobs, keep_cancelled_jobs)
     state = delete_old_inventory(state, keep_acquired_inventory, keep_produced_inventory)
     return state
 
 if __name__ == "__main__":
+    # Test example
     def get_agent_state(_: None, _e: None) -> dict:
         state = acp_plugin.get_acp_state()
         state_dict = to_serializable_dict(state)
@@ -95,7 +148,9 @@ if __name__ == "__main__":
             keep_completed_jobs=1,
             keep_cancelled_jobs=1,
             keep_acquired_inventory=1,
-            keep_produced_inventory=1
+            keep_produced_inventory=1,
+            job_ids_to_ignore=[6294, 6293, 6269],
+            agent_addresses_to_ignore=["0x408AE36F884Ef37aAFBA7C55aE1c9BB9c2753995"],
         )
     reduced_agent_state = get_agent_state(None, None)
     print("\n🧹 Cleaned State:")
