@@ -14,7 +14,7 @@ from game_sdk.game.agent import Agent, WorkerConfig
 from dotenv import load_dotenv
 
 # GAME Twitter Plugin import
-from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
@@ -28,7 +28,7 @@ options = {
     "name": "Twitter Plugin",
     "description": "Twitter Plugin for tweet-related functions.",
     "credentials": {
-        "gameTwitterAccessToken": os.environ.get("SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
+        "game_twitter_access_token": os.environ.get("SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
     },
 }
 
@@ -49,16 +49,14 @@ options = {
 def seller():
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_DEV_API_KEY"),
+            api_key=os.environ.get("GAME_DEV_API_KEY",""),
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
+                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY",""),
                 agent_wallet_address=os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
-                config=BASE_SEPOLIA_CONFIG
-            ),
-            # GAME Twitter Plugin
-            twitter_plugin=GameTwitterPlugin(options),
-            # Native Twitter Plugin
-            # twitter_plugin=TwitterPlugin(options)
+                config=BASE_SEPOLIA_CONFIG,
+                entity_id=int(os.environ.get("ENTITY_ID", 1))
+            ),       
+             twitter_plugin=TwitterPlugin(options)
         )
     )
 
@@ -73,7 +71,7 @@ def seller():
         state = acp_plugin.get_acp_state()
 
         job = next(
-            (j for j in state.get('jobs').get('active').get('asASeller') if j.get('jobId') == job_id),
+            (j for j in state.get('jobs',{}).get('active').get('asASeller') if j.get('jobId') == job_id),
             None
         )
 
@@ -134,7 +132,7 @@ def seller():
     )
 
     agent = Agent(
-        api_key=os.environ.get("GAME_API_KEY"),
+        api_key=os.environ.get("GAME_API_KEY",""),
         name="Memx",
         agent_goal="To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller.",
         agent_description=f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.

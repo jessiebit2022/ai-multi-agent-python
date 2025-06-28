@@ -1,27 +1,26 @@
-import os
 import threading
 
-from typing import Any, Tuple
+from typing import Tuple
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
-from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, AcpState, IInventory
+from acp_plugin_gamesdk.interface import AcpState, IInventory, to_serializable_dict
+from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
-from virtuals_acp.configs import BASE_SEPOLIA_CONFIG
+from virtuals_acp.configs import BASE_MAINNET_CONFIG
 from virtuals_acp import ACPJob, ACPJobPhase
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
-from dacite import from_dict
-from dacite.config import Config
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv
 
 # GAME Twitter Plugin import
-from twitter_plugin_gamesdk.game_twitter_plugin import GameTwitterPlugin
+from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
-load_dotenv()
+load_dotenv(override=True)
+env = PluginEnvSettings()
 
 
 # GAME Twitter Plugin options
@@ -30,7 +29,7 @@ options = {
     "name": "Twitter Plugin",
     "description": "Twitter Plugin for tweet-related functions.",
     "credentials": {
-        "gameTwitterAccessToken": os.environ.get("SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
+        "game_twitter_access_token": env.SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN
     },
 }
 
@@ -40,11 +39,11 @@ options = {
 #     "name": "Twitter Plugin",
 #     "description": "Twitter Plugin for tweet-related functions.",
 #     "credentials": {
-#         "bearerToken": os.environ.get("SELLER_AGENT_TWITTER_BEARER_TOKEN"),
-#         "apiKey": os.environ.get("SELLER_AGENT_TWITTER_API_KEY"),
-#         "apiSecretKey": os.environ.get("SELLER_AGENT_TWITTER_API_SECRET_KEY"),
-#         "accessToken": os.environ.get("SELLER_AGENT_TWITTER_ACCESS_TOKEN"),
-#         "accessTokenSecret": os.environ.get("SELLER_AGENT_TWITTER_ACCESS_TOKEN_SECRET"),
+#         "bearerToken": env.SELLER_AGENT_TWITTER_BEARER_TOKEN,
+#         "apiKey": env.SELLER_AGENT_TWITTER_API_KEY,
+#         "apiSecretKey": env.SELLER_AGENT_TWITTER_API_SECRET_KEY,
+#         "accessToken": env.SELLER_AGENT_TWITTER_ACCESS_TOKEN,
+#         "accessTokenSecret": env.SELLER_AGENT_TWITTER_ACCESS_TOKEN_SECRET,
 #     },
 # }
 
@@ -53,7 +52,6 @@ def seller():
         out = ""
         out += f"Reacting to job:\n{job}\n\n"
         prompt = ""
-        
         if job.phase == ACPJobPhase.REQUEST:
             for memo in job.memos:
                 if memo.next_phase == ACPJobPhase.NEGOTIATION:
@@ -85,25 +83,31 @@ def seller():
             
         print(Panel(out, title="🔁 Reaction", box=box.ROUNDED, title_align="left", border_style="red"))
 
+    if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
+        return
+    
+    if env.SELLER_ENTITY_ID is None:
+        return
+    
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_DEV_API_KEY"),
+            api_key=env.GAME_DEV_API_KEY,
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-                agent_wallet_address=os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
-                config=BASE_SEPOLIA_CONFIG,
-                on_new_task=on_new_task
+                wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+                agent_wallet_address=env.SELLER_AGENT_WALLET_ADDRESS,
+                config=BASE_MAINNET_CONFIG,
+                on_new_task=on_new_task,
+                entity_id=env.SELLER_ENTITY_ID
             ),
             # GAME Twitter Plugin
-            twitter_plugin=GameTwitterPlugin(options),
-            # Native Twitter Plugin
-            # twitter_plugin=TwitterPlugin(options)
+            twitter_plugin=TwitterPlugin(options),
         )
     )
 
     def get_agent_state(_: None, _e: None) -> dict:
         state = acp_plugin.get_acp_state()
-        return state
+        state_dict = to_serializable_dict(state)
+        return state_dict
 
     def generate_meme(description: str, job_id: int, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not job_id or job_id == 'None':
@@ -112,7 +116,7 @@ def seller():
         state = acp_plugin.get_acp_state()
         
         job = next(
-            (j for j in state.get('jobs').get('active').get('asASeller') if j.get('jobId') == job_id),
+            (j for j in state.get('jobs',{}).get('active',{}).get('asASeller',[]) if j.get('jobId') == job_id),
             None
         )
 
@@ -167,7 +171,7 @@ def seller():
     )
 
     agent = Agent(
-        api_key=os.environ.get("GAME_API_KEY"),
+        api_key=env.GAME_API_KEY,
         name="Memx",
         agent_goal="To provide meme generation as a service. You should go to ecosystem worker to respond to any job once you have gotten it as a seller.",
         agent_description=f"""
@@ -182,13 +186,9 @@ def seller():
     agent.compile()
 
     print("🟢"*40)
-    init_state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
+    init_state = AcpState.model_validate(agent.agent_state)
     print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
     print("🔴"*40)
-    active_jobs = agent.agent_state.get("jobs").get("active").get("asASeller")
-    if active_jobs:
-        for job in active_jobs:
-            on_new_task(job)
     print("\nListening\n")
     threading.Event().wait()
 

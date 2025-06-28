@@ -1,8 +1,9 @@
 import json
 import traceback
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional,Tuple
+
 import requests
 
 from game_sdk.game.agent import WorkerConfig
@@ -55,8 +56,21 @@ class AcpPlugin:
         
     def add_produce_item(self, item: IInventory) -> None:
         self.produced_inventory.append(item)
+    
+    def memo_to_dict(self, m):
+        return {
+            "id": m.id,
+            "type": m.type.name,
+            "content": m.content,
+            "next_phase": m.next_phase.name
+        }
 
     def _to_state_acp_job(self, job: ACPJob) -> Dict:
+        memos = []
+        for memo in job.memos:
+            memos.append(self.memo_to_dict(memo))
+            
+        
         return {
             "jobId": job.id,
             "clientName":  job.client_agent.name if job.client_agent else "",
@@ -65,13 +79,13 @@ class AcpPlugin:
             "price": str(job.price),
             "providerAddress": job.provider_address,
             "phase": ACP_JOB_PHASE_MAP.get(job.phase),
-            "memo": [{"id": memo.id} for memo in reversed(job.memos)] if job.memos else [],
+            "memo": list(reversed(memos)),
             "tweetHistory": [
                 {
                     "type": tweet.get("type"),
-                    "tweetId": tweet.get("tweetId"),
+                    "tweet_id": tweet.get("tweetId"),
                     "content": tweet.get("content"),
-                    "createdAt": tweet.get("createdAt")
+                    "created_at": tweet.get("createdAt")
                 }
                 for tweet in reversed(job.context.get('tweets', []) if job.context else [])
             ],
@@ -103,7 +117,7 @@ class AcpPlugin:
         return {
             "inventory": {
                 "acquired": [],
-                "produced": [asdict(item) for item in self.produced_inventory] if self.produced_inventory else [],
+                "produced": [item.model_dump() for item in self.produced_inventory] if self.produced_inventory else [],
             },
             "jobs": {
                 "active": {
@@ -158,7 +172,7 @@ class AcpPlugin:
             * phase: request (seller should response to accept/reject to the job) → pending_payment (as a buyer to make the payment for the service) → in_progress (seller to deliver the service) → evaluation → completed/rejected
         """
         
-    def _search_agents_executable(self,reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
+    def _search_agents_executable(self, reasoning: str, keyword: str) -> Tuple[FunctionResultStatus, str, dict]:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
 
@@ -288,17 +302,6 @@ class AcpPlugin:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you're making this purchase request", {}
         
         try:
-            state = self.get_acp_state()
-
-            existing_job = next(
-                (job for job in state["jobs"]["active"]["asABuyer"]
-                 if job["providerAddress"] == seller_wallet_address),
-                None
-            )
-
-            if existing_job:
-                return FunctionResultStatus.FAILED, f"You already have an active job as a buyer with {existing_job['providerAddress']} - complete the current job before initiating a new one", {}  
-            
             if not seller_wallet_address:
                 return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
             
@@ -407,7 +410,7 @@ class AcpPlugin:
             )
 
             if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-                tweet_id = job.get("tweetHistory", [])[0].get("tweetId") if job.get("tweetHistory") else None
+                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
                 if tweet_id:
                     self._tweet_job(job_id, tweet_content, tweet_id)
 
@@ -489,7 +492,7 @@ class AcpPlugin:
             )
 
             if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-                tweet_id = job.get("tweetHistory", [])[0].get("tweetId") if job.get("tweetHistory") else None
+                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
                 if tweet_id:
                     self._tweet_job(job_id, tweet_content, tweet_id)
 
@@ -582,7 +585,7 @@ class AcpPlugin:
             )
 
             if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-                tweet_id = job.get("tweetHistory", [])[0].get("tweetId") if job.get("tweetHistory") else None
+                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
                 if tweet_id:
                     self._tweet_job(job_id, tweet_content, tweet_id)
                 
@@ -604,24 +607,30 @@ class AcpPlugin:
         if not job:
             raise Exception("ERROR (tweetJob): Job not found")
 
-        tweet = (
-            self.twitter_plugin.twitter_client.create_tweet(
+              
+        if tweet_id :
+            response = self.twitter_plugin.twitter_client.create_tweet(
                 text=content,
                 in_reply_to_tweet_id=tweet_id
             )
-            if tweet_id
-            else self.twitter_plugin.twitter_client.create_tweet(text=content)
-        )
+        else:
+            response = self.twitter_plugin.twitter_client.create_tweet(text=content)
+
 
         role = "buyer" if job.client_address.lower() == self.acp_client.agent_address.lower() else "seller"
 
+        # Safely extract tweet ID
+        tweet_id = None
+        if isinstance(response, dict):
+            tweet_id = response.get('data', {}).get('id') or response.get('id')
+        
         context = {
             **(job.context or {}),
             'tweets': [
                 *((job.context or {}).get('tweets', [])),
                 {
                     'type': role,
-                    'tweetId': tweet['data']['id'],
+                    'tweetId': tweet_id,
                     'content': content,
                     'createdAt': int(datetime.now().timestamp() * 1000)
                 },
