@@ -89,7 +89,9 @@ def buyer():
                 on_new_task=on_new_task,
                 entity_id=env.BUYER_ENTITY_ID
             ),
-            twitter_plugin=TwitterPlugin(options)
+            twitter_plugin=TwitterPlugin(options),
+            cluster="<your_agent_cluster>", #example cluster
+            graduated=True,
         )
     )
 
