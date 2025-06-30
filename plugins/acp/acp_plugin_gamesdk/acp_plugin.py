@@ -21,7 +21,7 @@ class AcpPluginOptions:
     twitter_plugin: TwitterPlugin | None = None
     cluster: Optional[str] = None
     evaluator_cluster: Optional[str] = None
-    graduated: Optional[str] = True
+    graduated: Optional[bool] = True
     job_expiry_duration_mins: Optional[int] = None
     
 class AcpPlugin:
@@ -47,7 +47,7 @@ class AcpPlugin:
         """
         self.cluster = options.cluster
         self.evaluator_cluster = options.evaluator_cluster
-        self.graduated = True
+        self.graduated = options.graduated
         self.twitter_plugin = None
         if options.twitter_plugin is not None:
             self.twitter_plugin = options.twitter_plugin
