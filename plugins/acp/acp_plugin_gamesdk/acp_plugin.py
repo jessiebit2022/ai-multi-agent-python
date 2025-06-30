@@ -178,7 +178,7 @@ class AcpPlugin:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
 
-        agents = self.acp_client.browse_agents(keyword, self.cluster, self.graduated)
+        agents = self.acp_client.browse_agents(keyword, self.cluster, graduated=self.graduated)
 
         if not agents:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
@@ -313,7 +313,7 @@ class AcpPlugin:
             evaluator_address = self.acp_client.agent_address
             
             if require_evaluation:
-                validators = self.acp_client.browse_agents(evaluator_keyword, self.evaluator_cluster, self.graduated)
+                validators = self.acp_client.browse_agents(evaluator_keyword, self.evaluator_cluster, graduated=self.graduated)
                 
                 if len(validators) == 0:
                     return FunctionResultStatus.FAILED, "No evaluator found - try a different keyword", {}
