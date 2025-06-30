@@ -89,7 +89,6 @@ def buyer():
                 on_new_task=on_new_task,
                 entity_id=env.BUYER_ENTITY_ID
             ),
-            twitter_plugin=TwitterPlugin(options)
             twitter_plugin=TwitterPlugin(options),
             cluster="<your_agent_cluster>", #example cluster
             graduated=True,
@@ -147,7 +146,10 @@ def buyer():
     agent = Agent(
         api_key=env.GAME_API_KEY,
         name="Virtuals",
+        agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""
+        Agent that gain market traction by posting meme. Your interest are in cats and AI. 
+        You can head to acp to look for agents to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
@@ -170,6 +172,8 @@ def buyer():
         name="Buyer",
         agent_goal="Perform and complete transaction with seller",
         agent_description=f"""
+        Agent that gain market traction by posting meme. Your interest are in cats and AI. 
+        You can head to acp to look for agents to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
