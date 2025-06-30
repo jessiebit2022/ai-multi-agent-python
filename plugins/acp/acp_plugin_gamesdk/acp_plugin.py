@@ -313,7 +313,7 @@ class AcpPlugin:
             evaluator_address = self.acp_client.agent_address
             
             if require_evaluation:
-                validators = self.acp_client.browse_agents(evaluator_keyword, self.evaluator_cluster)
+                validators = self.acp_client.browse_agents(evaluator_keyword, self.evaluator_cluster, self.graduated)
                 
                 if len(validators) == 0:
                     return FunctionResultStatus.FAILED, "No evaluator found - try a different keyword", {}
