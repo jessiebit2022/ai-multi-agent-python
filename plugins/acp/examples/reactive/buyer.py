@@ -91,7 +91,7 @@ def buyer():
             ),
             twitter_plugin=TwitterPlugin(options)
             twitter_plugin=TwitterPlugin(options),
-            cluster="hedgefund", #example cluster
+            cluster="<your_agent_cluster>", #example cluster
             graduated=True,
         )
     )
