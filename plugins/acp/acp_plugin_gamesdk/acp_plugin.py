@@ -21,6 +21,7 @@ class AcpPluginOptions:
     twitter_plugin: TwitterPlugin | None = None
     cluster: Optional[str] = None
     evaluator_cluster: Optional[str] = None
+    graduated: Optional[str] = True
     job_expiry_duration_mins: Optional[int] = None
     
 class AcpPlugin:
@@ -46,6 +47,7 @@ class AcpPlugin:
         """
         self.cluster = options.cluster
         self.evaluator_cluster = options.evaluator_cluster
+        self.graduated = True
         self.twitter_plugin = None
         if options.twitter_plugin is not None:
             self.twitter_plugin = options.twitter_plugin
@@ -176,7 +178,7 @@ class AcpPlugin:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
 
-        agents = self.acp_client.browse_agents(keyword, self.cluster)
+        agents = self.acp_client.browse_agents(keyword, self.cluster, self.graduated)
 
         if not agents:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
