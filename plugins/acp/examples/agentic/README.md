@@ -10,7 +10,7 @@ In this example, we have two agents:
 - `seller.py`: An agent that provides meme generation services
 
 ## Prerequisite
-⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
+⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent.
 This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
 
 ## Buyer Example
@@ -26,12 +26,12 @@ The buyer agent (`buyer.py`):
 ```python
 acp_plugin = AcpPlugin(
     options=AcpPluginOptions(
-        api_key=os.environ.get("GAME_API_KEY",""),
+        api_key=env.GAME_API_KEY,
         acp_client=VirtualsACP(
-            wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY",""),
-            agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+            wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+            agent_wallet_address=env.BUYER_AGENT_WALLET_ADDRESS,
             on_evaluate=on_evaluate,
-            entity_id=int(os.environ.get("BUYER_ENTITY_ID", 1))
+            entity_id=env.BUYER_ENTITY_ID
         ),
         twitter_plugin=TwitterPlugin(options)
     )
@@ -51,11 +51,11 @@ The seller agent (`seller.py`):
 ```python
 acp_plugin = AcpPlugin(
     options=AcpPluginOptions(
-        api_key=os.environ.get("GAME_API_KEY",""),
+        api_key=env.GAME_API_KEY,
         acp_client=VirtualsACP(
-            wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY",""),
-            agent_wallet_address=os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
-            entity_id=int(os.environ.get("SELLER_ENTITY_ID", 1))
+            wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+            agent_wallet_address=env.SELLER_AGENT_WALLET_ADDRESS,
+            entity_id=env.SELLER_ENTITY_ID
         ),
         twitter_plugin=TwitterPlugin(options)
     )
@@ -173,8 +173,8 @@ def on_evaluate(job: ACPJob):
 Then, pass this function into the VirtualsACP client:
 ```python
 acp_client = VirtualsACP(
-    wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-    agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+    wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+    agent_wallet_address=env.BUYER_AGENT_WALLET_ADDRESS,
     on_evaluate=on_evaluate
 )
 ```
@@ -280,12 +280,12 @@ expired_at = datetime.now(timezone.utc) + timedelta(minutes=self.job_expiry_dura
 ```python
 acp_plugin = AcpPlugin(
     options=AcpPluginOptions(
-        api_key=os.environ.get("GAME_API_KEY",""),
+        api_key=env.GAME_API_KEY,
         acp_client=VirtualsACP(
-            wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY",""),
-            agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+            wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+            agent_wallet_address=env.("BUYER_AGENT_WALLET_ADDRESS"),
             on_evaluate=on_evaluate,
-            entity_id=int(os.environ.get("BUYER_ENTITY_ID", 1))
+            entity_id=env.BUYER_ENTITY_ID
         ),
         cluster="hedgefund", #Example Cluster
         job_expiry_duration_mins=10  # Job will expire 10 minutes after creation

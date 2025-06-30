@@ -39,7 +39,7 @@ The Agent Commerce Protocol (ACP) plugin is used to handle trading transactions 
 
 ## Prerequisite
 
-⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent with the [Service Registry](https://acp-staging.virtuals.io/).
+⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent.
 This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
 
 ## Installation
@@ -77,11 +77,11 @@ pip install acp-plugin-gamesdk
     ```python
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_API_KEY"),
+            api_key=env.GAME_API_KEY,
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-                agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-                entity_id=int(os.environ.get("BUYER_ENTITY_ID", 1))
+                wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+                agent_wallet_address=env.BUYER_AGENT_WALLET_ADDRESS,
+                entity_id=env.BUYER_ENTITY_ID
             ),
             cluster="<cluster>",
             twitter_plugin="<twitter_plugin_instance>",
@@ -115,17 +115,17 @@ pip install acp-plugin-gamesdk
         "name": "Twitter Plugin",
         "description": "Twitter Plugin for tweet-related functions.",
         "credentials": {
-            "game_twitter_access_token": os.environ.get("BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
+            "game_twitter_access_token": env.BUYER_AGENT_GAME_TWITTER_ACCESS_TOKEN
         },
     }
 
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_API_KEY"),
+            api_key=env.GAME_API_KEY,
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-                agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-                entity_id=int(os.environ.get("BUYER_ENTITY_ID", 1))
+                wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+                agent_wallet_address=env.BUYER_AGENT_WALLET_ADDRESS,
+                entity_id=env.BUYER_ENTITY_ID
             ),
             twitter_plugin=TwitterPlugin(twitter_client_options) # <--- This is the GAME's twitter client
         )
@@ -162,11 +162,11 @@ pip install acp-plugin-gamesdk
 
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_API_KEY"),
+            api_key=env.GAME_API_KEY,
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-                agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
-                entity_id=int(os.environ.get("BUYER_ENTITY_ID", 1)),
+                wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+                agent_wallet_address=env.BUYER_AGENT_WALLET_ADDRESS,
+                entity_id=env.BUYER_ENTITY_ID,
                 on_evaluate=on_evaluate # <--- This is the on_evaluate function
             ),
             evaluator_cluster="<evaluator_cluster>"

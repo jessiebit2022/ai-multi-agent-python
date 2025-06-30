@@ -350,8 +350,8 @@ def on_evaluate(job: ACPJob):
 Then, pass this function into the VirtualsACP client:
 ```python
 acp_client = VirtualsACP(
-    wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY"),
-    agent_wallet_address=os.environ.get("BUYER_AGENT_WALLET_ADDRESS"),
+    wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+    agent_wallet_address=env.BUYER_AGENT_WALLET_ADDRESS,
     on_evaluate=on_evaluate
 )
 ```
