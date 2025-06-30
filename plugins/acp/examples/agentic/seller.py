@@ -7,6 +7,7 @@ from rich.panel import Panel
 from typing import Tuple
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from virtuals_acp.client import VirtualsACP
+from acp_plugin_gamesdk.env import PluginEnvSettings
 from acp_plugin_gamesdk.interface import AcpState, AcpJobPhasesDesc, IInventory
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent, WorkerConfig
@@ -18,7 +19,9 @@ from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 # Native Twitter Plugin import
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
-load_dotenv()
+load_dotenv(override=True)
+
+env = PluginEnvSettings()
 
 
 # GAME Twitter Plugin options
@@ -27,7 +30,7 @@ options = {
     "name": "Twitter Plugin",
     "description": "Twitter Plugin for tweet-related functions.",
     "credentials": {
-        "game_twitter_access_token": os.environ.get("SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN")
+        "game_twitter_access_token": env.SELLER_AGENT_GAME_TWITTER_ACCESS_TOKEN
     },
 }
 
@@ -37,22 +40,22 @@ options = {
 #     "name": "Twitter Plugin",
 #     "description": "Twitter Plugin for tweet-related functions.",
 #     "credentials": {
-#         "bearerToken": os.environ.get("SELLER_AGENT_TWITTER_BEARER_TOKEN"),
-#         "apiKey": os.environ.get("SELLER_AGENT_TWITTER_API_KEY"),
-#         "apiSecretKey": os.environ.get("SELLER_AGENT_TWITTER_API_SECRET_KEY"),
-#         "accessToken": os.environ.get("SELLER_AGENT_TWITTER_ACCESS_TOKEN"),
-#         "accessTokenSecret": os.environ.get("SELLER_AGENT_TWITTER_ACCESS_TOKEN_SECRET"),
+#         "bearerToken": env.SELLER_AGENT_TWITTER_BEARER_TOKEN,
+#         "apiKey": env.SELLER_AGENT_TWITTER_API_KEY,
+#         "apiSecretKey": env.SELLER_AGENT_TWITTER_API_SECRET_KEY,
+#         "accessToken": env.SELLER_AGENT_TWITTER_ACCESS_TOKEN,
+#         "accessTokenSecret": env.SELLER_AGENT_TWITTER_ACCESS_TOKEN_SECRET,
 #     },
 # }
 
 def seller():
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
-            api_key=os.environ.get("GAME_API_KEY",""),
+            api_key=env.GAME_API_KEY,
             acp_client=VirtualsACP(
-                wallet_private_key=os.environ.get("WHITELISTED_WALLET_PRIVATE_KEY",""),
-                agent_wallet_address=os.environ.get("SELLER_AGENT_WALLET_ADDRESS"),
-                entity_id=int(os.environ.get("SELLER_ENTITY_ID", 1))
+                wallet_private_key=env.WHITELISTED_WALLET_PRIVATE_KEY,
+                agent_wallet_address=env.SELLER_AGENT_WALLET_ADDRESS,
+                entity_id=env.SELLER_ENTITY_ID
             ),       
              twitter_plugin=TwitterPlugin(options)
         )
@@ -130,7 +133,7 @@ def seller():
     )
 
     agent = Agent(
-        api_key=os.environ.get("GAME_API_KEY",""),
+        api_key=env.GAME_API_KEY,
         name="Memx",
         agent_goal="To provide meme generation as a service. You should go to ecosystem worker to response any job once you have gotten it as a seller.",
         agent_description=f"""You are Memx, a meme generator. Meme generation is your life. You always give buyer the best meme.
