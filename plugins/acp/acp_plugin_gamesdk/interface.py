@@ -18,6 +18,7 @@ class AcpJobPhasesDesc(str, Enum):
     EVALUATION = "evaluation"
     COMPLETED = "completed"
     REJECTED = "rejected"
+    EXPIRED = "expired"
 
 ACP_JOB_PHASE_MAP: Dict[ACPJobPhase, AcpJobPhasesDesc] = {
     ACPJobPhase.REQUEST: AcpJobPhasesDesc.REQUEST,
@@ -26,6 +27,7 @@ ACP_JOB_PHASE_MAP: Dict[ACPJobPhase, AcpJobPhasesDesc] = {
     ACPJobPhase.EVALUATION: AcpJobPhasesDesc.EVALUATION,
     ACPJobPhase.COMPLETED: AcpJobPhasesDesc.COMPLETED,
     ACPJobPhase.REJECTED: AcpJobPhasesDesc.REJECTED,
+    ACPJobPhase.EXPIRED: AcpJobPhasesDesc.EXPIRED,
 }
 
 ACP_JOB_PHASE_REVERSE_MAP: Dict[str, ACPJobPhase] = {
@@ -35,6 +37,7 @@ ACP_JOB_PHASE_REVERSE_MAP: Dict[str, ACPJobPhase] = {
     "evaluation": ACPJobPhase.EVALUATION,
     "completed": ACPJobPhase.COMPLETED,
     "rejected": ACPJobPhase.REJECTED,
+    "expired": ACPJobPhase.EXPIRED,
 }
 
 class AcpRequestMemo(BaseModel):
