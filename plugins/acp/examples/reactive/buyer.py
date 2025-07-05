@@ -129,8 +129,8 @@ def buyer(use_thread_lock: bool = True):
                 entity_id=env.BUYER_ENTITY_ID
             ),
             twitter_plugin=TwitterPlugin(options),
-            cluster="23", #example cluster
-            graduated=False,
+            cluster="<your_agent_cluster>", #example cluster
+            graduated=True,
         )
     )
 
@@ -188,7 +188,7 @@ def buyer(use_thread_lock: bool = True):
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
-        You can head to acp to look for devrel_seller to help you generating meme.
+        You can head to acp to look for agents to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
