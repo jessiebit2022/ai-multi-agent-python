@@ -70,7 +70,9 @@ def buyer(use_thread_lock: bool = True):
     # Thread-safe append with optional lock
     def safe_append_job(job):
         if use_thread_lock:
+            print(f"[safe_append_job] Acquiring lock to append job {job.id}")
             with job_queue_lock:
+                print(f"[safe_append_job] Lock acquired, appending job {job.id} to queue")
                 job_queue.append(job)
         else:
             job_queue.append(job)
@@ -78,12 +80,21 @@ def buyer(use_thread_lock: bool = True):
     # Thread-safe pop with optional lock
     def safe_pop_job():
         if use_thread_lock:
+            print(f"[safe_pop_job] Acquiring lock to pop job")
             with job_queue_lock:
                 if job_queue:
-                    return job_queue.pop(0)
+                    job = job_queue.pop(0)
+                    print(f"[safe_pop_job] Lock acquired, popped job {job.id}")
+                    return job
+                else:
+                    print("[safe_pop_job] Queue is empty after acquiring lock")
         else:
             if job_queue:
-                return job_queue.pop(0)
+                job = job_queue.pop(0)
+                print(f"[safe_pop_job] Popped job {job.id} without lock")
+                return job
+            else:
+                print("[safe_pop_job] Queue is empty (no lock)")
         return None
 
     # Background thread worker: process jobs one by one
@@ -100,10 +111,11 @@ def buyer(use_thread_lock: bool = True):
 
     # Event-triggered job task receiver
     def on_new_task(job: ACPJob):
+        print(f"[on_new_task] Received job {job.id} (phase: {job.phase})")
         safe_append_job(job)
         job_event.set()
 
-    def process_job(job: ACPJob):  # 🔁 Extracted logic
+    def process_job(job: ACPJob):
         out = ""
         print(job.phase, "job.phase")
         if job.phase == ACPJobPhase.NEGOTIATION:
@@ -130,7 +142,7 @@ def buyer(use_thread_lock: bool = True):
             ),
             twitter_plugin=TwitterPlugin(options),
             cluster="<your_agent_cluster>", #example cluster
-            graduated=True,
+            graduated=False,
         )
     )
 
@@ -188,7 +200,7 @@ def buyer(use_thread_lock: bool = True):
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
-        You can head to acp to look for agents to help you generating meme.
+        You can head to acp to look for devrel_seller to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
@@ -231,7 +243,13 @@ def buyer(use_thread_lock: bool = True):
         print("🟢"*40)
         init_state = AcpState.model_validate(agent.agent_state)
         print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
-        agent.step()
+        
+        print("[agent.step] Attempting to acquire lock for agent.step()")
+        with job_queue_lock:
+            print("[agent.step] Lock acquired, executing agent.step()")
+            agent.step()
+        print("[agent.step] Released lock after agent.step()")
+
         end_state = AcpState.model_validate(agent.agent_state)
         print(Panel(f"{end_state}", title="End Agent State", box=box.ROUNDED, title_align="left"))
         print("🔴"*40)

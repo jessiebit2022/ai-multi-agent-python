@@ -62,40 +62,58 @@ def seller(use_thread_lock: bool = True):
     # Thread-safe append wrapper
     def safe_append_job(job):
         if use_thread_lock:
+            print("[append] Attempting to acquire job_queue_lock")
             with job_queue_lock:
+                print("[append] Lock acquired. Appending job to queue:", job.id)
                 job_queue.append(job)
+                print(f"[append] Queue size is now {len(job_queue)}")
         else:
             job_queue.append(job)
+            print(f"[append] Appended job (no lock). Queue size is now {len(job_queue)}")
 
     # Thread-safe pop wrapper
     def safe_pop_job():
         if use_thread_lock:
+            print("[pop] Attempting to acquire job_queue_lock")
             with job_queue_lock:
+                print("[pop] Lock acquired.")
                 if job_queue:
-                    return job_queue.pop(0)
+                    job = job_queue.pop(0)
+                    print(f"[pop] Job popped: {job.id}")
+                    return job
+                else:
+                    print("[pop] Queue is empty.")
         else:
             if job_queue:
-                return job_queue.pop(0)
+                job = job_queue.pop(0)
+                print(f"[pop] Job popped (no lock): {job.id}")
+                return job
+            else:
+                print("[pop] Queue is empty (no lock).")
         return None
 
-    # Background thread worker
+    # Background thread worker: process jobs one by one
     def job_worker():
+        print("[worker] Job worker started, waiting for jobs.")
         while True:
             job_event.wait()
+            print("[worker] job_event triggered.")
 
-            # Process all available jobs before sleeping again
             job = safe_pop_job()
             while job:
+                print(f"[worker] Processing job {job.id}")
                 process_job(job)
                 job = safe_pop_job()
 
-            # Go back to waiting state
             job_event.clear()
+            print("[worker] All jobs processed. Waiting again.")
 
     # Event-triggered job task receiver
     def on_new_task(job: ACPJob):
+        print(f"[on_new_task] New job received: {job.id}")
         safe_append_job(job)
         job_event.set()
+        print("[on_new_task] job_event set.")
 
     def process_job(job: ACPJob):
         out = ""
