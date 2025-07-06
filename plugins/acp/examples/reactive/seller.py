@@ -19,6 +19,7 @@ from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 # from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 
 load_dotenv(override=True)
+
 env = PluginEnvSettings()
 
 
@@ -46,11 +47,79 @@ options = {
 #     },
 # }
 
-def seller():
+def seller(use_thread_lock: bool = True):
+    if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
+        return
+    
+    if env.SELLER_ENTITY_ID is None:
+        return
+
+    # Thread-safe job queue setup
+    job_queue = []
+    job_queue_lock = threading.Lock()
+    job_event = threading.Event()
+
+    # Thread-safe append wrapper
+    def safe_append_job(job):
+        if use_thread_lock:
+            print("[append] Attempting to acquire job_queue_lock")
+            with job_queue_lock:
+                print("[append] Lock acquired. Appending job to queue:", job.id)
+                job_queue.append(job)
+                print(f"[append] Queue size is now {len(job_queue)}")
+        else:
+            job_queue.append(job)
+            print(f"[append] Appended job (no lock). Queue size is now {len(job_queue)}")
+
+    # Thread-safe pop wrapper
+    def safe_pop_job():
+        if use_thread_lock:
+            print("[pop] Attempting to acquire job_queue_lock")
+            with job_queue_lock:
+                print("[pop] Lock acquired.")
+                if job_queue:
+                    job = job_queue.pop(0)
+                    print(f"[pop] Job popped: {job.id}")
+                    return job
+                else:
+                    print("[pop] Queue is empty.")
+        else:
+            if job_queue:
+                job = job_queue.pop(0)
+                print(f"[pop] Job popped (no lock): {job.id}")
+                return job
+            else:
+                print("[pop] Queue is empty (no lock).")
+        return None
+
+    # Background thread worker: process jobs one by one
+    def job_worker():
+        print("[worker] Job worker started, waiting for jobs.")
+        while True:
+            job_event.wait()
+            print("[worker] job_event triggered.")
+
+            job = safe_pop_job()
+            while job:
+                print(f"[worker] Processing job {job.id}")
+                process_job(job)
+                job = safe_pop_job()
+
+            job_event.clear()
+            print("[worker] All jobs processed. Waiting again.")
+
+    # Event-triggered job task receiver
     def on_new_task(job: ACPJob):
+        print(f"[on_new_task] New job received: {job.id}")
+        safe_append_job(job)
+        job_event.set()
+        print("[on_new_task] job_event set.")
+
+    def process_job(job: ACPJob):
         out = ""
         out += f"Reacting to job:\n{job}\n\n"
         prompt = ""
+
         if job.phase == ACPJobPhase.REQUEST:
             for memo in job.memos:
                 if memo.next_phase == ACPJobPhase.NEGOTIATION:
@@ -81,12 +150,6 @@ def seller():
             out += "✅ Seller has responded to job.\n"
             
         print(Panel(out, title="🔁 Reaction", box=box.ROUNDED, title_align="left", border_style="red"))
-
-    if env.WHITELISTED_WALLET_PRIVATE_KEY is None:
-        return
-    
-    if env.SELLER_ENTITY_ID is None:
-        return
     
     acp_plugin = AcpPlugin(
         options=AcpPluginOptions(
@@ -187,9 +250,12 @@ def seller():
     init_state = AcpState.model_validate(agent.agent_state)
     print(Panel(f"{init_state}", title="Agent State", box=box.ROUNDED, title_align="left"))
     print("🔴"*40)
-    print("\nListening\n")
+
+     # Start background thread
+    threading.Thread(target=job_worker, daemon=True).start()
+    print("\nListening...\n")
     threading.Event().wait()
 
 
 if __name__ == "__main__":
-    seller()
+    seller(use_thread_lock=True)
