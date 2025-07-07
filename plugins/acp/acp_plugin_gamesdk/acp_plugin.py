@@ -67,9 +67,6 @@ class AcpPlugin:
         self.produced_inventory.append(item)
 
     def get_acp_state(self) -> Dict:
-        keep_completed_jobs = self.keep_completed_jobs
-        keep_cancelled_jobs = self.keep_cancelled_jobs
-        keep_produced_inventory = self.keep_produced_inventory
         agent_addr = self.acp_client.agent_address.lower()
 
         def serialize_job(job: ACPJob, active: bool) -> Dict:
