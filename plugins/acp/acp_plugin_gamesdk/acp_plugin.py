@@ -106,12 +106,16 @@ class AcpPlugin:
         # Fetch job states
         active_jobs = self.acp_client.get_active_jobs()
 
-        completed_jobs = []
-        if self.keep_completed_jobs and self.keep_completed_jobs > 0:
+        # Fetch completed jobs if not explicitly disabled
+        if self.keep_completed_jobs == 0:
+            completed_jobs = []
+        else:
             completed_jobs = self.acp_client.get_completed_jobs()
 
-        cancelled_jobs = []
-        if self.keep_cancelled_jobs and self.keep_cancelled_jobs > 0:
+        # Fetch cancelled jobs if not explicitly disabled
+        if self.keep_cancelled_jobs == 0:
+            cancelled_jobs = []
+        else:
             cancelled_jobs = self.acp_client.get_cancelled_jobs()
 
         active_buyer_jobs = [
@@ -129,18 +133,32 @@ class AcpPlugin:
         # Limit completed and cancelled jobs
         completed = [
             serialize_job(job, active=False)
-            for job in completed_jobs[:keep_completed_jobs]
-        ] if self.keep_completed_jobs else []
+            for job in (
+                completed_jobs[:self.keep_completed_jobs]
+                if self.keep_completed_jobs is not None
+                else completed_jobs
+            )
+        ]
 
         cancelled = [
             serialize_job(job, active=False)
-            for job in cancelled_jobs[:keep_cancelled_jobs]
-        ] if self.keep_cancelled_jobs else []
+            for job in (
+                cancelled_jobs[:self.keep_cancelled_jobs]
+                if self.keep_cancelled_jobs is not None
+                else cancelled_jobs
+            )
+        ]
 
-        # Limit inventories
-        produced = [
-            item.model_dump() for item in self.produced_inventory[:keep_produced_inventory]
-        ] if self.produced_inventory and self.keep_produced_inventory > 0 else []
+        # Produced inventory logic
+        produced = []
+        if self.produced_inventory and self.keep_produced_inventory > 0:
+            produced = [
+                item.model_dump() for item in (
+                    self.produced_inventory[:self.keep_produced_inventory]
+                    if self.keep_produced_inventory is not None
+                    else self.produced_inventory
+                )
+            ]
 
         return {
             "inventory": {
