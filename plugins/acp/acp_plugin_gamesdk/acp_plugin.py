@@ -23,9 +23,9 @@ class AcpPluginOptions:
     evaluator_cluster: Optional[str] = None
     graduated: Optional[bool] = True
     job_expiry_duration_mins: Optional[int] = None
-    keep_completed_jobs: Optional[int] = 1
-    keep_cancelled_jobs: Optional[int] = 0
-    keep_produced_inventory: Optional[int] = 1
+    keep_completed_jobs: Optional[int] = None
+    keep_cancelled_jobs: Optional[int] = None
+    keep_produced_inventory: Optional[int] = None
     
 class AcpPlugin:
     def __init__(self, options: AcpPluginOptions):
@@ -58,9 +58,9 @@ class AcpPlugin:
         self.produced_inventory: List[IInventory] = []
         self.acp_base_url = self.acp_client.acp_api_url
         self.job_expiry_duration_mins = options.job_expiry_duration_mins if options.job_expiry_duration_mins is not None else 1440
-        self.keep_completed_jobs = options.keep_completed_jobs or 1
-        self.keep_cancelled_jobs = options.keep_cancelled_jobs or 0
-        self.keep_produced_inventory = options.keep_produced_inventory or 1
+        self.keep_completed_jobs = options.keep_completed_jobs if options.keep_completed_jobs is not None else 1
+        self.keep_cancelled_jobs = options.keep_cancelled_jobs if options.keep_cancelled_jobs is not None else 0
+        self.keep_produced_inventory = options.keep_produced_inventory if options.keep_produced_inventory is not None else 1
 
         
     def add_produce_item(self, item: IInventory) -> None:
@@ -105,10 +105,15 @@ class AcpPlugin:
 
         # Fetch job states
         active_jobs = self.acp_client.get_active_jobs()
-        completed_jobs = self.acp_client.get_completed_jobs()
-        cancelled_jobs = self.acp_client.get_cancelled_jobs()
 
-        # Partition active jobs
+        completed_jobs = []
+        if self.keep_completed_jobs and self.keep_completed_jobs > 0:
+            completed_jobs = self.acp_client.get_completed_jobs()
+
+        cancelled_jobs = []
+        if self.keep_cancelled_jobs and self.keep_cancelled_jobs > 0:
+            cancelled_jobs = self.acp_client.get_cancelled_jobs()
+
         active_buyer_jobs = [
             serialize_job(job, active=True)
             for job in active_jobs
@@ -125,17 +130,17 @@ class AcpPlugin:
         completed = [
             serialize_job(job, active=False)
             for job in completed_jobs[:keep_completed_jobs]
-        ]
+        ] if self.keep_completed_jobs else []
 
         cancelled = [
             serialize_job(job, active=False)
             for job in cancelled_jobs[:keep_cancelled_jobs]
-        ]
+        ] if self.keep_cancelled_jobs else []
 
         # Limit inventories
         produced = [
             item.model_dump() for item in self.produced_inventory[:keep_produced_inventory]
-        ] if self.produced_inventory else []
+        ] if self.produced_inventory and self.keep_produced_inventory > 0 else []
 
         return {
             "inventory": {
