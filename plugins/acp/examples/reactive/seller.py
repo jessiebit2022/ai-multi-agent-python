@@ -8,6 +8,7 @@ from virtuals_acp.client import VirtualsACP
 from virtuals_acp import ACPJob, ACPJobPhase
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
+from collections import deque
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv
@@ -55,7 +56,7 @@ def seller(use_thread_lock: bool = True):
         return
 
     # Thread-safe job queue setup
-    job_queue = []
+    job_queue = deque()
     job_queue_lock = threading.Lock()
     job_event = threading.Event()
 
@@ -78,14 +79,14 @@ def seller(use_thread_lock: bool = True):
             with job_queue_lock:
                 print("[pop] Lock acquired.")
                 if job_queue:
-                    job = job_queue.pop(0)
+                    job = job_queue.popleft()
                     print(f"[pop] Job popped: {job.id}")
                     return job
                 else:
                     print("[pop] Queue is empty.")
         else:
             if job_queue:
-                job = job_queue.pop(0)
+                job = job_queue.popleft()
                 print(f"[pop] Job popped (no lock): {job.id}")
                 return job
             else:
@@ -94,19 +95,28 @@ def seller(use_thread_lock: bool = True):
 
     # Background thread worker: process jobs one by one
     def job_worker():
-        print("[worker] Job worker started, waiting for jobs.")
         while True:
             job_event.wait()
-            print("[worker] job_event triggered.")
 
-            job = safe_pop_job()
-            while job:
-                print(f"[worker] Processing job {job.id}")
-                process_job(job)
+            # Process all available jobs
+            while True:
                 job = safe_pop_job()
+                if not job:
+                    break
+                try:
+                    process_job(job)
+                except Exception as e:
+                    print(f"❌ Error processing job: {e}")
+                    # Continue processing other jobs even if one fails
 
-            job_event.clear()
-            print("[worker] All jobs processed. Waiting again.")
+            # Clear event only after ensuring no jobs remain
+            if use_thread_lock:
+                with job_queue_lock:
+                    if not job_queue:
+                        job_event.clear()
+            else:
+                if not job_queue:
+                    job_event.clear()
 
     # Event-triggered job task receiver
     def on_new_task(job: ACPJob):

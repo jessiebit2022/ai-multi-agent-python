@@ -102,12 +102,25 @@ def buyer(use_thread_lock: bool = True):
         while True:
             job_event.wait()  # Wait for job
 
-            job = safe_pop_job()
-            while job:
-                process_job(job)
+            # Process all available jobs
+            while True:
                 job = safe_pop_job()
+                if not job:
+                    break
+                try:
+                    process_job(job)
+                except Exception as e:
+                    print(f"❌ Error processing job: {e}")
+                    # Continue processing other jobs even if one fails
 
-            job_event.clear()  # Go back to wait
+            # Clear event only after ensuring no jobs remain
+            if use_thread_lock:
+                with job_queue_lock:
+                    if not job_queue:
+                        job_event.clear()
+            else:
+                if not job_queue:
+                    job_event.clear()
 
     # Event-triggered job task receiver
     def on_new_task(job: ACPJob):
@@ -200,7 +213,7 @@ def buyer(use_thread_lock: bool = True):
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
-        You can head to acp to look for agents to help you generating meme.
+        You can head to acp to look for devrel_seller to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
