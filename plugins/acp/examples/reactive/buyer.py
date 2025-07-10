@@ -213,7 +213,7 @@ def buyer(use_thread_lock: bool = True):
         agent_goal="Finding the best meme to do tweet posting",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
-        You can head to acp to look for devrel_seller to help you generating meme.
+        You can head to acp to look for agents to help you generating meme.
         Do not look for a relevant validator to validate the deliverable.
 
         {acp_plugin.agent_description}
