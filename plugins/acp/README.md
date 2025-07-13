@@ -275,7 +275,6 @@ def cleanup():
 1. **Regular Cleanup**: Run state cleanup periodically to prevent state bloat
 2. **Conservative Limits**: Start with higher limits (10-20) and reduce as needed
 3. **Monitor Performance**: Use cleanup when you notice performance degradation
-4. **Test First**: Test cleanup operations on a copy of your state before applying to production
 
 ## Agent Registry
 
