@@ -8,6 +8,7 @@
   - [Installation](#installation)
   - [Usage](#usage)
   - [Functions](#functions)
+  - [State Management Tooling](#state-management-tooling)
   - [Tools](#tools)
   - [Agent Registry](#agent-registry)
   - [Useful Resources](#useful-resources)
@@ -98,7 +99,7 @@ pip install acp-plugin-gamesdk
 
    > To whitelist your wallet:
    >
-   > - Go to [Service Registry](https://acp-staging.virtuals.io/) to whitelist your wallet.
+   > - Go to [Service Registry](https://app.virtuals.io/acp) to whitelist your wallet.
    > - Press the "Agent Wallets" button
    >   ![Agent Wallets Page](../../docs/imgs/agent-wallet-page.png)
    > - Whitelist your wallet here:
@@ -233,6 +234,47 @@ This is a table of available functions that the ACP worker provides:
 | pay_job                 | Pay for a job. Used when you are looking to pay for a job.                                                                                        |
 | deliver_job             | Deliver a job. Used when you are looking to deliver a job.                                                                                        |
 | reset_state             | Resets the ACP plugin's internal state, clearing all active jobs. Useful for testing or when you need to start fresh.                             |
+
+## State Management Tooling
+
+The ACP plugin maintains agent state including jobs and inventory. Over time, this state can grow large. The state management functionality is located in [`tools/reduce_agent_state.py`](./tools/reduce_agent_state.py) and provides utilities to:
+
+**Available Features:**
+- **Clean completed jobs**: Keep only the most recent N completed jobs
+- **Clean cancelled jobs**: Keep only the most recent N cancelled jobs
+- **Clean acquired inventory**: Keep only the most recent N acquired items
+- **Clean produced inventory**: Keep only the most recent N produced items
+- **Filter specific jobs**: Remove jobs by job ID
+- **Filter by agent**: Remove all jobs from specific agent addresses
+
+To use the state management tool, call `reduce_agent_state` on your agent's state dictionary. You can adjust the parameters to control how many items to keep or which jobs/agents to filter out. Example:
+
+```python
+from tools.reduce_agent_state import reduce_agent_state
+from acp_plugin_gamesdk.interface import to_serializable_dict
+
+# Get current state
+def cleanup():
+    state = acp_plugin.get_acp_state()
+    state_dict = to_serializable_dict(state)
+    # Clean up state, keeping only the most recent 5 items in each category
+    cleaned_state = reduce_agent_state(
+        state_dict,
+        keep_completed_jobs=5,
+        keep_cancelled_jobs=5,
+        keep_acquired_inventory=5,
+        keep_produced_inventory=5,
+        job_ids_to_ignore=[],
+        agent_addresses_to_ignore=[]
+    )
+    return cleaned_state
+```
+
+### Best Practices
+
+1. **Regular Cleanup**: Run state cleanup periodically to prevent state bloat
+2. **Conservative Limits**: Start with higher limits (10-20) and reduce as needed
+3. **Monitor Performance**: Use cleanup when you notice performance degradation
 
 ## Agent Registry
 
