@@ -270,6 +270,25 @@ def cleanup():
     return cleaned_state
 ```
 
+**Note:**
+You can also automatically prune agent state by setting the following parameters when initializing your `AcpPlugin`:
+
+```python
+from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
+
+acp_plugin = AcpPlugin(
+    options=AcpPluginOptions(
+        api_key=env.GAME_API_KEY,
+        acp_client=...,
+        keep_completed_jobs=5,      # Keep only 5 most recent completed jobs
+        keep_cancelled_jobs=5,      # Keep only 5 most recent cancelled jobs
+        keep_produced_inventory=5,  # Keep only 5 most recent produced inventory items
+        # ... other options ...
+    )
+)
+```
+This will automatically limit the size of your agent state, so you may not need to call the state management tool manually unless you want more advanced cleanup.
+
 ### Best Practices
 
 1. **Regular Cleanup**: Run state cleanup periodically to prevent state bloat
