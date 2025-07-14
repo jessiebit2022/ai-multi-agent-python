@@ -242,36 +242,12 @@ The ACP plugin maintains agent state including jobs and inventory. Over time, th
 **Available Features:**
 - **Clean completed jobs**: Keep only the most recent N completed jobs
 - **Clean cancelled jobs**: Keep only the most recent N cancelled jobs
-- **Clean acquired inventory**: Keep only the most recent N acquired items
+- **Clean acquired inventory**: Keep only the most recent N acquired items (manual post-filtering only)
 - **Clean produced inventory**: Keep only the most recent N produced items
-- **Filter specific jobs**: Remove jobs by job ID
-- **Filter by agent**: Remove all jobs from specific agent addresses
+- **Filter specific jobs**: Remove jobs by job ID (manual post-filtering only)
+- **Filter by agent**: Remove all jobs from specific agent addresses (manual post-filtering only)
 
-To use the state management tool, call `reduce_agent_state` on your agent's state dictionary. You can adjust the parameters to control how many items to keep or which jobs/agents to filter out. Example:
-
-```python
-from tools.reduce_agent_state import reduce_agent_state
-from acp_plugin_gamesdk.interface import to_serializable_dict
-
-# Get current state
-def cleanup():
-    state = acp_plugin.get_acp_state()
-    state_dict = to_serializable_dict(state)
-    # Clean up state, keeping only the most recent 5 items in each category
-    cleaned_state = reduce_agent_state(
-        state_dict,
-        keep_completed_jobs=5,
-        keep_cancelled_jobs=5,
-        keep_acquired_inventory=5,
-        keep_produced_inventory=5,
-        job_ids_to_ignore=[],
-        agent_addresses_to_ignore=[]
-    )
-    return cleaned_state
-```
-
-**Note:**
-You can also automatically prune agent state by setting the following parameters when initializing your `AcpPlugin`:
+For most use cases, you should configure the built-in filtering using `AcpPluginOptions` and call `get_acp_state()` to retrieve a pruned agent state efficiently. This built-in filtering is applied **before** the agent state is processed or returned, making it the most efficient and recommended approach:
 
 ```python
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
@@ -286,8 +262,35 @@ acp_plugin = AcpPlugin(
         # ... other options ...
     )
 )
+
+# Get filtered state efficiently (pre-filtering)
+state = acp_plugin.get_acp_state()
 ```
-This will automatically limit the size of your agent state, so you may not need to call the state management tool manually unless you want more advanced cleanup.
+
+If you need more advanced or custom filtering (such as filtering by job ID or agent address, or pruning acquired inventory), you can use the post-filtering tool `reduce_agent_state()` on the full agent state. **Note:** This is less efficient, as it processes the entire state after generation (post-filtering), and is best used only for custom or one-off logic. The provided logic in `reduce_agent_state()` is just an example—you can implement your own custom post-filtering as needed:
+
+```python
+from tools.reduce_agent_state import reduce_agent_state
+from acp_plugin_gamesdk.interface import to_serializable_dict
+
+# Get full state, then post-filter (custom logic, less efficient)
+state = acp_plugin.get_acp_state()
+state_dict = to_serializable_dict(state)
+custom_cleaned_state = reduce_agent_state(
+    state_dict,
+    keep_completed_jobs=5,
+    keep_cancelled_jobs=5,
+    keep_acquired_inventory=5,  # Only available via post-filtering
+    keep_produced_inventory=5,
+    job_ids_to_ignore=[1234, 5678],
+    agent_addresses_to_ignore=["0x1234..."]
+)
+```
+
+**Comparison: Built-in Filtering vs. Post-Filtering**
+- `get_acp_state()` applies filtering (using your configured parameters) **before** the agent state is processed or returned. This is more efficient and is packaged directly with the ACP plugin. Use this for best performance.
+
+- `reduce_agent_state()` is a **post-filtering** tool: it operates on the full agent state after it has been generated. This allows for more custom or advanced logic (the examples provided are just a starting point), but comes with a performance tradeoff—generating the entire state first can be slower, especially in Python.
 
 ### Best Practices
 
