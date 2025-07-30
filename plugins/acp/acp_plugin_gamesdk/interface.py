@@ -2,7 +2,8 @@ from enum import Enum
 from typing import Optional, List, Literal, Dict, Any
 from pydantic import BaseModel
 
-from virtuals_acp.models import ACPJobPhase
+from virtuals_acp.models import ACPJobPhase, IDeliverable
+
 
 class AcpOffering(BaseModel):
     name: str
@@ -75,12 +76,6 @@ class IAcpJob(BaseModel):
             f"Memo: {self.memo}, "
             f"Tweet History: {self.tweetHistory}"
         )
-
-class IDeliverable(BaseModel):
-    type: str
-    value: str
-    clientName: Optional[str]
-    providerName: Optional[str]
 
 
 class IInventory(IDeliverable):

@@ -9,6 +9,7 @@ import requests
 from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
+from virtuals_acp import IDeliverable
 
 from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IInventory, ACP_JOB_PHASE_MAP
 from virtuals_acp.client import VirtualsACP 
@@ -556,12 +557,6 @@ class AcpPlugin:
             description="The job ID you are delivering for",
         )
 
-        deliverable_arg = Argument(
-            name="deliverable",
-            type="string",
-            description="The deliverable item",
-        )
-
         reasoning_arg = Argument(
             name="reasoning",
             type="string",
@@ -585,15 +580,12 @@ class AcpPlugin:
             executable=self._deliver_job_executable
         )
 
-    def _deliver_job_executable(self, job_id: int, deliverable: str, reasoning: str, tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
+    def _deliver_job_executable(self, job_id: int, reasoning: str, tweet_content: Optional[str] = None) -> Tuple[FunctionResultStatus, str, dict]:
         if not job_id:
             return FunctionResultStatus.FAILED, "Missing job ID - specify which job you're delivering for", {}
             
         if not reasoning:
             return FunctionResultStatus.FAILED, "Missing reasoning - explain why you're making this delivery", {}
-            
-        if not deliverable:
-            return FunctionResultStatus.FAILED, "Missing deliverable - specify what you're delivering", {}
 
         try:
             state = self.get_acp_state()
@@ -617,14 +609,14 @@ class AcpPlugin:
             if not produced:
                 return FunctionResultStatus.FAILED, "Cannot deliver - you should be producing the deliverable first before delivering it", {}
 
-            _deliverable: dict = {
-                "type": produced.type,
-                "value": produced.value
-            }
+            deliverable = IDeliverable(
+                type=produced.type,
+                value=produced.value
+            )
 
             self.acp_client.submit_job_deliverable(
                 job_id,
-                json.dumps(_deliverable),
+                deliverable,
             )
 
             if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
@@ -635,7 +627,7 @@ class AcpPlugin:
             return FunctionResultStatus.DONE, json.dumps({
                 "status": "success",
                 "jobId": job_id,
-                "deliverable": _deliverable,
+                "deliverable": deliverable.model_dump_json(),
                 "timestamp": datetime.now().timestamp()
             }), {}
         except Exception as e:
