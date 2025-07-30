@@ -72,7 +72,7 @@ def seller():
         state = acp_plugin.get_acp_state()
 
         job = next(
-            (j for j in state.get('jobs',{}).get('active').get('asASeller') if j.get('jobId') == job_id),
+            (j for j in state.get('jobs',{}).get('active').get('as_a_seller') if j.get('job_id') == job_id),
             None
         )
 
@@ -84,9 +84,9 @@ def seller():
         meme = IInventory(
             type="url",
             value=url,
-            jobId=job_id,
-            clientName=job.get("clientName"),
-            providerName=job.get("providerName"),
+            job_id=job_id,
+            client_name=job.get("client_name"),
+            provider_name=job.get("provider_name"),
         )
 
         acp_plugin.add_produce_item(meme)
@@ -149,7 +149,7 @@ def seller():
     while True:
         print("🟢"*40)
         agent.step()
-        state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
+        state = AcpState.model_validate(agent.agent_state)
         print(Panel(f"{state}", title="Agent State", box=box.ROUNDED, title_align="left"))
         print("🔴"*40)
         input("\nPress any key to continue...\n")

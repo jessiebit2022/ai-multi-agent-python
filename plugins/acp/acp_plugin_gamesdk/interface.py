@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, List, Literal, Dict, Any
 from pydantic import BaseModel
@@ -54,42 +55,42 @@ class ITweet(BaseModel):
     created_at: int
 
 class IAcpJob(BaseModel):
-    jobId: Optional[int]
-    clientName: Optional[str]
-    providerName: Optional[str]
+    job_id: Optional[int]
+    client_name: Optional[str]
+    provider_name: Optional[str]
     desc: str
     price: str
-    providerAddress: Optional[str]
+    provider_address: Optional[str]
     phase: AcpJobPhasesDesc
     memo: List[AcpRequestMemo]
-    tweetHistory: Optional[List[Optional[ITweet]]]
+    tweet_history: Optional[List[Optional[ITweet]]]
 
     def __repr__(self) -> str:
         return (
-            f"Job ID: {self.jobId}, "
-            f"Client Name: {self.clientName}, "
-            f"Provider Name: {self.providerName}, "
+            f"Job ID: {self.job_id}, "
+            f"Client Name: {self.client_name}, "
+            f"Provider Name: {self.provider_name}, "
             f"Description: {self.desc}, "
             f"Price: {self.price}, "
-            f"Provider Address: {self.providerAddress}, "
+            f"Provider Address: {self.provider_address}, "
             f"Phase: {self.phase.value}, "
             f"Memo: {self.memo}, "
-            f"Tweet History: {self.tweetHistory}"
+            f"Tweet History: {self.tweet_history}"
         )
 
 
 class IInventory(IDeliverable):
-    jobId: int
-    clientName: Optional[str]
-    providerName: Optional[str]
+    job_id: int
+    client_name: Optional[str]
+    provider_name: Optional[str]
 
 class AcpJobsSection(BaseModel):
-    asABuyer: List[IAcpJob]
-    asASeller: List[IAcpJob]
+    as_a_buyer: List[IAcpJob]
+    as_a_seller: List[IAcpJob]
 
     def __str__(self) -> str:
-        buyer_jobs = "\n".join([f"#{i+1} {str(job)}" for i, job in enumerate(self.asABuyer)])
-        seller_jobs = "\n".join([f"#{i+1} {str(job)}" for i, job in enumerate(self.asASeller)])
+        buyer_jobs = "\n".join([f"#{i+1} {str(job)}" for i, job in enumerate(self.as_a_buyer)])
+        seller_jobs = "\n".join([f"#{i+1} {str(job)}" for i, job in enumerate(self.as_a_seller)])
         return f"As Buyer:\n{buyer_jobs}\n\nAs Seller:\n{seller_jobs}"
 
 class AcpJobs(BaseModel):

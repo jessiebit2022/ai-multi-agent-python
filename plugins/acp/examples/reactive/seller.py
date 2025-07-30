@@ -187,7 +187,7 @@ def seller(use_thread_lock: bool = True):
         state = acp_plugin.get_acp_state()
         
         job = next(
-            (j for j in state.get('jobs',{}).get('active',{}).get('asASeller',[]) if j.get('jobId') == job_id),
+            (j for j in state.get('jobs',{}).get('active',{}).get('as_a_seller',[]) if j.get('job_id') == job_id),
             None
         )
 
@@ -197,11 +197,10 @@ def seller(use_thread_lock: bool = True):
         url = "https://example.com/meme"
 
         meme = IInventory(
-            jobId=job_id,
             type="url",
             value=url,
-            clientName=job.get("clientName"),
-            providerName=job.get("providerName"),
+            client_name=job.get("client_name"),
+            provider_name=job.get("provider_name"),
         )
 
         acp_plugin.add_produce_item(meme)

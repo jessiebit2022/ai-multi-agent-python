@@ -72,12 +72,12 @@ class AcpPlugin:
 
         def serialize_job(job: ACPJob, active: bool) -> Dict:
             return {
-                "jobId": job.id,
-                "clientName": job.client_agent.name if job.client_agent else "",
-                "providerName": job.provider_agent.name if job.provider_agent else "",
+                "job_id": job.id,
+                "client_name": job.client_agent.name if job.client_agent else "",
+                "provider_name": job.provider_agent.name if job.provider_agent else "",
                 "desc": job.service_requirement or "",
                 "price": str(job.price),
-                "providerAddress": job.provider_address,
+                "provider_address": job.provider_address,
                 "phase": ACP_JOB_PHASE_MAP.get(job.phase),
                 # Include memos only if active
                 "memo": [
@@ -89,8 +89,8 @@ class AcpPlugin:
                     }
                     for m in reversed(job.memos)
                 ] if active and job.memos else [],
-                # Include tweetHistory only if active
-                "tweetHistory": [
+                # Include tweet_history only if active
+                "tweet_history": [
                     {
                         "type": t.get("type"),
                         "tweet_id": t.get("tweetId"),
@@ -165,8 +165,8 @@ class AcpPlugin:
             },
             "jobs": {
                 "active": {
-                    "asABuyer": active_buyer_jobs,
-                    "asASeller": active_seller_jobs,
+                    "as_a_buyer": active_buyer_jobs,
+                    "as_a_seller": active_seller_jobs,
                 },
                 "completed": completed,
                 "cancelled": cancelled,
@@ -208,8 +208,8 @@ class AcpPlugin:
 
         Job Structure:
           - jobs.active:
-            * asABuyer: Pending resource purchases
-            * asASeller: Pending design requests
+            * as_a_buyer: Pending resource purchases
+            * as_a_seller: Pending design requests
           - jobs.completed: Successfully fulfilled projects
           - jobs.cancelled: Terminated or rejected requests
           - Each job tracks:
@@ -375,10 +375,10 @@ class AcpPlugin:
                 self._tweet_job(job_id, f"{tweet_content} #{job_id}")
 
             return FunctionResultStatus.DONE, json.dumps({
-                "jobId": job_id,
-                "sellerWalletAddress": seller_wallet_address,
+                "job_id": job_id,
+                "seller_wallet_address": seller_wallet_address,
                 "price": float(price),
-                "serviceRequirements": service_requirements,
+                "service_requirements": service_requirements,
                 "timestamp": datetime.now().timestamp(),
             }), {}
         except Exception as e:
@@ -436,7 +436,7 @@ class AcpPlugin:
             state = self.get_acp_state()
             
             job = next(
-                (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == job_id),
+                (c for c in state["jobs"]["active"]["as_a_seller"] if c["job_id"] == job_id),
                 None
             )
 
@@ -454,12 +454,12 @@ class AcpPlugin:
             )
 
             if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
+                tweet_id = job.get("tweet_history", [])[0].get("tweet_id") if job.get("tweet_history") else None
                 if tweet_id:
                     self._tweet_job(job_id, tweet_content, tweet_id)
 
             return FunctionResultStatus.DONE, json.dumps({
-                "jobId": job_id,
+                "job_id": job_id,
                 "decision": decision,
                 "timestamp": datetime.now().timestamp()
             }), {}
@@ -517,7 +517,7 @@ class AcpPlugin:
             state = self.get_acp_state()
             
             job = next(
-                (c for c in state["jobs"]["active"]["asABuyer"] if c["jobId"] == job_id),
+                (c for c in state["jobs"]["active"]["as_a_buyer"] if c["job_id"] == job_id),
                 None
             )
 
@@ -536,13 +536,13 @@ class AcpPlugin:
             )
 
             if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
+                tweet_id = job.get("tweet_history", [])[0].get("tweet_id") if job.get("tweet_history") else None
                 if tweet_id:
                     self._tweet_job(job_id, tweet_content, tweet_id)
 
             return FunctionResultStatus.DONE, json.dumps({
-                "jobId": job_id,
-                "amountPaid": amount,
+                "job_id": job_id,
+                "amount_paid": amount,
                 "timestamp": datetime.now().timestamp()
             }), {}
         except Exception as e:
@@ -563,7 +563,7 @@ class AcpPlugin:
             description="Why you are making this delivery",
         )
 
-        args = [job_id_arg, deliverable_arg, reasoning_arg]
+        args = [job_id_arg, reasoning_arg]
         
         if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None:
             tweet_content_arg = Argument(
@@ -591,7 +591,7 @@ class AcpPlugin:
             state = self.get_acp_state()
             
             job = next(
-                (c for c in state["jobs"]["active"]["asASeller"] if c["jobId"] == job_id),
+                (c for c in state["jobs"]["active"]["as_a_seller"] if c["job_id"] == job_id),
                 None
             )
 
@@ -602,7 +602,7 @@ class AcpPlugin:
                 return FunctionResultStatus.FAILED, f"Cannot deliver - job is in '{job['phase']}' phase, must be in 'transaction' phase", {}
 
             produced = next(
-                (i for i in self.produced_inventory if (i["jobId"] if isinstance(i, dict) else i.jobId) == job["jobId"]),
+                (i for i in self.produced_inventory if i.job_id == job["job_id"]),
                 None
             )
 
@@ -620,13 +620,13 @@ class AcpPlugin:
             )
 
             if hasattr(self, 'twitter_plugin') and self.twitter_plugin is not None and tweet_content is not None:
-                tweet_id = job.get("tweetHistory", [])[0].get("tweet_id") if job.get("tweetHistory") else None
+                tweet_id = job.get("tweet_history", [])[0].get("tweet_id") if job.get("tweet_history") else None
                 if tweet_id:
                     self._tweet_job(job_id, tweet_content, tweet_id)
                 
             return FunctionResultStatus.DONE, json.dumps({
                 "status": "success",
-                "jobId": job_id,
+                "job_id": job_id,
                 "deliverable": deliverable.model_dump_json(),
                 "timestamp": datetime.now().timestamp()
             }), {}

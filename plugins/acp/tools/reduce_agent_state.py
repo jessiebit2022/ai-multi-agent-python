@@ -32,7 +32,7 @@ def get_agent_state(_: None, _e: None) -> dict:
 def delete_old_items(items: list, keep: int, label: str) -> list:
     if len(items) <= keep:
         return items
-    sorted_items = sorted(items, key=lambda x: x.get("jobId", 0), reverse=True)
+    sorted_items = sorted(items, key=lambda x: x.get("job_id", 0), reverse=True)
     deleted_count = len(items) - keep
     print(f"Deleted {deleted_count} {label}, keeping {keep} most recent")
     return sorted_items[:keep]
@@ -92,16 +92,16 @@ def filter_out_job_ids(state: Dict, job_ids_to_ignore: List[int]) -> Dict:
     jobs = filtered_state.get("jobs", {})
     active = jobs.get("active", {})
 
-    if "asABuyer" in active:
-        active["asABuyer"] = [
-            job for job in active["asABuyer"]
-            if job.get("jobId") not in job_ids_to_ignore
+    if "as_a_buyer" in active:
+        active["as_a_buyer"] = [
+            job for job in active["as_a_buyer"]
+            if job.get("job_id") not in job_ids_to_ignore
         ]
 
-    if "asASeller" in active:
-        active["asASeller"] = [
-            job for job in active["asASeller"]
-            if job.get("jobId") not in job_ids_to_ignore
+    if "as_a_seller" in active:
+        active["as_a_seller"] = [
+            job for job in active["as_a_seller"]
+            if job.get("job_id") not in job_ids_to_ignore
         ]
 
     filtered_state["jobs"]["active"] = active
@@ -123,11 +123,11 @@ def reduce_agent_state(
     # Step 2: Filter jobs from any ignored agent address
     if agent_addresses_to_ignore:
         active_jobs = state.get("jobs", {}).get("active", {})
-        all_active = active_jobs.get("asABuyer", []) + active_jobs.get("asASeller", [])
+        all_active = active_jobs.get("as_a_buyer", []) + active_jobs.get("as_a_seller", [])
         matching_ids = [
-            job["jobId"]
+            job["job_id"]
             for job in all_active
-            if job.get("providerAddress", "") in agent_addresses_to_ignore
+            if job.get("provider_address", "") in agent_addresses_to_ignore
         ]
         if matching_ids:
             print(f"Removing {len(matching_ids)} active jobs from ignored agents: {', '.join(map(str, matching_ids))}")

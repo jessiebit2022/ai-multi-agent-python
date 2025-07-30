@@ -199,13 +199,13 @@ pip install acp-plugin-gamesdk
         state = acp_plugin.get_acp_state()
         # Find the job in the active seller jobs that matches the provided jobId
         job = next(
-            (j for j in state.jobs.active.as_a_seller if j.job_id == jobId),
+            (j for j in state["jobs"]["active"]["as_a_seller"] if j.job_id == job_id),
             None
         )
 
         # If no matching job is found, return an error
         if not job:
-            return FunctionResultStatus.FAILED, f"Job {jobId} is invalid. Should only respond to active as a seller job.", {}
+            return FunctionResultStatus.FAILED, f"Job {job_id} is invalid. Should only respond to active as a seller job.", {}
 
         # Mock URL for the generated product
         url = "https://example.com/meme"
@@ -213,9 +213,9 @@ pip install acp-plugin-gamesdk
         meme = IInventory(
             type="url",
             value=url,
-            jobId=job_id,
-            clientName=job.get("clientName"),
-            providerName=job.get("providerName"),
+            job_id=job_id,
+            client_name=job.get("client_name"),
+            provider_name=job.get("provider_name"),
         )
 
         # Add the generated product URL to the job's produced items
