@@ -87,7 +87,7 @@ class TwitterPlugin:
         # Configure logging
         logging.basicConfig(level=logging.INFO)
         self.logger: logging.Logger = logging.getLogger(__name__)
-
+        
         self._check_authentication()
 
     def _check_authentication(self) -> None:
