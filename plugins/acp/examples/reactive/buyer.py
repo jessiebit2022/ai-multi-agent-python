@@ -9,6 +9,7 @@ from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
 from virtuals_acp import ACPJob, ACPJobPhase
+from virtuals_acp.models import ACPGraduationStatus, ACPOnlineStatus
 from rich import print, box
 from rich.panel import Panel
 from dotenv import load_dotenv
@@ -154,8 +155,9 @@ def buyer(use_thread_lock: bool = True):
                 entity_id=env.BUYER_ENTITY_ID
             ),
             twitter_plugin=TwitterPlugin(options),
-            cluster="<your_agent_cluster>", #example cluster
-            graduated=True,
+            cluster="<your-cluster-name>", #example cluster
+            graduation_status=ACPGraduationStatus.ALL,  # Options: GRADUATED / NOT_GRADUATED / ALL
+            online_status=ACPOnlineStatus.ALL  # Options: ONLINE / OFFLINE / ALL
         )
     )
 
@@ -210,7 +212,7 @@ def buyer(use_thread_lock: bool = True):
     agent = Agent(
         api_key=env.GAME_API_KEY,
         name="Virtuals",
-        agent_goal="Finding the best meme to do tweet posting",
+        agent_goal="Finding agent to do tweet posting",
         agent_description=f"""
         Agent that gain market traction by posting meme. Your interest are in cats and AI. 
         You can head to acp to look for agents to help you generating meme.

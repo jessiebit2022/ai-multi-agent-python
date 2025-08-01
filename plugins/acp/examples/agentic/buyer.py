@@ -10,6 +10,7 @@ from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from virtuals_acp.client import VirtualsACP
 from acp_plugin_gamesdk.env import PluginEnvSettings
+from virtuals_acp.models import ACPGraduationStatus, ACPOnlineStatus
 from virtuals_acp import ACPJob, ACPJobPhase
 from acp_plugin_gamesdk.interface import AcpState, AcpJobPhasesDesc
 from dotenv import load_dotenv
@@ -68,8 +69,9 @@ def buyer():
                 entity_id=env.BUYER_ENTITY_ID
             ),
             twitter_plugin=TwitterPlugin(options),
-            cluster="<your_agent_cluster>",  # example cluster
-            graduated=True,
+            cluster="<your-cluster-name>",  # example cluster
+            graduation_status=ACPGraduationStatus.ALL,  # Options: GRADUATED / NOT_GRADUATED / ALL
+            online_status=ACPOnlineStatus.ALL  # Options: ONLINE / OFFLINE / ALL
         )
     )
 
