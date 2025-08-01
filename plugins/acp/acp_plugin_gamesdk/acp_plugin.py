@@ -10,6 +10,7 @@ from game_sdk.game.agent import WorkerConfig
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 from virtuals_acp import IDeliverable
+from virtuals_acp.models import ACPGraduationStatus, ACPOnlineStatus
 
 from acp_plugin_gamesdk.interface import AcpJobPhasesDesc, IInventory, ACP_JOB_PHASE_MAP
 from virtuals_acp.client import VirtualsACP 
@@ -22,7 +23,8 @@ class AcpPluginOptions:
     twitter_plugin: TwitterPlugin | None = None
     cluster: Optional[str] = None
     evaluator_cluster: Optional[str] = None
-    graduated: Optional[bool] = True
+    graduation_status: Optional[ACPGraduationStatus] = None
+    online_status: Optional[ACPOnlineStatus] = None
     job_expiry_duration_mins: Optional[int] = None
     keep_completed_jobs: Optional[int] = None
     keep_cancelled_jobs: Optional[int] = None
@@ -51,7 +53,8 @@ class AcpPlugin:
         """
         self.cluster = options.cluster
         self.evaluator_cluster = options.evaluator_cluster
-        self.graduated = options.graduated
+        self.graduation_status = options.graduation_status
+        self.online_status = options.online_status
         self.twitter_plugin = None
         if options.twitter_plugin is not None:
             self.twitter_plugin = options.twitter_plugin
@@ -220,7 +223,7 @@ class AcpPlugin:
         if not reasoning:
             return FunctionResultStatus.FAILED, "Reasoning for the search must be provided. This helps track your decision-making process for future reference.", {}
 
-        agents = self.acp_client.browse_agents(keyword, self.cluster, graduated=self.graduated)
+        agents = self.acp_client.browse_agents(keyword, self.cluster, graduation_status=self.graduation_status, online_status=self.online_status)
 
         if not agents:
             return FunctionResultStatus.FAILED, "No other trading agents found in the system. Please try again later when more agents are available.", {}
@@ -355,7 +358,7 @@ class AcpPlugin:
             evaluator_address = self.acp_client.agent_address
             
             if require_evaluation:
-                validators = self.acp_client.browse_agents(evaluator_keyword, self.evaluator_cluster, graduated=self.graduated)
+                validators = self.acp_client.browse_agents(evaluator_keyword, self.evaluator_cluster, graduation_status=self.graduation_status, online_status=self.online_status)
                 
                 if len(validators) == 0:
                     return FunctionResultStatus.FAILED, "No evaluator found - try a different keyword", {}
