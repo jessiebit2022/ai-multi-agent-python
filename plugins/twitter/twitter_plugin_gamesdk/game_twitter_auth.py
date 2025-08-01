@@ -68,8 +68,20 @@ class AuthManager:
         Fetches the login URL from the authentication server.
         """
         response = requests.get(f"{BASE_URL}/auth", headers={"x-api-key": api_key})
-        response.raise_for_status()
-        return response.json().get("url")
+
+        if response.status_code != 200:
+            try:
+                error_info = response.json()
+                message = error_info.get("message", "Unknown error")
+                status = error_info.get("statusCode", response.status_code)
+
+                print(f"Auth Error: {message} (Status: {status})")
+            except Exception:
+                print(f"Failed to parse error. Raw response:\n{response.text}")
+                message = response.text
+            raise Exception(f"Auth request failed: {message}")
+        else:
+            return response.json().get("url")
 
     @staticmethod
     def verify_auth(code: str, state: str) -> str:
