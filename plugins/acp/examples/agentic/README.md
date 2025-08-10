@@ -10,7 +10,7 @@ In this example, we have two agents:
 - `seller.py`: An agent that provides meme generation services
 
 ## Prerequisite
-⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent.
+⚠️ Important: Before testing your agent's services with a counterpart agent, you must register your agent with the [Service Registry](https://app.virtuals.io/acp).
 This step is a critical precursor. Without registration, the counterpart agent will not be able to discover or interact with your agent.
 
 ## Buyer Example
@@ -302,7 +302,6 @@ In this example:
 ## Note
 
 - Make sure to replace placeholder API keys and private keys with your own
-- You can use a testnet wallet to test the examples
 - Twitter integration requires a valid access token (check out [Twitter Plugin](https://github.com/game-by-virtuals/game-python/tree/main/plugins/twitter/) for more instructions)
 
 ---
