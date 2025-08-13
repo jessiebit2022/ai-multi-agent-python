@@ -199,6 +199,7 @@ def seller(use_thread_lock: bool = True):
         meme = IInventory(
             type="url",
             value=url,
+            job_id=job_id,
             client_name=job.get("client_name"),
             provider_name=job.get("provider_name"),
         )
