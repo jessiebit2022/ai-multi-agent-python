@@ -1,11 +1,11 @@
 import threading
 
-from typing import Tuple
+from typing import Tuple, Optional, Deque
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.interface import AcpState, IInventory, to_serializable_dict
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
-from virtuals_acp import ACPJob, ACPJobPhase
+from virtuals_acp import ACPJob, ACPJobPhase, ACPMemo
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 from game_sdk.game.agent import Agent
 from collections import deque
@@ -56,20 +56,20 @@ def seller(use_thread_lock: bool = True):
         return
 
     # Thread-safe job queue setup
-    job_queue = deque()
+    job_queue: Deque[Tuple[ACPJob, Optional[ACPMemo]]] = deque()
     job_queue_lock = threading.Lock()
     job_event = threading.Event()
 
     # Thread-safe append wrapper
-    def safe_append_job(job):
+    def safe_append_job(job: ACPJob, memo_to_sign: Optional[ACPMemo] = None):
         if use_thread_lock:
             print("[append] Attempting to acquire job_queue_lock")
             with job_queue_lock:
                 print("[append] Lock acquired. Appending job to queue:", job.id)
-                job_queue.append(job)
+                job_queue.append((job, memo_to_sign))
                 print(f"[append] Queue size is now {len(job_queue)}")
         else:
-            job_queue.append(job)
+            job_queue.append((job, memo_to_sign))
             print(f"[append] Appended job (no lock). Queue size is now {len(job_queue)}")
 
     # Thread-safe pop wrapper
@@ -79,19 +79,20 @@ def seller(use_thread_lock: bool = True):
             with job_queue_lock:
                 print("[pop] Lock acquired.")
                 if job_queue:
-                    job = job_queue.popleft()
+                    job, memo_to_sign = job_queue.popleft()
                     print(f"[pop] Job popped: {job.id}")
-                    return job
+                    return job, memo_to_sign
                 else:
                     print("[pop] Queue is empty.")
+                    return None, None
         else:
             if job_queue:
-                job = job_queue.popleft()
+                job, memo_to_sign = job_queue.popleft()
                 print(f"[pop] Job popped (no lock): {job.id}")
-                return job
+                return job, memo_to_sign
             else:
                 print("[pop] Queue is empty (no lock).")
-        return None
+                return None, None
 
     # Background thread worker: process jobs one by one
     def job_worker():
@@ -100,11 +101,11 @@ def seller(use_thread_lock: bool = True):
 
             # Process all available jobs
             while True:
-                job = safe_pop_job()
+                job, memo_to_sign = safe_pop_job()
                 if not job:
                     break
                 try:
-                    process_job(job)
+                    process_job(job, memo_to_sign)
                 except Exception as e:
                     print(f"❌ Error processing job: {e}")
                     # Continue processing other jobs even if one fails
@@ -119,31 +120,35 @@ def seller(use_thread_lock: bool = True):
                     job_event.clear()
 
     # Event-triggered job task receiver
-    def on_new_task(job: ACPJob):
+    def on_new_task(job: ACPJob, memo_to_sign: ACPMemo):
         print(f"[on_new_task] New job received: {job.id}")
-        safe_append_job(job)
+        safe_append_job(job, memo_to_sign)
         job_event.set()
         print("[on_new_task] job_event set.")
 
-    def process_job(job: ACPJob):
+    def process_job(job: ACPJob, memo_to_sign: Optional[ACPMemo]):
         out = ""
         out += f"Reacting to job:\n{job}\n\n"
         prompt = ""
 
-        if job.phase == ACPJobPhase.REQUEST:
-            for memo in job.memos:
-                if memo.next_phase == ACPJobPhase.NEGOTIATION:
-                    prompt = f"""
+        if (
+            job.phase == ACPJobPhase.REQUEST and
+            memo_to_sign is not None and
+            memo_to_sign.next_phase == ACPJobPhase.NEGOTIATION
+        ):
+            prompt = f"""
                     Respond to the following transaction:
                     {job}
         
                     decide whether you should accept the job or not.
                     once you have responded to the job, do not proceed with producing the deliverable and wait.
                     """
-        elif job.phase == ACPJobPhase.TRANSACTION:
-            for memo in job.memos:
-                if memo.next_phase == ACPJobPhase.EVALUATION:
-                    prompt = f"""
+        elif (
+            job.phase == ACPJobPhase.TRANSACTION and
+            memo_to_sign is not None and
+            memo_to_sign.next_phase == ACPJobPhase.EVALUATION
+        ):
+            prompt = f"""
                     Respond to the following transaction:
                     {job}
         
@@ -206,7 +211,7 @@ def seller(use_thread_lock: bool = True):
 
         acp_plugin.add_produce_item(meme)
 
-        return FunctionResultStatus.DONE, f"Meme generated with the URL: {url}", {}
+        return FunctionResultStatus.DONE, f"Meme generated with the URL: {url}, next step is to deliver it to the client.", {}
 
     generate_meme_function = Function(
         fn_name="generate_meme",

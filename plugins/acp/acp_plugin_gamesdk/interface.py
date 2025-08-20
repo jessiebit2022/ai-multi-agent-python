@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, Literal, Dict, Any
+from typing import Optional, List, Literal, Dict, Any, Union
 from pydantic import BaseModel
 
 from virtuals_acp.models import ACPJobPhase, IDeliverable
@@ -58,7 +58,7 @@ class IAcpJob(BaseModel):
     job_id: Optional[int]
     client_name: Optional[str]
     provider_name: Optional[str]
-    desc: str
+    desc: Union[str, Dict[str, Any]]
     price: str
     provider_address: Optional[str]
     phase: AcpJobPhasesDesc
