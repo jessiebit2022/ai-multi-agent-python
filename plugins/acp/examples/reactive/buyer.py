@@ -1,14 +1,15 @@
 import threading
+from collections import deque
 
-from typing import Tuple
-from game_sdk.game.agent import Agent, WorkerConfig
+from typing import Tuple, Optional, Deque
+from game_sdk.game.agent import Agent
 from game_sdk.game.custom_types import Argument, Function, FunctionResultStatus
 
 from acp_plugin_gamesdk.interface import AcpState, to_serializable_dict
 from acp_plugin_gamesdk.acp_plugin import AcpPlugin, AcpPluginOptions
 from acp_plugin_gamesdk.env import PluginEnvSettings
 from virtuals_acp.client import VirtualsACP
-from virtuals_acp import ACPJob, ACPJobPhase
+from virtuals_acp import ACPJob, ACPJobPhase, ACPMemo
 from virtuals_acp.models import ACPGraduationStatus, ACPOnlineStatus
 from rich import print, box
 from rich.panel import Panel
@@ -23,14 +24,6 @@ from twitter_plugin_gamesdk.twitter_plugin import TwitterPlugin
 load_dotenv(override=True)
 
 env = PluginEnvSettings()
-
-def on_evaluate(job: ACPJob):
-    for memo in job.memos:
-        if memo.next_phase == ACPJobPhase.COMPLETED:
-            print(f"Evaluating deliverable for job {job.id}")
-            # Auto-accept all deliverables for this example
-            job.evaluate(True)
-            break
 
 # GAME Twitter Plugin options
 options = {
@@ -64,19 +57,19 @@ def buyer(use_thread_lock: bool = True):
         return
     
     # Thread-safe job queue setup
-    job_queue = []
+    job_queue: Deque[Tuple[ACPJob, Optional[ACPMemo]]] = deque()
     job_queue_lock = threading.Lock()
     job_event = threading.Event()
 
     # Thread-safe append with optional lock
-    def safe_append_job(job):
+    def safe_append_job(job: ACPJob, memo_to_sign: Optional[ACPMemo] = None):
         if use_thread_lock:
             print(f"[safe_append_job] Acquiring lock to append job {job.id}")
             with job_queue_lock:
                 print(f"[safe_append_job] Lock acquired, appending job {job.id} to queue")
-                job_queue.append(job)
+                job_queue.append((job, memo_to_sign))
         else:
-            job_queue.append(job)
+            job_queue.append((job, memo_to_sign))
 
     # Thread-safe pop with optional lock
     def safe_pop_job():
@@ -84,19 +77,20 @@ def buyer(use_thread_lock: bool = True):
             print(f"[safe_pop_job] Acquiring lock to pop job")
             with job_queue_lock:
                 if job_queue:
-                    job = job_queue.pop(0)
+                    job, memo_to_sign = job_queue.popleft()
                     print(f"[safe_pop_job] Lock acquired, popped job {job.id}")
-                    return job
+                    return job, memo_to_sign
                 else:
                     print("[safe_pop_job] Queue is empty after acquiring lock")
+                    return None, None
         else:
             if job_queue:
-                job = job_queue.pop(0)
+                job, memo_to_sign = job_queue.popleft()
                 print(f"[safe_pop_job] Popped job {job.id} without lock")
-                return job
+                return job, memo_to_sign
             else:
                 print("[safe_pop_job] Queue is empty (no lock)")
-        return None
+                return None, None
 
     # Background thread worker: process jobs one by one
     def job_worker():
@@ -105,11 +99,11 @@ def buyer(use_thread_lock: bool = True):
 
             # Process all available jobs
             while True:
-                job = safe_pop_job()
+                job, memo_to_sign = safe_pop_job()
                 if not job:
                     break
                 try:
-                    process_job(job)
+                    process_job(job, memo_to_sign)
                 except Exception as e:
                     print(f"❌ Error processing job: {e}")
                     # Continue processing other jobs even if one fails
@@ -124,23 +118,34 @@ def buyer(use_thread_lock: bool = True):
                     job_event.clear()
 
     # Event-triggered job task receiver
-    def on_new_task(job: ACPJob):
+    def on_new_task(job: ACPJob, memo_to_sign: ACPMemo):
         print(f"[on_new_task] Received job {job.id} (phase: {job.phase})")
+        safe_append_job(job, memo_to_sign)
+        job_event.set()
+
+    def on_evaluate(job: ACPJob):
+        print(f"[on_evaluate] Received job {job.id}")
         safe_append_job(job)
         job_event.set()
 
-    def process_job(job: ACPJob):
+    def process_job(job: ACPJob, memo_to_sign: Optional[ACPMemo]):
         out = ""
         print(job.phase, "job.phase")
-        if job.phase == ACPJobPhase.NEGOTIATION:
-            for memo in job.memos:
-                print(memo.next_phase, "memo.next_phase")
-                if memo.next_phase == ACPJobPhase.TRANSACTION:
-                    out += f"Buyer agent is reacting to job:\n{job}\n\n"
-                    buyer_agent.get_worker("acp_worker").run(
-                        f"Respond to the following transaction: {job}",
-                    )
-                    out += "Buyer agent has responded to the job\n"
+        if (
+            job.phase == ACPJobPhase.NEGOTIATION and
+            memo_to_sign is not None and
+            memo_to_sign.next_phase == ACPJobPhase.TRANSACTION
+        ):
+            out += f"Buyer agent is reacting to job:\n{job}\n\n"
+            buyer_agent.get_worker("acp_worker").run(
+                f"Respond to the following transaction: {job}",
+            )
+            out += "Buyer agent has responded to the job\n"
+        elif job.phase == ACPJobPhase.EVALUATION:
+            out += f"Buyer agent is evaluating to job:\n{job}\n\n"
+            # Auto-accept all deliverables for this example
+            job.evaluate(True)
+            out += f"Buyer agent has evaluated the job:\n{job}\n\n"
 
         print(Panel(out, title="🔁 Reaction", box=box.ROUNDED, title_align="left", border_style="red"))
     
@@ -154,10 +159,10 @@ def buyer(use_thread_lock: bool = True):
                 on_new_task=on_new_task,
                 entity_id=env.BUYER_ENTITY_ID
             ),
-            twitter_plugin=TwitterPlugin(options),
             cluster="<your-cluster-name>", #example cluster
             graduation_status=ACPGraduationStatus.ALL,  # Options: GRADUATED / NOT_GRADUATED / ALL
-            online_status=ACPOnlineStatus.ALL  # Options: ONLINE / OFFLINE / ALL
+            online_status=ACPOnlineStatus.ALL,  # Options: ONLINE / OFFLINE / ALL
+            twitter_plugin=TwitterPlugin(options),
         )
     )
 
@@ -167,44 +172,36 @@ def buyer(use_thread_lock: bool = True):
         return state_dict
 
     def post_tweet(content: str, reasoning: str) -> Tuple[FunctionResultStatus, str, dict]:
-        return FunctionResultStatus.DONE, "Tweet has been posted", {}
-        # if acp_plugin.twitter_plugin is not None:
-        #     post_tweet_fn = acp_plugin.twitter_plugin.get_function('post_tweet')
-        #     post_tweet_fn(content)
-        #     return FunctionResultStatus.DONE, "Tweet has been posted", {}
+        if acp_plugin.twitter_plugin is not None:
+            acp_plugin.twitter_plugin.twitter_client.create_tweet(text=content)
+            return FunctionResultStatus.DONE, "Tweet has been posted", {}
 
-        # return FunctionResultStatus.FAILED, "Twitter plugin is not initialized", {}
+        return FunctionResultStatus.FAILED, "Twitter plugin is not initialized", {}
 
-    core_worker = WorkerConfig(
-        id="core-worker",
-        worker_description="This worker is to post tweet",
-        action_space=[
-            Function(
-                fn_name="post_tweet",
-                fn_description="This function is to post tweet",
-                args=[
-                    Argument(
-                        name="content",
-                        type="string",
-                        description="The content of the tweet"
-                    ),
-                    Argument(
-                        name="reasoning",
-                        type="string",
-                        description="The reasoning of the tweet"
-                    )
-                ],
-                executable=post_tweet
+    post_tweet_fn = Function(
+        fn_name="post_tweet",
+        fn_description="This function is to post tweet",
+        args=[
+            Argument(
+                name="content",
+                type="string",
+                description="The content of the tweet"
+            ),
+            Argument(
+                name="reasoning",
+                type="string",
+                description="The reasoning of the tweet"
             )
         ],
-        get_state_fn=get_agent_state
+        executable=post_tweet
     )
 
     acp_worker = acp_plugin.get_worker(
         {
             "functions": [
                 acp_plugin.search_agents_functions,
-                acp_plugin.initiate_job
+                acp_plugin.initiate_job,
+                post_tweet_fn
             ]
         }
     )
@@ -220,7 +217,7 @@ def buyer(use_thread_lock: bool = True):
 
         {acp_plugin.agent_description}
         """,
-        workers=[core_worker, acp_worker],
+        workers=[acp_worker],
         get_agent_state_fn=get_agent_state
     )
 

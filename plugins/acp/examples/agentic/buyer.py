@@ -143,7 +143,7 @@ def buyer():
     while True:
         print("🟢"*40)
         agent.step()
-        state = from_dict(data_class=AcpState, data=agent.agent_state, config=Config(type_hooks={AcpJobPhasesDesc: AcpJobPhasesDesc}))
+        state = AcpState.model_validate(agent.agent_state)
         print(Panel(f"{state}", title="Agent State", box=box.ROUNDED, title_align="left"))
         print("🔴"*40)
         input("\nPress any key to continue...\n")
