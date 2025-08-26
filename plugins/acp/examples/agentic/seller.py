@@ -91,7 +91,7 @@ def seller():
 
         acp_plugin.add_produce_item(meme)
 
-        return FunctionResultStatus.DONE, f"Meme generated with the URL: {url}", {}
+        return FunctionResultStatus.DONE, f"Meme generated with the URL: {url}, next step is to deliver it to the client.", {}
 
     core_worker = WorkerConfig(
         id="core-worker",
