@@ -365,7 +365,19 @@ class AcpPlugin:
         try:
             if not seller_wallet_address:
                 return FunctionResultStatus.FAILED, "Missing seller wallet address - specify the agent you want to buy from", {}
-            
+
+            if not service_name:
+                return FunctionResultStatus.FAILED, "Missing service name - specify the service name", {}
+
+            if not service_requirement:
+                return FunctionResultStatus.FAILED, "Missing service requirements - provide detailed specifications for service-based items", {}
+
+            if isinstance(service_requirement, str):
+                # failsafe if GAME still passes in dictionary wrapped with quotes and treated it as a str
+                if (sr := service_requirement.strip()).startswith("{") and sr.endswith("}"):
+                    with suppress(ValueError, SyntaxError):
+                        service_requirement = ast.literal_eval(sr)
+
             if require_evaluation and not evaluator_keyword:
                 return FunctionResultStatus.FAILED, "Missing validator keyword - provide a keyword to search for a validator", {}
             
@@ -393,12 +405,6 @@ class AcpPlugin:
                     f"No offering found with name '{service_name}', available offerings are: {', '.join(str(agent.offerings))}",
                     {}
                 )
-
-            if isinstance(service_requirement, str):
-                # failsafe if GAME still passes in dictionary wrapped with quotes and treated as a str
-                if (sr := service_requirement.strip()).startswith("{") and sr.endswith("}"):
-                    with suppress(ValueError, SyntaxError):
-                        service_requirement = ast.literal_eval(sr)
 
             job_id = offering.initiate_job(
                 service_requirement,
